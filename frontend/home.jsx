@@ -1,6 +1,6 @@
 // Home page (landing / browse)
 
-function Home({ onOpenComponent, onOpenUpload, onGoAdmin }) {
+function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   const [activeCat, setActiveCat] = React.useState('all');
   const [sortBy, setSortBy] = React.useState('popular');
   const [query, setQuery] = React.useState('');
@@ -42,16 +42,19 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin }) {
       {window.MOCK_NOTICES && window.MOCK_NOTICES.filter(n => n.is_pinned).length > 0 && (
         <div style={{marginBottom: 22}}>
           {window.MOCK_NOTICES.filter(n => n.is_pinned).map(n => (
-            <div key={n.id} style={{
+            <div key={n.id} onClick={onGoNotice} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 16px', marginBottom: 6,
               background: 'var(--bg-elev)', border: '1px solid var(--line)',
               borderLeft: '3px solid var(--accent)', borderRadius: 'var(--radius)',
-              fontSize: 13,
-            }}>
+              fontSize: 13, cursor: 'pointer', transition: 'background 0.12s',
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'var(--bg-muted)'}
+            onMouseOut={e => e.currentTarget.style.background = 'var(--bg-elev)'}>
               <span style={{fontWeight: 700, color: 'var(--accent-fg)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em'}}>공지</span>
               <span style={{fontWeight: 600, flex: 1}}>{n.title}</span>
               <span className="muted-sm">{n.created_at}</span>
+              <Icons.ChevronRight size={12} style={{color: 'var(--text-4)'}}/>
             </div>
           ))}
         </div>

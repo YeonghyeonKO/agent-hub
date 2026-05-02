@@ -98,16 +98,44 @@ function VocPage() {
   const [sort, setSort] = React.useState('popular');
   const [selected, setSelected] = React.useState(null);
   const [showForm, setShowForm] = React.useState(false);
+  const [posts, setPosts] = React.useState(MOCK_VOC);
+
+  // Form state
+  const [formCat, setFormCat] = React.useState('suggestion');
+  const [formTitle, setFormTitle] = React.useState('');
+  const [formContent, setFormContent] = React.useState('');
+  const [showPreview, setShowPreview] = React.useState(false);
 
   const catLabels = { suggestion: '제안', bug: '버그', question: '질문', other: '기타' };
   const statusLabels = { open: '접수', 'in-progress': '검토 중', resolved: '반영됨', closed: '종료' };
   const statusChip = { open: 'chip-neutral', 'in-progress': 'chip-warn', resolved: 'chip-ok', closed: 'chip-neutral' };
 
-  const filtered = MOCK_VOC
+  const handleSubmit = () => {
+    if (!formTitle.trim() || !formContent.trim()) return;
+    const newPost = {
+      id: 'v-' + Date.now(),
+      title: formTitle.trim(),
+      content: formContent.trim(),
+      category: formCat,
+      author: { name: '고영현', id: '2074795', initial: '고' },
+      status: 'open',
+      upvotes: 0,
+      comments: 0,
+      created_at: new Date().toISOString().slice(0, 10),
+    };
+    setPosts([newPost, ...posts]);
+    setFormTitle('');
+    setFormContent('');
+    setFormCat('suggestion');
+    setShowForm(false);
+    setShowPreview(false);
+  };
+
+  const filtered = posts
     .filter(v => filter === 'all' || v.category === filter)
     .sort((a, b) => sort === 'popular' ? b.upvotes - a.upvotes : 0);
 
-  const post = selected ? MOCK_VOC.find(v => v.id === selected) : null;
+  const post = selected ? posts.find(v => v.id === selected) : null;
 
   if (selected && post) {
     return (
@@ -173,24 +201,38 @@ function VocPage() {
           <div className="field">
             <label className="field-label">카테고리 <span className="req">*</span></label>
             <div className="segmented">
-              <button className="segmented-item active">제안</button>
-              <button className="segmented-item">버그</button>
-              <button className="segmented-item">질문</button>
-              <button className="segmented-item">기타</button>
+              {[['suggestion','제안'],['bug','버그'],['question','질문'],['other','기타']].map(([v,l]) => (
+                <button key={v} className={`segmented-item ${formCat===v?'active':''}`} onClick={() => setFormCat(v)}>{l}</button>
+              ))}
             </div>
           </div>
           <div className="field">
             <label className="field-label">제목 <span className="req">*</span></label>
-            <input className="input" placeholder="간결하게 한 줄로 요약해주세요"/>
+            <input className="input" placeholder="간결하게 한 줄로 요약해주세요" value={formTitle} onChange={e => setFormTitle(e.target.value)}/>
           </div>
           <div className="field">
-            <label className="field-label">내용 <span className="req">*</span></label>
-            <textarea className="textarea" rows="4" placeholder="마크다운 형식을 지원합니다. **굵게**, `코드`, - 목록 등을 사용할 수 있어요."/>
-            <div className="field-hint">Markdown 형식 지원 · **굵게** · `코드` · - 목록 · [링크](url)</div>
+            <div className="row" style={{justifyContent: 'space-between', marginBottom: 6}}>
+              <label className="field-label" style={{margin: 0}}>내용 <span className="req">*</span></label>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowPreview(!showPreview)} style={{fontSize: 12}}>
+                <Icons.Eye size={11}/> {showPreview ? '편집' : '미리보기'}
+              </button>
+            </div>
+            {!showPreview ? (
+              <>
+                <textarea className="textarea" rows="6" placeholder="마크다운 형식을 지원합니다. **굵게**, `코드`, - 목록 등을 사용할 수 있어요." value={formContent} onChange={e => setFormContent(e.target.value)}/>
+                <div className="field-hint">Markdown 형식 지원 · **굵게** · `코드` · - 목록 · [링크](url)</div>
+              </>
+            ) : (
+              <div style={{minHeight: 120, padding: 16, border: '1px solid var(--line)', borderRadius: 'var(--radius)', background: 'var(--bg-muted)'}}>
+                {formContent ? <Markdown>{formContent}</Markdown> : <span className="muted-sm">내용을 입력하면 미리보기가 표시됩니다.</span>}
+              </div>
+            )}
           </div>
           <div className="row gap-8" style={{justifyContent: 'flex-end'}}>
-            <button className="btn btn-ghost btn-sm" onClick={() => setShowForm(false)}>취소</button>
-            <button className="btn btn-accent btn-sm"><Icons.Check size={11}/> 등록</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => { setShowForm(false); setShowPreview(false); }}>취소</button>
+            <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={!formTitle.trim() || !formContent.trim()} style={{opacity: (!formTitle.trim() || !formContent.trim()) ? 0.5 : 1}}>
+              <Icons.Check size={11}/> 등록
+            </button>
           </div>
         </div>
       )}
