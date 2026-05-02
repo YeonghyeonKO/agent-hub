@@ -121,6 +121,60 @@ class Issue(Base):
     reporter: Mapped["User"] = relationship()
 
 
+class Notice(Base):
+    __tablename__ = "notices"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title: Mapped[str] = mapped_column(String(300))
+    content: Mapped[str] = mapped_column(Text)
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"))
+    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    author: Mapped["User"] = relationship()
+
+
+class VocPost(Base):
+    __tablename__ = "voc_posts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title: Mapped[str] = mapped_column(String(300))
+    content: Mapped[str] = mapped_column(Text)
+    category: Mapped[str] = mapped_column(String(30))  # suggestion / bug / question / etc
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"))
+    status: Mapped[str] = mapped_column(String(20), default="open")  # open / in-progress / resolved / closed
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    author: Mapped["User"] = relationship()
+    comments: Mapped[list["VocComment"]] = relationship(back_populates="post", cascade="all, delete-orphan")
+    upvotes: Mapped[list["VocUpvote"]] = relationship(back_populates="post", cascade="all, delete-orphan")
+
+
+class VocComment(Base):
+    __tablename__ = "voc_comments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    post_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("voc_posts.id", ondelete="CASCADE"))
+    author_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"))
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    post: Mapped["VocPost"] = relationship(back_populates="comments")
+    author: Mapped["User"] = relationship()
+
+
+class VocUpvote(Base):
+    __tablename__ = "voc_upvotes"
+
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), primary_key=True)
+    post_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("voc_posts.id", ondelete="CASCADE"), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    post: Mapped["VocPost"] = relationship(back_populates="upvotes")
+
+
 class Season(Base):
     __tablename__ = "seasons"
 

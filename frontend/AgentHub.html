@@ -20,6 +20,7 @@
 <script type="text/babel" src="upload-modal.jsx"></script>
 <script type="text/babel" src="admin.jsx"></script>
 <script type="text/babel" src="extra-pages.jsx"></script>
+<script type="text/babel" src="boards.jsx"></script>
 
 <script type="text/babel">
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
@@ -58,6 +59,8 @@ function App() {
   const goMine = () => setRoute({ name: 'mine' });
   const goRanking = () => setRoute({ name: 'ranking' });
   const goGuide = () => setRoute({ name: 'guide' });
+  const goNotice = () => setRoute({ name: 'notice' });
+  const goVoc = () => setRoute({ name: 'voc' });
 
   return (
     <div data-screen-label={`AgentHub · ${route.name}`}>
@@ -68,6 +71,8 @@ function App() {
         onGoMine={goMine}
         onGoRanking={goRanking}
         onGoGuide={goGuide}
+        onGoNotice={goNotice}
+        onGoVoc={goVoc}
         onOpenUpload={() => setShowUpload(true)}
         role={tweaks.role}
       />
@@ -96,6 +101,12 @@ function App() {
       )}
       {route.name === 'guide' && (
         <GuidePage/>
+      )}
+      {route.name === 'notice' && (
+        <NoticePage/>
+      )}
+      {route.name === 'voc' && (
+        <VocPage/>
       )}
 
       {showUpload && <UploadModal onClose={() => setShowUpload(false)}/>}
@@ -148,7 +159,7 @@ function App() {
   );
 }
 
-function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onOpenUpload, role }) {
+function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, role }) {
   return (
     <div className="topbar">
       <div className="brand" onClick={onGoHome}>
@@ -159,6 +170,8 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
         <a className={`nav-link ${route.name === 'home' ? 'active' : ''}`} onClick={onGoHome}>홈</a>
         <a className={`nav-link ${route.name === 'mine' ? 'active' : ''}`} onClick={onGoMine}>내 Component / Flow</a>
         <a className={`nav-link ${route.name === 'ranking' ? 'active' : ''}`} onClick={onGoRanking}>2026 랭킹</a>
+        <a className={`nav-link ${route.name === 'notice' ? 'active' : ''}`} onClick={onGoNotice}>공지사항</a>
+        <a className={`nav-link ${route.name === 'voc' ? 'active' : ''}`} onClick={onGoVoc}>VoC</a>
         <a className={`nav-link ${route.name === 'guide' ? 'active' : ''}`} onClick={onGoGuide}>가이드</a>
         {role === 'admin' && (
           <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>관리자</a>
