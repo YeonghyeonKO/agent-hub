@@ -136,7 +136,7 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
                 <button className="btn btn-secondary btn-sm">이어서 작성</button>
                 <button className="btn btn-ghost btn-sm">미리보기</button>
                 <span className="spacer"/>
-                {d.state === 'review' && <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)'}}>제출 취소</button>}
+                {d.state === 'review' && <button className="btn btn-ghost btn-sm btn-ghost-danger">제출 취소</button>}
               </div>
             </div>
           ))}
