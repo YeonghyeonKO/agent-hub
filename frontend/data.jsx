@@ -265,6 +265,14 @@ const PEOPLE = {
   '2069447': { id: '2069447', name: '오세훈', initial: '오', role: 'Senior MLOps', org: 'DevX팀', avatarBg: '#dcfce7', avatarFg: '#166534' },
 };
 
+// Notices (shared between home + boards page)
+const MOCK_NOTICES = [
+  { id: 'n1', title: 'AgentHub v0.1.0 정식 오픈 안내', content: '2026년 상반기 AgentHub가 정식 오픈되었습니다. 모든 구성원은 본인이 개발한 Langflow Component·Flow를 자유롭게 등록할 수 있습니다.\n\n**주요 기능:**\n- Component/Flow 업로드 및 자동 검증\n- 심사위원 리뷰 시스템\n- 2026 랭킹 (Star × 2 + 다운로드 × 1)\n- Keycloak SSO 연동\n\n문의: AI/Data Platform 고영현TL', author: { name: '고영현', id: '2074795', initial: '고' }, is_pinned: true, created_at: '2026-04-28' },
+  { id: 'n2', title: '2026 상반기 심사 기준 변경 공지', content: '심사 항목 가중치가 아래와 같이 조정되었습니다:\n\n| 항목 | 기존 | 변경 |\n|------|------|------|\n| 기능성/완성도 | 40% | **35%** |\n| 독창성 | 20% | 20% |\n| 사내 활용도 | 25% | **30%** |\n| 문서화 품질 | 15% | 15% |\n\n적용일: 2026-05-01', author: { name: '정승현', id: '2068122', initial: '정' }, is_pinned: true, created_at: '2026-04-25' },
+  { id: 'n3', title: '시스템 점검 안내 (5/10 토요일 02:00~06:00)', content: 'PostgreSQL 및 인프라 점검으로 인해 5월 10일(토) 02:00~06:00 동안 서비스가 일시 중단됩니다.', author: { name: '오세훈', id: '2069447', initial: '오' }, is_pinned: false, created_at: '2026-05-01' },
+  { id: 'n4', title: 'Langflow 1.9.1 호환성 테스트 완료', content: 'Langflow 1.9.1에 대한 사내 호환성 테스트가 완료되었습니다. 기존 1.9.0 기준 Component는 모두 정상 동작합니다.', author: { name: '한미경', id: '2071003', initial: '한' }, is_pinned: false, created_at: '2026-04-20' },
+];
+
 Object.assign(window, {
   Icons,
   COMPONENTS,
@@ -272,5 +280,6 @@ Object.assign(window, {
   SUBMISSIONS,
   REVIEWERS,
   PEOPLE,
+  MOCK_NOTICES,
   pythonHighlight,
 });

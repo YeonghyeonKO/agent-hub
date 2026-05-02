@@ -2,12 +2,20 @@
 // 공지사항 (Notice Board) + VoC (Voice of Customer) Board
 // ─────────────────────────────────────────────────────────────────────
 
-const MOCK_NOTICES = [
-  { id: 'n1', title: 'AgentHub v0.1.0 정식 오픈 안내', content: '2026년 상반기 AgentHub가 정식 오픈되었습니다. 모든 구성원은 본인이 개발한 Langflow Component·Flow를 자유롭게 등록할 수 있습니다.\n\n주요 기능:\n- Component/Flow 업로드 및 자동 검증\n- 심사위원 리뷰 시스템\n- 2026 랭킹 (Star × 2 + 다운로드 × 1)\n- Keycloak SSO 연동\n\n문의: AI/Data Platform 고영현TL', author: { name: '고영현', id: '2074795', initial: '고' }, is_pinned: true, created_at: '2026-04-28' },
-  { id: 'n2', title: '2026 상반기 심사 기준 변경 공지', content: '심사 항목 가중치가 아래와 같이 조정되었습니다:\n- 기능성/완성도: 35% (기존 40%)\n- 독창성: 20%\n- 사내 활용도: 30% (기존 25%)\n- 문서화 품질: 15%\n\n적용일: 2026-05-01', author: { name: '정승현', id: '2068122', initial: '정' }, is_pinned: true, created_at: '2026-04-25' },
-  { id: 'n3', title: '시스템 점검 안내 (5/10 토요일 02:00~06:00)', content: 'PostgreSQL 및 인프라 점검으로 인해 5월 10일(토) 02:00~06:00 동안 서비스가 일시 중단됩니다.', author: { name: '오세훈', id: '2069447', initial: '오' }, is_pinned: false, created_at: '2026-05-01' },
-  { id: 'n4', title: 'Langflow 1.9.1 호환성 테스트 완료', content: 'Langflow 1.9.1에 대한 사내 호환성 테스트가 완료되었습니다. 기존 1.9.0 기준 Component는 모두 정상 동작합니다.', author: { name: '한미경', id: '2071003', initial: '한' }, is_pinned: false, created_at: '2026-04-20' },
-];
+// Markdown renderer helper
+function Markdown({ children }) {
+  const html = React.useMemo(() => {
+    if (!children) return '';
+    if (window.marked && window.marked.parse) {
+      return window.marked.parse(children, { breaks: true });
+    }
+    // fallback: just escape and preserve newlines
+    return children.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br/>');
+  }, [children]);
+  return <div className="markdown-body" dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+// MOCK_NOTICES is defined in data.jsx and shared globally
 
 const MOCK_VOC = [
   { id: 'v1', title: '검색 필터에 "호환 버전" 조건 추가 요청', content: '홈에서 Component를 검색할 때 특정 Langflow 버전과 호환되는 것만 필터링할 수 있으면 좋겠습니다. 현재는 카드 안에 들어가서야 호환 여부를 확인할 수 있어요.', category: 'suggestion', author: { name: '김정호', id: '2074814', initial: '김' }, status: 'in-progress', upvotes: 12, comments: 3, created_at: '2026-04-29' },
@@ -76,9 +84,7 @@ function NoticePage() {
               <span>·</span>
               <span>{notice.created_at}</span>
             </div>
-            <div style={{whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'var(--text-2)', fontSize: 14}}>
-              {notice.content}
-            </div>
+            <Markdown>{notice.content}</Markdown>
           </div>
         </div>
       )}
@@ -125,8 +131,8 @@ function VocPage() {
             <span style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Star size={12}/> {post.upvotes}</span>
             <span style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Comment size={12}/> {post.comments}</span>
           </div>
-          <div style={{whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'var(--text-2)', fontSize: 14, marginBottom: 28}}>
-            {post.content}
+          <div style={{marginBottom: 28}}>
+            <Markdown>{post.content}</Markdown>
           </div>
           <div style={{borderTop: '1px solid var(--line)', paddingTop: 20}}>
             <div className="h3" style={{marginBottom: 14}}>댓글 {post.comments}개</div>
@@ -179,7 +185,8 @@ function VocPage() {
           </div>
           <div className="field">
             <label className="field-label">내용 <span className="req">*</span></label>
-            <textarea className="textarea" rows="4" placeholder="자세한 내용을 작성해주세요. 스크린샷이나 재현 방법이 있으면 더 좋습니다."/>
+            <textarea className="textarea" rows="4" placeholder="마크다운 형식을 지원합니다. **굵게**, `코드`, - 목록 등을 사용할 수 있어요."/>
+            <div className="field-hint">Markdown 형식 지원 · **굵게** · `코드` · - 목록 · [링크](url)</div>
           </div>
           <div className="row gap-8" style={{justifyContent: 'flex-end'}}>
             <button className="btn btn-ghost btn-sm" onClick={() => setShowForm(false)}>취소</button>

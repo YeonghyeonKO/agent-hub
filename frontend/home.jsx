@@ -38,6 +38,25 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin }) {
         </div>
       </div>
 
+      {/* Pinned notices */}
+      {window.MOCK_NOTICES && window.MOCK_NOTICES.filter(n => n.is_pinned).length > 0 && (
+        <div style={{marginBottom: 22}}>
+          {window.MOCK_NOTICES.filter(n => n.is_pinned).map(n => (
+            <div key={n.id} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 16px', marginBottom: 6,
+              background: 'var(--bg-elev)', border: '1px solid var(--line)',
+              borderLeft: '3px solid var(--accent)', borderRadius: 'var(--radius)',
+              fontSize: 13,
+            }}>
+              <span style={{fontWeight: 700, color: 'var(--accent-fg)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em'}}>공지</span>
+              <span style={{fontWeight: 600, flex: 1}}>{n.title}</span>
+              <span className="muted-sm">{n.created_at}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Title row */}
       <div className="gallery-head">
         <div>
