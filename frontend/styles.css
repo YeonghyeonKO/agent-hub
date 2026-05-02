@@ -203,7 +203,7 @@ a { color: inherit; text-decoration: none; }
 }
 .btn-secondary:hover { background: var(--bg-muted); }
 .btn-ghost { color: var(--text-2); }
-.btn-ghost:hover { background: var(--bg-muted); color: var(--text); }
+.btn-ghost:hover { background: var(--bg-muted); color: var(--text); }\n.btn-ghost-danger { color: var(--err-fg); }\n.btn-ghost-danger:hover { background: var(--err-bg); color: var(--err-fg); }
 .btn-accent {
   background: var(--accent);
   color: white;

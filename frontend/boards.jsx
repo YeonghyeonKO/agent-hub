@@ -27,9 +27,15 @@ const MOCK_VOC = [
 
 // ─── Notice Board ───────────────────────────────────────────────────
 function NoticePage() {
-  const [notices, setNotices] = React.useState(MOCK_NOTICES);
+  const [notices, setNotices] = React.useState(() => {
+    try { const saved = localStorage.getItem('agenthub_notices'); return saved ? JSON.parse(saved) : MOCK_NOTICES; }
+    catch { return MOCK_NOTICES; }
+  });
   const [selected, setSelected] = React.useState(null);
   const [showForm, setShowForm] = React.useState(false);
+
+  // Persist to localStorage
+  React.useEffect(() => { localStorage.setItem('agenthub_notices', JSON.stringify(notices)); }, [notices]);
 
   // Form state
   const [formTitle, setFormTitle] = React.useState('');
@@ -171,7 +177,7 @@ function NoticePage() {
                 <button className="btn btn-ghost btn-sm" onClick={() => togglePin(notice.id)} title={notice.is_pinned ? '고정 해제' : '상단 고정'}>
                   <Icons.Star size={12} filled={notice.is_pinned}/> {notice.is_pinned ? '고정 해제' : '고정'}
                 </button>
-                <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)'}} onClick={() => deleteNotice(notice.id)}>
+                <button className="btn btn-ghost btn-sm btn-ghost-danger" onClick={() => deleteNotice(notice.id)}>
                   <Icons.X size={12}/> 삭제
                 </button>
               </div>
@@ -198,7 +204,11 @@ function VocPage() {
   const [sort, setSort] = React.useState('popular');
   const [selected, setSelected] = React.useState(null);
   const [showForm, setShowForm] = React.useState(false);
-  const [posts, setPosts] = React.useState(MOCK_VOC);
+  const [posts, setPosts] = React.useState(() => {
+    try { const saved = localStorage.getItem('agenthub_voc'); return saved ? JSON.parse(saved) : MOCK_VOC; }
+    catch { return MOCK_VOC; }
+  });
+  React.useEffect(() => { localStorage.setItem('agenthub_voc', JSON.stringify(posts)); }, [posts]);
 
   // Form state
   const [formCat, setFormCat] = React.useState('suggestion');
