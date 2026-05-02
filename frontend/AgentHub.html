@@ -45,6 +45,8 @@ function App() {
     const tinted = tweaks.accent + '14';
     document.documentElement.style.setProperty('--accent-bg', tinted);
     document.documentElement.style.setProperty('--accent-fg', tweaks.accent);
+    // darken accent for hover by overlaying black
+    document.documentElement.style.setProperty('--accent-hover', `color-mix(in srgb, ${tweaks.accent} 80%, black)`);
     if (tweaks.density === 'compact') {
       document.body.style.fontSize = '13px';
     } else {
