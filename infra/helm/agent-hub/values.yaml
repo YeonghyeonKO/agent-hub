@@ -1,0 +1,72 @@
+global:
+  namespace: agent-hub
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: registry.internal/agent-hub/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  service:
+    port: 80
+
+backend:
+  replicaCount: 2
+  image:
+    repository: registry.internal/agent-hub/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  service:
+    port: 8000
+  env:
+    KEYCLOAK_URL: https://keycloak.internal
+    KEYCLOAK_REALM: hynix
+    KEYCLOAK_CLIENT_ID: agent-hub
+    CORS_ORIGINS: https://agent-hub.internal
+
+postgresql:
+  enabled: true
+  auth:
+    username: agenthub
+    password: changeme
+    database: agenthub
+  storage:
+    size: 10Gi
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+ingress:
+  enabled: true
+  className: nginx
+  host: agent-hub.internal
+  tls:
+    enabled: true
+    secretName: agent-hub-tls
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilization: 70

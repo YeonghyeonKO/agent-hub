@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=1440"/>
+<title>AgentHub · Langflow Component & Flow</title>
+<link rel="stylesheet" href="styles.css"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="home.jsx"></script>
+<script type="text/babel" src="component-detail.jsx"></script>
+<script type="text/babel" src="flow-detail.jsx"></script>
+<script type="text/babel" src="upload-modal.jsx"></script>
+<script type="text/babel" src="admin.jsx"></script>
+<script type="text/babel" src="extra-pages.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "#ea725d",
+  "density": "comfortable",
+  "showTrophies": true,
+  "showSeasonBanner": true,
+  "role": "user"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [route, setRoute] = React.useState({ name: 'home' });
+  const [showUpload, setShowUpload] = React.useState(false);
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // Apply tweaks to CSS vars
+  React.useEffect(() => {
+    document.documentElement.style.setProperty('--accent', tweaks.accent);
+    // derive accent variants
+    const tinted = tweaks.accent + '14';
+    document.documentElement.style.setProperty('--accent-bg', tinted);
+    document.documentElement.style.setProperty('--accent-fg', tweaks.accent);
+    if (tweaks.density === 'compact') {
+      document.body.style.fontSize = '13px';
+    } else {
+      document.body.style.fontSize = '14px';
+    }
+  }, [tweaks]);
+
+  const goHome = () => setRoute({ name: 'home' });
+  const openComponent = (c) => {
+    if (c.type === 'json') setRoute({ name: 'flow', data: c });
+    else setRoute({ name: 'component', data: c });
+  };
+  const goAdmin = () => setRoute({ name: 'admin' });
+  const goMine = () => setRoute({ name: 'mine' });
+  const goRanking = () => setRoute({ name: 'ranking' });
+  const goGuide = () => setRoute({ name: 'guide' });
+
+  return (
+    <div data-screen-label={`AgentHub · ${route.name}`}>
+      <Topbar
+        route={route}
+        onGoHome={goHome}
+        onGoAdmin={goAdmin}
+        onGoMine={goMine}
+        onGoRanking={goRanking}
+        onGoGuide={goGuide}
+        onOpenUpload={() => setShowUpload(true)}
+        role={tweaks.role}
+      />
+
+      {route.name === 'home' && (
+        <Home
+          onOpenComponent={openComponent}
+          onOpenUpload={() => setShowUpload(true)}
+          onGoAdmin={goAdmin}
+        />
+      )}
+      {route.name === 'component' && (
+        <ComponentDetail component={route.data} onBack={goHome}/>
+      )}
+      {route.name === 'flow' && (
+        <FlowDetail component={route.data} onBack={goHome} onOpenComponent={openComponent}/>
+      )}
+      {route.name === 'admin' && (
+        <AdminDashboard onBack={goHome}/>
+      )}
+      {route.name === 'mine' && (
+        <MyAssetsPage onOpenComponent={openComponent} onOpenUpload={() => setShowUpload(true)}/>
+      )}
+      {route.name === 'ranking' && (
+        <RankingPage onOpenComponent={openComponent}/>
+      )}
+      {route.name === 'guide' && (
+        <GuidePage/>
+      )}
+
+      {showUpload && <UploadModal onClose={() => setShowUpload(false)}/>}
+
+      <footer className="page-footer">
+        <div className="page-footer-inner">
+          <div className="page-footer-mark">
+            <span className="page-footer-logo">SK<span style={{color: 'var(--accent-fg)'}}>hynix</span></span>
+            <span className="page-footer-divider"/>
+            <span className="page-footer-team">AI / Data Platform</span>
+          </div>
+          <div className="page-footer-meta">
+            <span>© 2026 SK hynix Inc.</span>
+            <span className="page-footer-dot">·</span>
+            <span className="page-footer-contact">
+              문의
+              <span className="page-footer-tooltip">AI/Data Platform 고영현TL</span>
+            </span>
+          </div>
+        </div>
+      </footer>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="브랜드">
+          <TweakColor label="강조 색상" value={tweaks.accent} onChange={v => setTweak('accent', v)} swatches={['#4f46e5', '#0ea5e9', '#16a34a', '#dc2626', '#a855f7', '#1a1a18']}/>
+        </TweakSection>
+        <TweakSection title="레이아웃">
+          <TweakRadio label="밀도" value={tweaks.density} onChange={v => setTweak('density', v)} options={[
+            { value: 'comfortable', label: '여유' },
+            { value: 'compact', label: '컴팩트' },
+          ]}/>
+          <TweakToggle label="2026 배너 표시" value={tweaks.showSeasonBanner} onChange={v => setTweak('showSeasonBanner', v)}/>
+          <TweakToggle label="순위 트로피 표시" value={tweaks.showTrophies} onChange={v => setTweak('showTrophies', v)}/>
+        </TweakSection>
+        <TweakSection title="역할">
+          <TweakRadio label="사용자 역할" value={tweaks.role} onChange={v => setTweak('role', v)} options={[
+            { value: 'user', label: '일반' },
+            { value: 'admin', label: '관리자' },
+          ]}/>
+        </TweakSection>
+
+      </TweaksPanel>
+
+      {/* expose tweaks to children via dataset for things like trophy/banner toggles */}
+      <style>{`
+        ${!tweaks.showTrophies ? '.trophy { display: none !important; }' : ''}
+        ${!tweaks.showSeasonBanner ? '.season-banner { display: none !important; }' : ''}
+      `}</style>
+    </div>
+  );
+}
+
+function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onOpenUpload, role }) {
+  return (
+    <div className="topbar">
+      <div className="brand" onClick={onGoHome}>
+        <div className="brand-mark"/>
+        <span>AgentHub</span>
+      </div>
+      <div className="nav-links">
+        <a className={`nav-link ${route.name === 'home' ? 'active' : ''}`} onClick={onGoHome}>홈</a>
+        <a className={`nav-link ${route.name === 'mine' ? 'active' : ''}`} onClick={onGoMine}>내 Component / Flow</a>
+        <a className={`nav-link ${route.name === 'ranking' ? 'active' : ''}`} onClick={onGoRanking}>2026 랭킹</a>
+        <a className={`nav-link ${route.name === 'guide' ? 'active' : ''}`} onClick={onGoGuide}>가이드</a>
+        {role === 'admin' && (
+          <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>관리자</a>
+        )}
+      </div>
+      <div className="nav-spacer"/>
+      <div className="nav-search">
+        <Icons.Search size={13}/>
+        <input placeholder="Component · Flow · 개발자 검색…"/>
+      </div>
+      <button className="btn btn-secondary btn-sm" onClick={onOpenUpload}>
+        <Icons.Plus size={12}/> 제출
+      </button>
+      <button className="btn btn-icon btn-ghost"><Icons.Bell size={14}/></button>
+      <div className="user-chip">
+        <div className="avatar">고</div>
+        <div className="user-chip-label">고영현</div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

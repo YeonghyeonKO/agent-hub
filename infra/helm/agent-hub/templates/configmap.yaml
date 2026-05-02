@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agent-hub.fullname" . }}-config
+  labels:
+    {{- include "agent-hub.labels" . | nindent 4 }}
+data:
+  KEYCLOAK_URL: {{ .Values.backend.env.KEYCLOAK_URL | quote }}
+  KEYCLOAK_REALM: {{ .Values.backend.env.KEYCLOAK_REALM | quote }}
+  KEYCLOAK_CLIENT_ID: {{ .Values.backend.env.KEYCLOAK_CLIENT_ID | quote }}
+  CORS_ORIGINS: {{ .Values.backend.env.CORS_ORIGINS | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agent-hub.fullname" . }}-nginx
+  labels:
+    {{- include "agent-hub.labels" . | nindent 4 }}
+data:
+  nginx.conf: |
+    server {
+        listen 80;
+        server_name _;
+        root /usr/share/nginx/html;
+        index AgentHub.html;
+
+        location / {
+            try_files $uri $uri/ /AgentHub.html;
+        }
+
+        location /api/ {
+            proxy_pass http://{{ include "agent-hub.fullname" . }}-backend:{{ .Values.backend.service.port }};
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            client_max_body_size 10m;
+        }
+
+        location /health {
+            proxy_pass http://{{ include "agent-hub.fullname" . }}-backend:{{ .Values.backend.service.port }}/health;
+        }
+    }

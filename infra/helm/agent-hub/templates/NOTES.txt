@@ -1,0 +1,16 @@
+🎉 AgentHub has been deployed!
+
+Get the application URL:
+{{- if .Values.ingress.enabled }}
+  https://{{ .Values.ingress.host }}
+{{- else }}
+  kubectl port-forward svc/{{ include "agent-hub.fullname" . }}-frontend 8080:80
+  Open http://localhost:8080
+{{- end }}
+
+Backend API:
+  https://{{ .Values.ingress.host }}/api/v1/components
+  Health: https://{{ .Values.ingress.host }}/health
+
+Run database migrations:
+  kubectl exec -it deploy/{{ include "agent-hub.fullname" . }}-backend -- alembic upgrade head
