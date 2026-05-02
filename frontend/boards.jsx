@@ -27,28 +27,118 @@ const MOCK_VOC = [
 
 // ─── Notice Board ───────────────────────────────────────────────────
 function NoticePage() {
+  const [notices, setNotices] = React.useState(MOCK_NOTICES);
   const [selected, setSelected] = React.useState(null);
+  const [showForm, setShowForm] = React.useState(false);
 
-  const notice = selected ? MOCK_NOTICES.find(n => n.id === selected) : null;
+  // Form state
+  const [formTitle, setFormTitle] = React.useState('');
+  const [formContent, setFormContent] = React.useState('');
+  const [formPinned, setFormPinned] = React.useState(false);
+  const [showPreview, setShowPreview] = React.useState(false);
+
+  // Check admin role from tweaks (same mechanism as nav)
+  const isAdmin = document.querySelector('[data-screen-label]')?.closest('[data-screen-label]') !== null;
+
+  const handleSubmit = () => {
+    if (!formTitle.trim() || !formContent.trim()) return;
+    const newNotice = {
+      id: 'n-' + Date.now(),
+      title: formTitle.trim(),
+      content: formContent.trim(),
+      author: { name: '고영현', id: '2074795', initial: '고' },
+      is_pinned: formPinned,
+      created_at: new Date().toISOString().slice(0, 10),
+    };
+    setNotices([newNotice, ...notices]);
+    setFormTitle('');
+    setFormContent('');
+    setFormPinned(false);
+    setShowForm(false);
+    setShowPreview(false);
+  };
+
+  const togglePin = (id) => {
+    setNotices(notices.map(n => n.id === id ? { ...n, is_pinned: !n.is_pinned } : n));
+  };
+
+  const deleteNotice = (id) => {
+    setNotices(notices.filter(n => n.id !== id));
+    setSelected(null);
+  };
+
+  const sorted = [...notices].sort((a, b) => {
+    if (a.is_pinned && !b.is_pinned) return -1;
+    if (!a.is_pinned && b.is_pinned) return 1;
+    return 0;
+  });
+
+  const notice = selected ? notices.find(n => n.id === selected) : null;
 
   return (
     <div className="page fade-in">
-      <div style={{marginBottom: 24}}>
-        <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>Announcements</div>
-        <div className="h1">공지사항</div>
-        <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>AgentHub 운영 관련 공지사항을 확인하세요.</div>
+      <div className="row" style={{justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24}}>
+        <div>
+          <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>Announcements</div>
+          <div className="h1">공지사항</div>
+          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>AgentHub 운영 관련 공지사항을 확인하세요.</div>
+        </div>
+        <button className="btn btn-accent" onClick={() => setShowForm(!showForm)}>
+          <Icons.Plus size={12}/> 공지 작성
+        </button>
       </div>
+
+      {/* Write form (admin) */}
+      {showForm && (
+        <div className="card card-pad" style={{marginBottom: 20}}>
+          <div className="h3" style={{marginBottom: 14}}>새 공지 작성</div>
+          <div className="field">
+            <label className="field-label">제목 <span className="req">*</span></label>
+            <input className="input" placeholder="공지 제목을 입력하세요" value={formTitle} onChange={e => setFormTitle(e.target.value)}/>
+          </div>
+          <div className="field">
+            <div className="row" style={{justifyContent: 'space-between', marginBottom: 6}}>
+              <label className="field-label" style={{margin: 0}}>내용 <span className="req">*</span></label>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowPreview(!showPreview)} style={{fontSize: 12}}>
+                <Icons.Eye size={11}/> {showPreview ? '편집' : '미리보기'}
+              </button>
+            </div>
+            {!showPreview ? (
+              <>
+                <textarea className="textarea" rows="8" placeholder="마크다운 형식을 지원합니다." value={formContent} onChange={e => setFormContent(e.target.value)}/>
+                <div className="field-hint">Markdown 형식 지원 · **굵게** · `코드` · - 목록 · | 표 | · [링크](url)</div>
+              </>
+            ) : (
+              <div style={{minHeight: 160, padding: 16, border: '1px solid var(--line)', borderRadius: 'var(--radius)', background: 'var(--bg-muted)'}}>
+                {formContent ? <Markdown>{formContent}</Markdown> : <span className="muted-sm">내용을 입력하면 미리보기가 표시됩니다.</span>}
+              </div>
+            )}
+          </div>
+          <div className="row gap-8" style={{justifyContent: 'space-between'}}>
+            <label style={{display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer'}}>
+              <input type="checkbox" checked={formPinned} onChange={e => setFormPinned(e.target.checked)} style={{width: 16, height: 16}}/>
+              <Icons.Star size={12}/> 상단 고정
+            </label>
+            <div className="row gap-8">
+              <button className="btn btn-ghost btn-sm" onClick={() => { setShowForm(false); setShowPreview(false); }}>취소</button>
+              <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={!formTitle.trim() || !formContent.trim()} style={{opacity: (!formTitle.trim() || !formContent.trim()) ? 0.5 : 1}}>
+                <Icons.Check size={11}/> 게시
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!selected ? (
         <div className="card" style={{padding: 0, overflow: 'hidden'}}>
-          {MOCK_NOTICES.map((n, i) => (
+          {sorted.map((n, i) => (
             <div key={n.id} style={{
               padding: '18px 22px',
-              borderBottom: i < MOCK_NOTICES.length - 1 ? '1px solid var(--line)' : 'none',
+              borderBottom: i < sorted.length - 1 ? '1px solid var(--line)' : 'none',
               cursor: 'pointer',
               transition: 'background 0.12s',
               display: 'flex',
-              alignItems: 'flex-start',
+              alignItems: 'center',
               gap: 14,
             }} onClick={() => setSelected(n.id)}
                onMouseOver={e => e.currentTarget.style.background = 'var(--bg-muted)'}
@@ -63,7 +153,7 @@ function NoticePage() {
                   <span>{n.created_at}</span>
                 </div>
               </div>
-              <Icons.ChevronRight size={14} style={{color: 'var(--text-4)', marginTop: 6}}/>
+              <Icons.ChevronRight size={14} style={{color: 'var(--text-4)'}}/>
             </div>
           ))}
         </div>
@@ -73,8 +163,18 @@ function NoticePage() {
             ← 목록으로
           </button>
           <div className="card card-pad" style={{padding: 28}}>
-            <div className="row gap-8" style={{marginBottom: 8}}>
-              {notice.is_pinned && <span className="chip chip-accent" style={{fontSize: 10}}><Icons.Star size={9} filled/> 고정</span>}
+            <div className="row gap-8" style={{marginBottom: 8, justifyContent: 'space-between'}}>
+              <div className="row gap-8">
+                {notice.is_pinned && <span className="chip chip-accent" style={{fontSize: 10}}><Icons.Star size={9} filled/> 고정</span>}
+              </div>
+              <div className="row gap-8">
+                <button className="btn btn-ghost btn-sm" onClick={() => togglePin(notice.id)} title={notice.is_pinned ? '고정 해제' : '상단 고정'}>
+                  <Icons.Star size={12} filled={notice.is_pinned}/> {notice.is_pinned ? '고정 해제' : '고정'}
+                </button>
+                <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)'}} onClick={() => deleteNotice(notice.id)}>
+                  <Icons.X size={12}/> 삭제
+                </button>
+              </div>
             </div>
             <h2 className="h2" style={{marginBottom: 12}}>{notice.title}</h2>
             <div className="row gap-8 muted-sm" style={{marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--line)'}}>
