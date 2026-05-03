@@ -16,13 +16,19 @@ function StatTile({ label, value, icon, delta }) {
 function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
   const { t } = useI18n();
   const [tab, setTab] = React.useState('published');
-  const me = { name: '고영현', id: '2074795', initial: '고' };
+  const [me, setMe] = React.useState({ name: '고영현', id: '2074795', initial: '고' });
+  const [myComponents, setMyComponents] = React.useState([]);
 
-  const mine = COMPONENTS.filter(c => c.author?.name === me.name);
-  const drafts = [
-    { id: 'd-1', type: 'py', title: 'SmartChunker', desc: '의미 단위로 자동 분할하는 한국어 특화 청커', version: 'v1.3.0-rc.1', updatedAgo: '32분 전', state: 'review', validation: { ok: 4, total: 5 } },
-    { id: 'd-2', type: 'json', title: '계약서 검토 Flow', desc: '계약서 PDF → 위험 조항 추출 → Slack 알림', version: 'v0.1.0', updatedAgo: '어제', state: 'draft', validation: { ok: 2, total: 5 } },
-  ];
+  React.useEffect(() => {
+    api.users.me().then(u => setMe({ name: u.name, id: u.employee_id, initial: u.name?.[0] || '?' })).catch(() => {});
+    api.users.myComponents().then(items => setMyComponents(items || [])).catch(() => {});
+  }, []);
+
+  const mine = myComponents.filter(c => c.status === 'approved').map(apiToCard);
+  const drafts = myComponents.filter(c => c.status === 'pending' || c.status === 'draft').map(c => ({
+    ...c, desc: c.description || '', state: c.status === 'pending' ? 'review' : 'draft',
+    updatedAgo: fmtDate(c.created_at), validation: { ok: 4, total: 5 },
+  }));
   const activity = [
     { kind: 'star', who: '김정호', target: 'SmartChunker', when: '2시간 전' },
     { kind: 'download', who: '박지원', target: 'KoreanReranker', when: '4시간 전' },

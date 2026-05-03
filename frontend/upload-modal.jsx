@@ -1,28 +1,75 @@
-// Upload modal — multi-step submission
+// Upload modal — multi-step submission (wired to API)
 
 function UploadModal({ onClose }) {
   const [step, setStep] = React.useState(0); // 0: file, 1: meta, 2: confirm
-  const [hasFile, setHasFile] = React.useState(false);
   const [realFile, setRealFile] = React.useState(null);
   const [drag, setDrag] = React.useState(false);
   const [fileType, setFileType] = React.useState('py');
   const [title, setTitle] = React.useState('');
   const [desc, setDesc] = React.useState('');
   const [category, setCategory] = React.useState('RAG / 검색');
+  const [icon, setIcon] = React.useState('Box');
+  const [tags, setTags] = React.useState([]);
+  const [tagInput, setTagInput] = React.useState('');
   const [minVer, setMinVer] = React.useState('1.8.0');
   const [maxVer, setMaxVer] = React.useState('1.9.1');
-  const [tested, setTested] = React.useState(['1.9.1', '1.9.0', '1.8.3']);
+  const [tested, setTested] = React.useState(['1.9.1', '1.9.0']);
   const [deps, setDeps] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
+  const [submitDone, setSubmitDone] = React.useState(false);
+
+  // Real file validation
+  const [validation, setValidation] = React.useState(null);
+
+  // User info from API
+  const [user, setUser] = React.useState(null);
+  React.useEffect(() => { api.users.me().then(setUser).catch(() => {}); }, []);
+
+  const validateFile = (file) => {
+    const checks = [];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    // 1. File type
+    checks.push({ label: `파일 형식 유효 (.${ext})`, ok: ext === 'py' || ext === 'json' });
+    // 2. File size (< 5MB)
+    checks.push({ label: '파일 크기 적정 (' + (file.size / 1024).toFixed(1) + ' KB)', ok: file.size < 5 * 1024 * 1024 });
+
+    // Read content for deeper checks
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      // 3. Secret scan
+      const hasSecrets = /(api_key|secret_key|password|token)\s*=\s*['"][^'"]{8,}/i.test(content);
+      checks.push({ label: '비밀키 노출 없음', ok: !hasSecrets, warn: hasSecrets });
+      // 4. Import check (py only)
+      if (ext === 'py') {
+        const hasImports = /^(import |from )/m.test(content);
+        checks.push({ label: '임포트 구문 확인', ok: hasImports });
+        // 5. External packages
+        const extPkgs = content.match(/^from\s+(?!langflow|app|\.)\S+/gm);
+        if (extPkgs && extPkgs.length > 0) {
+          checks.push({ label: `외부 패키지 ${extPkgs.length}개 감지`, ok: false, warn: true });
+        } else {
+          checks.push({ label: '외부 패키지 없음', ok: true });
+        }
+      }
+      if (ext === 'json') {
+        try { JSON.parse(content); checks.push({ label: 'JSON 파싱 성공', ok: true }); }
+        catch { checks.push({ label: 'JSON 파싱 실패', ok: false }); }
+        checks.push({ label: 'Flow 구조 확인', ok: content.includes('"nodes"') || content.includes('"edges"'), warn: !(content.includes('"nodes"')) });
+      }
+      setValidation(checks);
+    };
+    reader.readAsText(file);
+  };
 
   const handleRealFile = (file) => {
     if (!file) return;
     setRealFile(file);
-    setHasFile(true);
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (ext === 'json') setFileType('json');
     else setFileType('py');
     if (!title) setTitle(file.name.replace(/\.(py|json)$/i, ''));
+    validateFile(file);
   };
 
   const handleSubmitToAPI = async () => {
@@ -39,21 +86,41 @@ function UploadModal({ onClose }) {
       fd.append('min_langflow_ver', minVer);
       fd.append('max_langflow_ver', maxVer === '제한 없음' ? '' : maxVer);
       fd.append('tested_versions', tested.join(','));
-      fd.append('icon', fileType === 'json' ? 'Workflow' : 'Box');
+      fd.append('icon', icon);
       await api.components.create(fd);
-      onClose();
+      setSubmitDone(true);
+      setTimeout(() => onClose(), 1500);
     } catch (e) {
       console.error('Upload failed:', e);
+      alert('업로드 실패: ' + e.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const toggleVer = (v) => {
-    setTested(t => t.includes(v) ? t.filter(x => x !== v) : [...t, v]);
-  };
+  const toggleVer = (v) => { setTested(t => t.includes(v) ? t.filter(x => x !== v) : [...t, v]); };
+  const addTag = () => { if (tagInput.trim() && !tags.includes(tagInput.trim())) { setTags([...tags, tagInput.trim()]); setTagInput(''); } };
+  const removeTag = (t) => { setTags(tags.filter(x => x !== t)); };
 
   const VERSIONS = ['1.9.1', '1.9.0', '1.8.3', '1.8.2', '1.8.1', '1.8.0'];
+  const ICONS = ['Box', 'Scissors', 'Database', 'Plug', 'Ticket', 'FileText', 'Layers', 'Workflow'];
+
+  const hasFile = !!realFile;
+  const valOk = validation ? validation.filter(v => v.ok).length : 0;
+  const valTotal = validation ? validation.length : 0;
+  const valAllClear = validation ? validation.every(v => v.ok || v.warn) : false;
+
+  if (submitDone) {
+    return (
+      <div className="modal-backdrop">
+        <div className="modal" style={{textAlign: 'center', padding: 48}}>
+          <div style={{fontSize: 48, marginBottom: 16}}>✓</div>
+          <div className="h2" style={{marginBottom: 8}}>제출 완료</div>
+          <div className="muted">심사 대기 상태로 등록되었습니다. 내 Component / Flow에서 확인하세요.</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -61,9 +128,7 @@ function UploadModal({ onClose }) {
         <div className="modal-header">
           <div>
             <div className="h2">새 Component / Flow 제출</div>
-            <div className="muted-sm" style={{marginTop: 4}}>
-              .py Component 또는 .json Flow를 등록하세요
-            </div>
+            <div className="muted-sm" style={{marginTop: 4}}>.py Component 또는 .json Flow를 등록하세요</div>
           </div>
           <button className="btn btn-icon btn-ghost" onClick={onClose}><Icons.X/></button>
         </div>
@@ -113,8 +178,8 @@ function UploadModal({ onClose }) {
                   <div>
                     <div style={{display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 16px', background: 'var(--bg-elev)', borderRadius: 8, border: '1px solid var(--ok)'}}>
                       <Icons.Check size={14}/>
-                      <span className="mono" style={{fontWeight: 600, fontSize: 13}}>{realFile ? realFile.name : 'file'}</span>
-                      <span className="muted-sm">· {realFile ? (realFile.size / 1024).toFixed(1) + ' KB' : ''}</span>
+                      <span className="mono" style={{fontWeight: 600, fontSize: 13}}>{realFile.name}</span>
+                      <span className="muted-sm">· {(realFile.size / 1024).toFixed(1)} KB</span>
                     </div>
                     <div className="muted-sm" style={{marginTop: 10, fontSize: 11.5}}>다른 파일로 교체하려면 클릭하세요</div>
                   </div>
@@ -131,17 +196,20 @@ function UploadModal({ onClose }) {
                 )}
               </div>
 
-              {hasFile && (
-                <div style={{marginTop: 16, padding: 14, background: 'var(--ok-bg)', border: '1px solid var(--ok)', borderRadius: 8}}>
-                  <div style={{fontSize: 12.5, fontWeight: 600, color: 'var(--ok-fg)', marginBottom: 8}}>
-                    <Icons.Check size={11}/> 사전 검증 통과 (4/5)
+              {hasFile && validation && (
+                <div style={{marginTop: 16, padding: 14, background: valAllClear ? 'var(--ok-bg)' : 'var(--warn-bg)', border: `1px solid ${valAllClear ? 'var(--ok)' : 'var(--warn)'}`, borderRadius: 8}}>
+                  <div style={{fontSize: 12.5, fontWeight: 600, color: valAllClear ? 'var(--ok-fg)' : 'var(--warn-fg)', marginBottom: 8}}>
+                    {valAllClear ? <Icons.Check size={11}/> : <Icons.Warn size={11}/>} 사전 검증 ({valOk}/{valTotal})
                   </div>
                   <div className="checklist">
-                    <div className="check-item"><div className="check-icon ok"><Icons.Check size={9}/></div>파일 형식 유효 (.py)</div>
-                    <div className="check-item"><div className="check-icon ok"><Icons.Check size={9}/></div>임포트 검증 통과</div>
-                    <div className="check-item"><div className="check-icon ok"><Icons.Check size={9}/></div>비밀키 노출 없음</div>
-                    <div className="check-item"><div className="check-icon ok"><Icons.Check size={9}/></div>파일 크기 적정</div>
-                    <div className="check-item"><div className="check-icon warn"><Icons.Warn size={9}/></div>외부 패키지 2개 필요</div>
+                    {validation.map((v, i) => (
+                      <div key={i} className="check-item">
+                        <div className={`check-icon ${v.ok ? 'ok' : v.warn ? 'warn' : 'err'}`}>
+                          {v.ok ? <Icons.Check size={9}/> : <Icons.Warn size={9}/>}
+                        </div>
+                        {v.label}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -174,10 +242,16 @@ function UploadModal({ onClose }) {
                 <div className="field">
                   <label className="field-label">아이콘</label>
                   <div className="row gap-8">
-                    {['Scissors', 'Database', 'Plug', 'Ticket', 'FileText', 'Layers'].map(name => {
+                    {ICONS.map(name => {
                       const I = Icons[name] || Icons.Box;
+                      const active = icon === name;
                       return (
-                        <button key={name} className="btn btn-icon btn-secondary" style={{width: 32, height: 32}}>
+                        <button key={name} className="btn btn-icon btn-secondary" onClick={() => setIcon(name)} style={{
+                          width: 32, height: 32,
+                          borderColor: active ? 'var(--accent)' : undefined,
+                          background: active ? 'var(--accent-bg)' : undefined,
+                          color: active ? 'var(--accent-fg)' : undefined,
+                        }}>
                           <I size={14}/>
                         </button>
                       );
@@ -188,10 +262,13 @@ function UploadModal({ onClose }) {
               <div className="field" style={{marginBottom: 0}}>
                 <label className="field-label">태그 (선택)</label>
                 <div className="row gap-8" style={{flexWrap: 'wrap'}}>
-                  {['한국어', 'KSS', '청크', 'RAG'].map(t => (
-                    <span key={t} className="tag">#{t} <Icons.X size={10}/></span>
+                  {tags.map(t => (
+                    <span key={t} className="tag" style={{cursor: 'pointer'}} onClick={() => removeTag(t)}>#{t} <Icons.X size={10}/></span>
                   ))}
-                  <button className="tag" style={{cursor: 'pointer', borderStyle: 'dashed'}}><Icons.Plus size={10}/> 추가</button>
+                  <div className="row gap-8">
+                    <input className="input" style={{width: 120, height: 28, fontSize: 12}} placeholder="태그 입력" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}/>
+                    <button className="tag" style={{cursor: 'pointer', borderStyle: 'dashed'}} onClick={addTag}><Icons.Plus size={10}/> 추가</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -201,7 +278,7 @@ function UploadModal({ onClose }) {
             <div className="fade-in">
               <div className="val-card">
                 <div className="val-card-title">Langflow 호환 버전 <span className="req">*</span></div>
-                <div className="muted-sm" style={{marginBottom: 12, fontSize: 12}}>동작을 확인한 버전을 명시해주세요. 사용자에게 카드와 상세 페이지에서 안내됩니다.</div>
+                <div className="muted-sm" style={{marginBottom: 12, fontSize: 12}}>동작을 확인한 버전을 명시해주세요.</div>
                 <div className="grid-2" style={{gap: 12, marginBottom: 14}}>
                   <div>
                     <label className="field-label">최소 버전</label>
@@ -226,11 +303,9 @@ function UploadModal({ onClose }) {
                         <button key={v} className="version-pill" onClick={() => toggleVer(v)} style={{
                           borderColor: on ? 'var(--ok)' : 'var(--line)',
                           color: on ? 'var(--ok-fg)' : 'var(--text-3)',
-                          fontWeight: on ? 600 : 400,
-                          cursor: 'pointer',
+                          fontWeight: on ? 600 : 400, cursor: 'pointer',
                         }}>
-                          {on && <Icons.Check size={9}/>}
-                          {v}
+                          {on && <Icons.Check size={9}/>} {v}
                         </button>
                       );
                     })}
@@ -244,13 +319,15 @@ function UploadModal({ onClose }) {
                 <div className="field-hint">requirements.txt 형식 · 쉼표로 구분</div>
               </div>
 
-              <div style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--bg-muted)', border: '1px solid var(--line)', borderRadius: 8}}>
-                <div className="avatar sm" style={{background: 'var(--bg-elev)', color: 'var(--text-2)', border: '1px solid var(--line)'}}>고</div>
-                <div>
-                  <div style={{fontSize: 12.5, fontWeight: 600}}>고영현 <span className="mono muted-sm" style={{fontWeight: 400}}>2074795</span></div>
-                  <div className="muted-sm" style={{fontSize: 11.5}}>SSO 로그인 정보로 자동 입력됨</div>
+              {user && (
+                <div style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--bg-muted)', border: '1px solid var(--line)', borderRadius: 8}}>
+                  <div className="avatar sm" style={{background: 'var(--accent-bg)', color: 'var(--accent-fg)'}}>{user.name?.[0] || '?'}</div>
+                  <div>
+                    <div style={{fontSize: 12.5, fontWeight: 600}}>{user.name} <span className="mono muted-sm" style={{fontWeight: 400}}>{user.employee_id}</span></div>
+                    <div className="muted-sm" style={{fontSize: 11.5}}>{user.team || user.org || 'SSO 로그인 정보'}</div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -258,7 +335,6 @@ function UploadModal({ onClose }) {
         <div className="modal-footer">
           <button className="btn btn-ghost btn-sm" onClick={onClose}>취소</button>
           <div className="row gap-8">
-            <button className="btn btn-secondary btn-sm">임시 저장</button>
             {step > 0 && (
               <button className="btn btn-secondary btn-sm" onClick={() => setStep(s => s - 1)}>이전</button>
             )}
@@ -267,7 +343,7 @@ function UploadModal({ onClose }) {
                 다음 <Icons.ArrowRight size={11}/>
               </button>
             ) : (
-              <button className="btn btn-accent btn-sm" onClick={handleSubmitToAPI} disabled={submitting} style={{opacity: submitting ? 0.5 : 1}}>
+              <button className="btn btn-accent btn-sm" onClick={handleSubmitToAPI} disabled={submitting || !title.trim()} style={{opacity: (submitting || !title.trim()) ? 0.5 : 1}}>
                 <Icons.Check size={11}/> {submitting ? '제출 중...' : '제출하기'}
               </button>
             )}
