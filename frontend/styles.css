@@ -1839,6 +1839,7 @@ input[type=range].native-slider {
 [data-screen-label] > .page,
 [data-screen-label] > .page-narrow {
   flex: 1;
+  width: 100%;
 }
 
 .page-footer {
@@ -2307,3 +2308,50 @@ input[type=range].native-slider {
 .markdown-body a { color: var(--accent-fg); text-decoration: underline; }
 .markdown-body a:hover { color: var(--accent-hover); }
 .markdown-body img { max-width: 100%; border-radius: var(--radius); }
+
+
+/* ──────── Detail overlay (modal-style) ──────── */
+.detail-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 18, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.15s;
+}
+.detail-overlay {
+  width: 82%;
+  max-width: 1200px;
+  height: 100vh;
+  background: var(--bg);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.detail-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-elev);
+  flex-shrink: 0;
+}
+.detail-overlay-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.detail-overlay-body > .page-narrow,
+.detail-overlay-body > .page {
+  padding-top: 20px;
+  padding-bottom: 40px;
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}

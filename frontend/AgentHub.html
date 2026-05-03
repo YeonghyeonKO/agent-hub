@@ -34,9 +34,37 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "role": "user"
 }/*EDITMODE-END*/;
 
+function DetailOverlay({ detail, onClose, onOpenComponent }) {
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [onClose]);
+
+  return (
+    <div className="detail-overlay-backdrop" onClick={onClose}>
+      <div className="detail-overlay" onClick={e => e.stopPropagation()}>
+        <div className="detail-overlay-header">
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>
+            <Icons.X size={14}/> 닫기
+          </button>
+        </div>
+        <div className="detail-overlay-body">
+          {detail.type === 'flow'
+            ? <FlowDetail component={detail.component} onBack={onClose} onOpenComponent={onOpenComponent}/>
+            : <ComponentDetail component={detail.component} onBack={onClose}/>
+          }
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [route, setRoute] = React.useState({ name: 'home' });
   const [showUpload, setShowUpload] = React.useState(false);
+  const [detailModal, setDetailModal] = React.useState(null); // { component, type: 'component'|'flow' }
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [lang, setLang] = React.useState('ko');
   const toggleLang = () => {
@@ -64,9 +92,9 @@ function App() {
 
   const goHome = () => setRoute({ name: 'home' });
   const openComponent = (c) => {
-    if (c.type === 'json') setRoute({ name: 'flow', data: c });
-    else setRoute({ name: 'component', data: c });
+    setDetailModal({ component: c, type: c.type === 'json' ? 'flow' : 'component' });
   };
+  const closeDetail = () => setDetailModal(null);
   const goAdmin = () => setRoute({ name: 'admin' });
   const goMine = () => setRoute({ name: 'mine' });
   const goRanking = () => setRoute({ name: 'ranking' });
@@ -99,12 +127,6 @@ function App() {
           onGoNotice={goNotice}
         />
       )}
-      {route.name === 'component' && (
-        <ComponentDetail component={route.data} onBack={goHome}/>
-      )}
-      {route.name === 'flow' && (
-        <FlowDetail component={route.data} onBack={goHome} onOpenComponent={openComponent}/>
-      )}
       {route.name === 'admin' && (
         <AdminDashboard onBack={goHome}/>
       )}
@@ -124,6 +146,7 @@ function App() {
         <VocPage/>
       )}
 
+      {detailModal && <DetailOverlay detail={detailModal} onClose={closeDetail} onOpenComponent={openComponent}/>}
       {showUpload && <UploadModal onClose={() => setShowUpload(false)}/>}
 
       <footer className="page-footer">
