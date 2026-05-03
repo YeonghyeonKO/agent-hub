@@ -2,6 +2,8 @@
 // 공지사항 (Notice Board) + VoC (Voice of Customer) Board
 // ─────────────────────────────────────────────────────────────────────
 
+// fmtDate is defined in api.jsx
+
 // Markdown renderer helper
 function Markdown({ children }) {
   const html = React.useMemo(() => {
@@ -134,7 +136,7 @@ function NoticePage() {
                 </div>
                 <div className="muted-sm" style={{display: 'flex', gap: 12}}>
                   <span>{n.author.name} ({n.author.id})</span>
-                  <span>{n.created_at}</span>
+                  <span>{fmtDate(n.created_at)}</span>
                 </div>
               </div>
               <Icons.ChevronRight size={14} style={{color: 'var(--text-4)'}}/>
@@ -244,7 +246,7 @@ function VocPage() {
             <span style={{fontWeight: 500, color: 'var(--text-2)'}}>{d.author?.name}</span>
             <span className="mono">({d.author?.employee_id || d.author?.id})</span>
             <span>·</span>
-            <span>{d.created_at}</span>
+            <span>{fmtDate(d.created_at)}</span>
             <span className="spacer"/>
             <span style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Star size={12}/> {d.upvote_count ?? d.upvotes ?? 0}</span>
             <span style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Comment size={12}/> {commentCount}</span>
@@ -259,7 +261,7 @@ function VocPage() {
                 <div className="row gap-8" style={{marginBottom: 6}}>
                   <div className="avatar sm" style={{background: 'var(--accent-bg)', color: 'var(--accent-fg)'}}>{(c.author?.name || '?')[0]}</div>
                   <span style={{fontWeight: 600, fontSize: 13}}>{c.author?.name}</span>
-                  <span className="muted-sm">· {c.created_at}</span>
+                  <span className="muted-sm">· {fmtDate(c.created_at)}</span>
                 </div>
                 <div style={{fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6}}>{c.content}</div>
               </div>
@@ -354,8 +356,8 @@ function VocPage() {
                onMouseOut={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.transform = ''; }}>
             <div className="row" style={{gap: 16}}>
               <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 44}}>
-                <button className="btn btn-icon btn-ghost" style={{color: 'var(--text-3)'}}><Icons.Star size={16}/></button>
-                <span className="mono" style={{fontSize: 13, fontWeight: 700}}>{v.upvotes}</span>
+                <button className="btn btn-icon btn-ghost" style={{color: 'var(--text-3)'}} onClick={e => { e.stopPropagation(); api.voc.upvote(v.id).then(loadVoc).catch(() => {}); }}><Icons.Star size={16}/></button>
+                <span className="mono" style={{fontSize: 13, fontWeight: 700}}>{v.upvote_count ?? v.upvotes ?? 0}</span>
               </div>
               <div style={{flex: 1, minWidth: 0}}>
                 <div className="row gap-8" style={{marginBottom: 6}}>
@@ -365,7 +367,7 @@ function VocPage() {
                 </div>
                 <div className="muted-sm" style={{display: 'flex', gap: 12}}>
                   <span>{v.author.name} ({v.author.id})</span>
-                  <span>{v.created_at}</span>
+                  <span>{fmtDate(v.created_at)}</span>
                   <span><Icons.Comment size={11}/> {v.comments}</span>
                 </div>
               </div>

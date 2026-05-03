@@ -89,7 +89,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
             onMouseOut={e => e.currentTarget.style.background = 'var(--bg-elev)'}>
               <span style={{fontWeight: 700, color: 'var(--accent-fg)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em'}}>{t('pinned_label')}</span>
               <span style={{fontWeight: 600, flex: 1}}>{n.title}</span>
-              <span className="muted-sm">{n.created_at}</span>
+              <span className="muted-sm">{fmtDate(n.created_at)}</span>
               <Icons.ChevronRight size={12} style={{color: 'var(--text-4)'}}/>
             </div>
           ))}

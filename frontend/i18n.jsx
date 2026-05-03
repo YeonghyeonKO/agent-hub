@@ -87,7 +87,7 @@ const I18N = {
     // Guide
     guide_title: 'AgentHub 가이드', guide_eyebrow: 'Documentation',
     guide_subtitle: 'Langflow Component·Flow를 사내에서 안전하게 공유하기 위한 표준과 절차를 안내합니다. 처음이라면 빠른 시작부터 읽어보세요.',
-    guide_external: '외부 자료',
+    guide_external: '관련 사이트',
     guide_quickstart: '빠른 시작', guide_naming: '네이밍 규칙',
     guide_standard: '표준 인증 기준', guide_review: '심사 프로세스',
     guide_versioning: '버전 호환성', guide_faq: '자주 묻는 질문',
@@ -188,7 +188,7 @@ const I18N = {
     // Guide
     guide_title: 'AgentHub Guide', guide_eyebrow: 'Documentation',
     guide_subtitle: 'Standards and procedures for safely sharing Langflow Components & Flows. Start with Quick Start if you\'re new.',
-    guide_external: 'External Resources',
+    guide_external: 'Related Sites',
     guide_quickstart: 'Quick Start', guide_naming: 'Naming Rules',
     guide_standard: 'Standard Certification', guide_review: 'Review Process',
     guide_versioning: 'Version Compatibility', guide_faq: 'FAQ',

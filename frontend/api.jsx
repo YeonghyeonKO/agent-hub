@@ -123,4 +123,10 @@ function useFetch(fetchFn, deps = []) {
   return { data, loading, error, reload, setData };
 }
 
-Object.assign(window, { api, useFetch });
+// Format ISO datetime to YYYY-MM-DD
+function fmtDate(d) {
+  if (!d) return '';
+  return d.length > 10 ? d.slice(0, 10) : d;
+}
+
+Object.assign(window, { api, useFetch, fmtDate });
