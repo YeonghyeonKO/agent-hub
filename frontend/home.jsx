@@ -2,17 +2,28 @@
 
 // Map API response to card-compatible shape
 function apiToCard(item) {
+  const author = item.author || {};
   return {
     ...item,
     desc: item.description || item.desc || '',
     stars: item.stars_count ?? item.stars ?? 0,
     downloads: item.downloads_count ?? item.downloads ?? 0,
-    author: item.author || { name: '', id: '', initial: '' },
+    copies: item.copies ?? 0,
+    comments: item.comments ?? 0,
+    author: {
+      name: author.name || '',
+      id: author.employee_id || author.id || '',
+      initial: author.initial || (author.name || '?')[0],
+    },
     minLF: item.min_langflow_ver || item.minLF || '',
     maxLF: item.max_langflow_ver || item.maxLF || '',
+    testedVersions: item.tested_versions || item.testedVersions || [],
     standard: item.is_standard ?? item.standard ?? false,
     incompat: item.min_langflow_ver && item.max_langflow_ver && item.min_langflow_ver === item.max_langflow_ver && item.min_langflow_ver < '1.8.0',
-    updatedAgo: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : item.updatedAgo || '',
+    updatedAgo: item.updated_at ? fmtDate(item.updated_at) : item.updatedAgo || '',
+    typeLabel: item.type === 'py' ? '.py Component' : 'JSON Flow',
+    version: item.version || 'v1.0.0',
+    versions: item.versions ?? 1,
   };
 }
 window.apiToCard = apiToCard;
