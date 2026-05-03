@@ -122,13 +122,16 @@ async def update_notice(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[User, Depends(require_admin)],
 ):
-    notice = await db.get(Notice, notice_id)
+    result = await db.execute(
+        select(Notice).where(Notice.id == notice_id).options(selectinload(Notice.author))
+    )
+    notice = result.scalar_one_or_none()
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(notice, field, value)
     await db.commit()
-    await db.refresh(notice, ["author"])
+    await db.refresh(notice)
     return NoticeResponse(
         id=notice.id,
         title=notice.title,
@@ -146,7 +149,8 @@ async def delete_notice(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[User, Depends(require_admin)],
 ):
-    notice = await db.get(Notice, notice_id)
+    result = await db.execute(select(Notice).where(Notice.id == notice_id))
+    notice = result.scalar_one_or_none()
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
     await db.delete(notice)
