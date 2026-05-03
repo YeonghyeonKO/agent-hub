@@ -62,8 +62,14 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
         </div>
         <div className="detail-actions">
           <button className="btn btn-secondary"><Icons.Star size={13}/> {c.stars}</button>
-          <button className="btn btn-secondary"><Icons.Code size={13}/> JSON 복사</button>
-          <button className="btn btn-primary"><Icons.Download size={13}/> 다운로드</button>
+          <button className="btn btn-secondary" onClick={() => { navigator.clipboard?.writeText(JSON.stringify({name: c.title, version: c.version, nodes: FLOW_NODES.map(n => ({id: n.id, type: n.label})), edges: FLOW_EDGES}, null, 2)); }}><Icons.Code size={13}/> JSON 복사</button>
+          <button className="btn btn-primary" onClick={() => {
+            const json = JSON.stringify({name: c.title, version: c.version, langflow: `>=${c.minLF},<=${c.maxLF}`, nodes: FLOW_NODES.map(n => ({id: n.id, type: n.label, config: n.tooltip?.meta || {}})), edges: FLOW_EDGES.map(([f,t,d]) => ({from: f, to: t, dashed: !!d}))}, null, 2);
+            const blob = new Blob([json], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = c.title.replace(/\s+/g, '_') + '.json'; a.click();
+            URL.revokeObjectURL(url);
+          }}><Icons.Download size={13}/> 다운로드</button>
         </div>
       </div>
 
@@ -198,7 +204,7 @@ function FlowGraph({ hoverNode, setHoverNode }) {
         </div>
         <div className="row gap-8">
           <button className="btn btn-sm btn-secondary"><Icons.Maximize size={11}/> 확대</button>
-          <button className="btn btn-sm btn-secondary"><Icons.Code size={11}/> JSON 복사</button>
+          <button className="btn btn-sm btn-secondary" onClick={() => { navigator.clipboard?.writeText(JSON.stringify({nodes: FLOW_NODES.map(n => ({id: n.id, type: n.label})), edges: FLOW_EDGES.map(([f,t]) => ({from: f, to: t}))}, null, 2)); }}><Icons.Code size={11}/> JSON 복사</button>
         </div>
       </div>
       <div className="flow-graph-canvas">
