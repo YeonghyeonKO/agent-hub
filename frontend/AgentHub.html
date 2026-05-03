@@ -37,6 +37,8 @@ function App() {
   const [route, setRoute] = React.useState({ name: 'home' });
   const [showUpload, setShowUpload] = React.useState(false);
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [lang, setLang] = React.useState('ko');
+  const toggleLang = () => setLang(l => l === 'ko' ? 'en' : 'ko');
 
   // Apply tweaks to CSS vars
   React.useEffect(() => {
@@ -78,6 +80,8 @@ function App() {
         onGoNotice={goNotice}
         onGoVoc={goVoc}
         onOpenUpload={() => setShowUpload(true)}
+        onToggleLang={toggleLang}
+        lang={lang}
         role={tweaks.role}
       />
 
@@ -164,12 +168,12 @@ function App() {
   );
 }
 
-function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, role }) {
+function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, onToggleLang, lang, role }) {
   return (
     <div className="topbar">
       <div className="brand" onClick={onGoHome}>
         <div className="brand-mark"/>
-        <span>AgentHub</span>
+        <span><span style={{color: 'var(--accent)'}}>AgentH</span>ub</span>
       </div>
       <div className="nav-links">
         <a className={`nav-link ${route.name === 'home' ? 'active' : ''}`} onClick={onGoHome}>홈</a>
@@ -190,7 +194,9 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
       <button className="btn btn-secondary btn-sm" onClick={onOpenUpload}>
         <Icons.Plus size={12}/> 제출
       </button>
-      <button className="btn btn-icon btn-ghost"><Icons.Bell size={14}/></button>
+      <button className="btn btn-ghost" onClick={onToggleLang} title="한국어/English" style={{fontSize: 15, padding: '4px 8px'}}>
+        {lang === 'en' ? '🇺🇸' : '🇰🇷'}
+      </button>
       <div className="user-chip">
         <div className="avatar">고</div>
         <div className="user-chip-label">고영현</div>

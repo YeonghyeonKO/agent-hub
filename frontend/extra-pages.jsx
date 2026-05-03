@@ -188,12 +188,13 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
   const top3 = ranked.slice(0, 3);
   const rest = ranked.slice(3);
 
-  // Top 3 podium order: 2, 1, 3 (height-based reordering for visual)
+  // Top 3 podium order: 2, 1, 3 (visual center emphasis)
   const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
 
-  const trophyColors = ['#94a3b8', '#f59e0b', '#a16207']; // for podium order: silver, gold, bronze
-  const heights = [180, 220, 150];
+  const medalGradients = ['linear-gradient(135deg, #e2e8f0, #f8fafc)', 'linear-gradient(135deg, #fef3c7, #fffbeb)', 'linear-gradient(135deg, #ffedd5, #fff7ed)'];
+  const medalBorders = ['#cbd5e1', '#fbbf24', '#fb923c'];
   const placeLabel = ['2nd', '1st', '3rd'];
+  const placeScale = [0.92, 1, 0.92];
 
   return (
     <div className="page fade-in">
@@ -243,27 +244,25 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
           if (!c) return null;
           const Icon = Icons[c.icon] || Icons.Box;
           const realRank = i === 0 ? 2 : i === 1 ? 1 : 3;
+          const score = c.stars * starWeight + c.downloads * downloadWeight;
           return (
-            <div key={c.id} className="podium-col" onClick={() => onOpenComponent(c)}>
-              <div className="podium-card">
+            <div key={c.id} className="podium-col" onClick={() => onOpenComponent(c)} style={{transform: `scale(${placeScale[i]})`, transformOrigin: 'bottom center'}}>
+              <div className="podium-card" style={{background: medalGradients[i], borderColor: medalBorders[i], borderWidth: realRank === 1 ? 2 : 1}}>
                 <div className={`podium-medal medal-${realRank}`}>
                   <Icons.Trophy size={14}/>
                   <span>{placeLabel[i]}</span>
                 </div>
-                <div className="card-icon-md" style={{background: c.iconBg, color: c.iconFg, margin: '14px auto 12px'}}>
+                <div className="card-icon-md" style={{background: 'white', color: c.iconFg, margin: '14px auto 12px', border: `1.5px solid ${medalBorders[i]}`}}>
                   <Icon size={22}/>
                 </div>
-                <div style={{fontWeight: 700, fontSize: 15, textAlign: 'center', marginBottom: 4}}>{c.title}</div>
-                <div className="muted-sm" style={{textAlign: 'center', marginBottom: 4}}>{c.author?.name}</div>
-                <div className="mono muted-sm" style={{textAlign: 'center', marginBottom: 10, fontSize: 11}}>({c.author?.id})</div>
-                <div className="podium-stats">
-                  <div><span className="mono" style={{fontWeight: 700}}>{c.stars}</span><span className="muted-sm"> Star</span></div>
+                <div style={{fontWeight: 700, fontSize: 16, textAlign: 'center', marginBottom: 4}}>{c.title}</div>
+                <div style={{fontSize: 12.5, textAlign: 'center', color: 'var(--text-2)', marginBottom: 2}}>{c.author?.name} <span className="mono" style={{color: 'var(--text-3)'}}>({c.author?.id})</span></div>
+                <div className="mono" style={{textAlign: 'center', fontSize: 22, fontWeight: 800, color: 'var(--accent)', margin: '12px 0 8px'}}>{score}<span style={{fontSize: 11, fontWeight: 500, color: 'var(--text-3)'}}> pts</span></div>
+                <div className="podium-stats" style={{background: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '8px 12px', margin: '0 -2px'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Star size={12}/><span className="mono" style={{fontWeight: 700}}>{c.stars}</span></div>
                   <div className="podium-stats-sep"/>
-                  <div><span className="mono" style={{fontWeight: 700}}>{c.downloads}</span><span className="muted-sm"> 다운로드</span></div>
+                  <div style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Download size={12}/><span className="mono" style={{fontWeight: 700}}>{c.downloads}</span></div>
                 </div>
-              </div>
-              <div className="podium-block" style={{height: heights[i], background: trophyColors[i]}}>
-                <div className="podium-rank-num">{realRank}</div>
               </div>
             </div>
           );

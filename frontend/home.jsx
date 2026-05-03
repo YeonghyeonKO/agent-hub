@@ -70,7 +70,6 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
           <div className="segmented" style={{height: 32}}>
             <button className={`segmented-item ${sortBy==='popular'?'active':''}`} onClick={() => setSortBy('popular')}>인기순</button>
             <button className={`segmented-item ${sortBy==='new'?'active':''}`} onClick={() => setSortBy('new')}>최신순</button>
-            <button className={`segmented-item ${sortBy==='trending'?'active':''}`} onClick={() => setSortBy('trending')}>트렌딩</button>
           </div>
         </div>
       </div>
