@@ -102,6 +102,7 @@ const I18N = {
 
     // Common
     common_all: '전체',
+    col_download: '다운로드',
   },
   en: {
     // Nav
@@ -202,6 +203,7 @@ const I18N = {
 
     // Common
     common_all: 'All',
+    col_download: 'Downloads',
   },
 };
 

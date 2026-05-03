@@ -444,7 +444,7 @@ function SettingsTab() {
           <span className="sf-op">×</span>
           <span className="sf-num">2</span>
           <span className="sf-op">+</span>
-          <span className="sf-token sf-dl">다운로드</span>
+          <span className="sf-token sf-dl">{(useI18n().t('col_download'))}</span>
           <span className="sf-op">×</span>
           <span className="sf-num">1</span>
         </div>

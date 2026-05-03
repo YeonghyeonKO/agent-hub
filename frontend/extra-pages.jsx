@@ -241,7 +241,7 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
           <span className="sf-op">×</span>
           <span className="sf-num">{starWeight}</span>
           <span className="sf-op">+</span>
-          <span className="sf-token sf-dl">다운로드</span>
+          <span className="sf-token sf-dl">{t('col_download')}</span>
           <span className="sf-op">×</span>
           <span className="sf-num">{downloadWeight}</span>
         </div>
