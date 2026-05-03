@@ -383,7 +383,7 @@ function GuidePage() {
         </div>
         <div style={{flex: 1, minWidth: 0}}>
           <div className="lf-promo-eyebrow">{t('guide_lf_promo_eyebrow')}</div>
-          <div className="lf-promo-title">langflow-guide.posong.space</div>
+          <div className="lf-promo-title">https://langflow-guide.posong.space</div>
           <div className="lf-promo-desc">{t('guide_lf_promo_desc')}</div>
         </div>
         <div className="lf-promo-arrow">
