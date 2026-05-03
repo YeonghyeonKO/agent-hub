@@ -9,7 +9,6 @@ function Markdown({ children }) {
     if (window.marked && window.marked.parse) {
       return window.marked.parse(children, { breaks: true });
     }
-    // fallback: just escape and preserve newlines
     return children.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br/>');
   }, [children]);
   return <div className="markdown-body" dangerouslySetInnerHTML={{ __html: html }} />;
@@ -27,6 +26,7 @@ const MOCK_VOC = [
 
 // ─── Notice Board ───────────────────────────────────────────────────
 function NoticePage() {
+  const { t } = useI18n();
   const [notices, setNotices] = React.useState(() => {
     try { const saved = localStorage.getItem('agenthub_notices'); return saved ? JSON.parse(saved) : MOCK_NOTICES; }
     catch { return MOCK_NOTICES; }
@@ -34,17 +34,12 @@ function NoticePage() {
   const [selected, setSelected] = React.useState(null);
   const [showForm, setShowForm] = React.useState(false);
 
-  // Persist to localStorage
   React.useEffect(() => { localStorage.setItem('agenthub_notices', JSON.stringify(notices)); }, [notices]);
 
-  // Form state
   const [formTitle, setFormTitle] = React.useState('');
   const [formContent, setFormContent] = React.useState('');
   const [formPinned, setFormPinned] = React.useState(false);
   const [showPreview, setShowPreview] = React.useState(false);
-
-  // Check admin role from tweaks (same mechanism as nav)
-  const isAdmin = document.querySelector('[data-screen-label]')?.closest('[data-screen-label]') !== null;
 
   const handleSubmit = () => {
     if (!formTitle.trim() || !formContent.trim()) return;
@@ -57,21 +52,12 @@ function NoticePage() {
       created_at: new Date().toISOString().slice(0, 10),
     };
     setNotices([newNotice, ...notices]);
-    setFormTitle('');
-    setFormContent('');
-    setFormPinned(false);
-    setShowForm(false);
-    setShowPreview(false);
+    setFormTitle(''); setFormContent(''); setFormPinned(false);
+    setShowForm(false); setShowPreview(false);
   };
 
-  const togglePin = (id) => {
-    setNotices(notices.map(n => n.id === id ? { ...n, is_pinned: !n.is_pinned } : n));
-  };
-
-  const deleteNotice = (id) => {
-    setNotices(notices.filter(n => n.id !== id));
-    setSelected(null);
-  };
+  const togglePin = (id) => { setNotices(notices.map(n => n.id === id ? { ...n, is_pinned: !n.is_pinned } : n)); };
+  const deleteNotice = (id) => { setNotices(notices.filter(n => n.id !== id)); setSelected(null); };
 
   const sorted = [...notices].sort((a, b) => {
     if (a.is_pinned && !b.is_pinned) return -1;
@@ -85,50 +71,49 @@ function NoticePage() {
     <div className="page fade-in">
       <div className="row" style={{justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24}}>
         <div>
-          <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>Announcements</div>
-          <div className="h1">공지사항</div>
-          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>AgentHub 운영 관련 공지사항을 확인하세요.</div>
+          <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>{t('notice_eyebrow')}</div>
+          <div className="h1">{t('notice_title')}</div>
+          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>{t('notice_subtitle')}</div>
         </div>
         <button className="btn btn-accent" onClick={() => setShowForm(!showForm)}>
-          <Icons.Plus size={12}/> 공지 작성
+          <Icons.Plus size={12}/> {t('notice_write')}
         </button>
       </div>
 
-      {/* Write form (admin) */}
       {showForm && (
         <div className="card card-pad" style={{marginBottom: 20}}>
-          <div className="h3" style={{marginBottom: 14}}>새 공지 작성</div>
+          <div className="h3" style={{marginBottom: 14}}>{t('notice_form_title')}</div>
           <div className="field">
-            <label className="field-label">제목 <span className="req">*</span></label>
-            <input className="input" placeholder="공지 제목을 입력하세요" value={formTitle} onChange={e => setFormTitle(e.target.value)}/>
+            <label className="field-label">{t('notice_field_title')} <span className="req">*</span></label>
+            <input className="input" value={formTitle} onChange={e => setFormTitle(e.target.value)}/>
           </div>
           <div className="field">
             <div className="row" style={{justifyContent: 'space-between', marginBottom: 6}}>
-              <label className="field-label" style={{margin: 0}}>내용 <span className="req">*</span></label>
+              <label className="field-label" style={{margin: 0}}>{t('notice_field_content')} <span className="req">*</span></label>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowPreview(!showPreview)} style={{fontSize: 12}}>
-                <Icons.Eye size={11}/> {showPreview ? '편집' : '미리보기'}
+                <Icons.Eye size={11}/> {showPreview ? t('voc_edit') : t('voc_preview')}
               </button>
             </div>
             {!showPreview ? (
               <>
-                <textarea className="textarea" rows="8" placeholder="마크다운 형식을 지원합니다." value={formContent} onChange={e => setFormContent(e.target.value)}/>
-                <div className="field-hint">Markdown 형식 지원 · **굵게** · `코드` · - 목록 · | 표 | · [링크](url)</div>
+                <textarea className="textarea" rows="8" value={formContent} onChange={e => setFormContent(e.target.value)}/>
+                <div className="field-hint">{t('voc_md_hint')}</div>
               </>
             ) : (
               <div style={{minHeight: 160, padding: 16, border: '1px solid var(--line)', borderRadius: 'var(--radius)', background: 'var(--bg-muted)'}}>
-                {formContent ? <Markdown>{formContent}</Markdown> : <span className="muted-sm">내용을 입력하면 미리보기가 표시됩니다.</span>}
+                {formContent ? <Markdown>{formContent}</Markdown> : <span className="muted-sm">...</span>}
               </div>
             )}
           </div>
           <div className="row gap-8" style={{justifyContent: 'space-between'}}>
             <label style={{display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer'}}>
               <input type="checkbox" checked={formPinned} onChange={e => setFormPinned(e.target.checked)} style={{width: 16, height: 16}}/>
-              <Icons.Star size={12}/> 상단 고정
+              <Icons.Star size={12}/> {t('notice_pin_label')}
             </label>
             <div className="row gap-8">
-              <button className="btn btn-ghost btn-sm" onClick={() => { setShowForm(false); setShowPreview(false); }}>취소</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => { setShowForm(false); setShowPreview(false); }}>{t('voc_cancel')}</button>
               <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={!formTitle.trim() || !formContent.trim()} style={{opacity: (!formTitle.trim() || !formContent.trim()) ? 0.5 : 1}}>
-                <Icons.Check size={11}/> 게시
+                <Icons.Check size={11}/> {t('notice_publish')}
               </button>
             </div>
           </div>
@@ -141,17 +126,14 @@ function NoticePage() {
             <div key={n.id} style={{
               padding: '18px 22px',
               borderBottom: i < sorted.length - 1 ? '1px solid var(--line)' : 'none',
-              cursor: 'pointer',
-              transition: 'background 0.12s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
+              cursor: 'pointer', transition: 'background 0.12s',
+              display: 'flex', alignItems: 'center', gap: 14,
             }} onClick={() => setSelected(n.id)}
                onMouseOver={e => e.currentTarget.style.background = 'var(--bg-muted)'}
                onMouseOut={e => e.currentTarget.style.background = ''}>
               <div style={{flex: 1, minWidth: 0}}>
                 <div className="row gap-8" style={{marginBottom: 6}}>
-                  {n.is_pinned && <span className="chip chip-accent" style={{fontSize: 10}}><Icons.Star size={9} filled/> 고정</span>}
+                  {n.is_pinned && <span className="chip chip-accent" style={{fontSize: 10}}><Icons.Star size={9} filled/> {t('notice_pin')}</span>}
                   <span style={{fontWeight: 700, fontSize: 15}}>{n.title}</span>
                 </div>
                 <div className="muted-sm" style={{display: 'flex', gap: 12}}>
@@ -166,19 +148,19 @@ function NoticePage() {
       ) : (
         <div>
           <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} style={{marginBottom: 16}}>
-            ← 목록으로
+            {t('notice_back')}
           </button>
           <div className="card card-pad" style={{padding: 28}}>
             <div className="row gap-8" style={{marginBottom: 8, justifyContent: 'space-between'}}>
               <div className="row gap-8">
-                {notice.is_pinned && <span className="chip chip-accent" style={{fontSize: 10}}><Icons.Star size={9} filled/> 고정</span>}
+                {notice.is_pinned && <span className="chip chip-accent" style={{fontSize: 10}}><Icons.Star size={9} filled/> {t('notice_pin')}</span>}
               </div>
               <div className="row gap-8">
-                <button className="btn btn-ghost btn-sm" onClick={() => togglePin(notice.id)} title={notice.is_pinned ? '고정 해제' : '상단 고정'}>
-                  <Icons.Star size={12} filled={notice.is_pinned}/> {notice.is_pinned ? '고정 해제' : '고정'}
+                <button className="btn btn-ghost btn-sm" onClick={() => togglePin(notice.id)}>
+                  <Icons.Star size={12} filled={notice.is_pinned}/> {notice.is_pinned ? t('notice_unpin') : t('notice_pin')}
                 </button>
                 <button className="btn btn-ghost btn-sm btn-ghost-danger" onClick={() => deleteNotice(notice.id)}>
-                  <Icons.X size={12}/> 삭제
+                  <Icons.X size={12}/> {t('notice_delete')}
                 </button>
               </div>
             </div>
@@ -200,6 +182,7 @@ function NoticePage() {
 
 // ─── VoC Board ──────────────────────────────────────────────────────
 function VocPage() {
+  const { t } = useI18n();
   const [filter, setFilter] = React.useState('all');
   const [sort, setSort] = React.useState('popular');
   const [selected, setSelected] = React.useState(null);
@@ -210,14 +193,13 @@ function VocPage() {
   });
   React.useEffect(() => { localStorage.setItem('agenthub_voc', JSON.stringify(posts)); }, [posts]);
 
-  // Form state
   const [formCat, setFormCat] = React.useState('suggestion');
   const [formTitle, setFormTitle] = React.useState('');
   const [formContent, setFormContent] = React.useState('');
   const [showPreview, setShowPreview] = React.useState(false);
 
-  const catLabels = { suggestion: '제안', bug: '버그', question: '질문', other: '기타' };
-  const statusLabels = { open: '접수', 'in-progress': '검토 중', resolved: '반영됨', closed: '종료' };
+  const catLabels = { suggestion: t('cat_suggestion'), bug: t('cat_bug'), question: t('cat_question'), other: t('cat_other') };
+  const statusLabels = { open: t('status_open'), 'in-progress': t('status_inprogress'), resolved: t('status_resolved'), closed: t('status_closed') };
   const statusChip = { open: 'chip-neutral', 'in-progress': 'chip-warn', resolved: 'chip-ok', closed: 'chip-neutral' };
 
   const handleSubmit = () => {
@@ -229,16 +211,12 @@ function VocPage() {
       category: formCat,
       author: { name: '고영현', id: '2074795', initial: '고' },
       status: 'open',
-      upvotes: 0,
-      comments: 0,
+      upvotes: 0, comments: 0,
       created_at: new Date().toISOString().slice(0, 10),
     };
     setPosts([newPost, ...posts]);
-    setFormTitle('');
-    setFormContent('');
-    setFormCat('suggestion');
-    setShowForm(false);
-    setShowPreview(false);
+    setFormTitle(''); setFormContent(''); setFormCat('suggestion');
+    setShowForm(false); setShowPreview(false);
   };
 
   const filtered = posts
@@ -251,7 +229,7 @@ function VocPage() {
     return (
       <div className="page fade-in">
         <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} style={{marginBottom: 16}}>
-          ← VoC 목록
+          {t('voc_back')}
         </button>
         <div className="card card-pad" style={{padding: 28}}>
           <div className="row gap-8" style={{marginBottom: 10}}>
@@ -273,7 +251,7 @@ function VocPage() {
             <Markdown>{post.content}</Markdown>
           </div>
           <div style={{borderTop: '1px solid var(--line)', paddingTop: 20}}>
-            <div className="h3" style={{marginBottom: 14}}>댓글 {post.comments}개</div>
+            <div className="h3" style={{marginBottom: 14}}>{t('voc_comments')} {post.comments}</div>
             <div style={{padding: 14, background: 'var(--bg-muted)', borderRadius: 8, marginBottom: 10}}>
               <div className="row gap-8" style={{marginBottom: 6}}>
                 <div className="avatar sm" style={{background: '#dbeafe', color: '#1e40af'}}>정</div>
@@ -283,8 +261,8 @@ function VocPage() {
               <div style={{fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6}}>좋은 제안입니다. 다음 스프린트에 반영 검토하겠습니다.</div>
             </div>
             <div className="row gap-8" style={{marginTop: 16}}>
-              <input className="input" placeholder="댓글 작성..." style={{flex: 1}}/>
-              <button className="btn btn-accent btn-sm">작성</button>
+              <input className="input" placeholder={t('voc_comment_write')} style={{flex: 1}}/>
+              <button className="btn btn-accent btn-sm">{t('voc_comment_submit')}</button>
             </div>
           </div>
         </div>
@@ -296,52 +274,52 @@ function VocPage() {
     <div className="page fade-in">
       <div className="row" style={{justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24}}>
         <div>
-          <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>Voice of Customer</div>
-          <div className="h1">VoC 게시판</div>
-          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>AgentHub에 대한 제안·버그·질문을 자유롭게 남겨주세요. 운영팀이 확인하고 답변드립니다.</div>
+          <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>{t('voc_eyebrow')}</div>
+          <div className="h1">{t('voc_title')}</div>
+          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>{t('voc_subtitle')}</div>
         </div>
         <button className="btn btn-accent" onClick={() => setShowForm(!showForm)}>
-          <Icons.Plus size={12}/> 새 글 작성
+          <Icons.Plus size={12}/> {t('voc_write')}
         </button>
       </div>
 
       {showForm && (
         <div className="card card-pad" style={{marginBottom: 20}}>
-          <div className="h3" style={{marginBottom: 14}}>새 VoC 작성</div>
+          <div className="h3" style={{marginBottom: 14}}>{t('voc_form_title')}</div>
           <div className="field">
-            <label className="field-label">카테고리 <span className="req">*</span></label>
+            <label className="field-label">{t('voc_field_category')} <span className="req">*</span></label>
             <div className="segmented">
-              {[['suggestion','제안'],['bug','버그'],['question','질문'],['other','기타']].map(([v,l]) => (
+              {[['suggestion', t('cat_suggestion')],['bug', t('cat_bug')],['question', t('cat_question')],['other', t('cat_other')]].map(([v,l]) => (
                 <button key={v} className={`segmented-item ${formCat===v?'active':''}`} onClick={() => setFormCat(v)}>{l}</button>
               ))}
             </div>
           </div>
           <div className="field">
-            <label className="field-label">제목 <span className="req">*</span></label>
-            <input className="input" placeholder="간결하게 한 줄로 요약해주세요" value={formTitle} onChange={e => setFormTitle(e.target.value)}/>
+            <label className="field-label">{t('voc_field_title')} <span className="req">*</span></label>
+            <input className="input" placeholder={t('voc_title_placeholder')} value={formTitle} onChange={e => setFormTitle(e.target.value)}/>
           </div>
           <div className="field">
             <div className="row" style={{justifyContent: 'space-between', marginBottom: 6}}>
-              <label className="field-label" style={{margin: 0}}>내용 <span className="req">*</span></label>
+              <label className="field-label" style={{margin: 0}}>{t('voc_field_content')} <span className="req">*</span></label>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowPreview(!showPreview)} style={{fontSize: 12}}>
-                <Icons.Eye size={11}/> {showPreview ? '편집' : '미리보기'}
+                <Icons.Eye size={11}/> {showPreview ? t('voc_edit') : t('voc_preview')}
               </button>
             </div>
             {!showPreview ? (
               <>
-                <textarea className="textarea" rows="6" placeholder="마크다운 형식을 지원합니다. **굵게**, `코드`, - 목록 등을 사용할 수 있어요." value={formContent} onChange={e => setFormContent(e.target.value)}/>
-                <div className="field-hint">Markdown 형식 지원 · **굵게** · `코드` · - 목록 · [링크](url)</div>
+                <textarea className="textarea" rows="6" placeholder={t('voc_content_placeholder')} value={formContent} onChange={e => setFormContent(e.target.value)}/>
+                <div className="field-hint">{t('voc_md_hint')}</div>
               </>
             ) : (
               <div style={{minHeight: 120, padding: 16, border: '1px solid var(--line)', borderRadius: 'var(--radius)', background: 'var(--bg-muted)'}}>
-                {formContent ? <Markdown>{formContent}</Markdown> : <span className="muted-sm">내용을 입력하면 미리보기가 표시됩니다.</span>}
+                {formContent ? <Markdown>{formContent}</Markdown> : <span className="muted-sm">...</span>}
               </div>
             )}
           </div>
           <div className="row gap-8" style={{justifyContent: 'flex-end'}}>
-            <button className="btn btn-ghost btn-sm" onClick={() => { setShowForm(false); setShowPreview(false); }}>취소</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => { setShowForm(false); setShowPreview(false); }}>{t('voc_cancel')}</button>
             <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={!formTitle.trim() || !formContent.trim()} style={{opacity: (!formTitle.trim() || !formContent.trim()) ? 0.5 : 1}}>
-              <Icons.Check size={11}/> 등록
+              <Icons.Check size={11}/> {t('voc_register')}
             </button>
           </div>
         </div>
@@ -349,13 +327,13 @@ function VocPage() {
 
       <div className="row gap-8" style={{marginBottom: 20}}>
         <div className="segmented">
-          {[['all', '전체'], ['suggestion', '제안'], ['bug', '버그'], ['question', '질문']].map(([v, l]) => (
+          {[['all', t('filter_all')], ['suggestion', t('cat_suggestion')], ['bug', t('cat_bug')], ['question', t('cat_question')]].map(([v, l]) => (
             <button key={v} className={`segmented-item ${filter===v?'active':''}`} onClick={() => setFilter(v)}>{l}</button>
           ))}
         </div>
         <div className="spacer"/>
         <div className="segmented">
-          {[['popular', '인기순'], ['newest', '최신순']].map(([v, l]) => (
+          {[['popular', t('sort_popular')], ['newest', t('sort_new')]].map(([v, l]) => (
             <button key={v} className={`segmented-item ${sort===v?'active':''}`} onClick={() => setSort(v)}>{l}</button>
           ))}
         </div>

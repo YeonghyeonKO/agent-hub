@@ -14,6 +14,7 @@ function StatTile({ label, value, icon, delta }) {
 }
 
 function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
+  const { t } = useI18n();
   const [tab, setTab] = React.useState('published');
   const me = { name: '고영현', id: '2074795', initial: '고' };
 
@@ -40,27 +41,27 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
       <div className="row" style={{justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 22}}>
         <div>
           <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>{me.id} · {me.name}</div>
-          <div className="h1">내 Component / Flow</div>
-          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>내가 등록한 Component·Flow와 진행 중인 초안을 한눈에 관리하세요.</div>
+          <div className="h1">{t('mine_title')}</div>
+          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>{t('mine_desc')}</div>
         </div>
         <div className="row gap-8">
-          <button className="btn btn-secondary"><Icons.Download size={13}/> CSV 내보내기</button>
-          <button className="btn btn-accent" onClick={onOpenUpload}><Icons.Plus/> 새 Component / Flow</button>
+          <button className="btn btn-secondary"><Icons.Download size={13}/> {t('mine_export')}</button>
+          <button className="btn btn-accent" onClick={onOpenUpload}><Icons.Plus/> {t('mine_new')}</button>
         </div>
       </div>
 
       <div className="grid-4" style={{marginBottom: 28}}>
-        <StatTile label="내 등록" value={mine.length} icon={<Icons.Box size={12}/>} />
-        <StatTile label="누적 Star" value={totals.stars} icon={<Icons.Star size={12}/>} delta="+12 이번 주"/>
-        <StatTile label="누적 다운로드" value={totals.downloads} icon={<Icons.Download size={12}/>} delta="+38 이번 주"/>
-        <StatTile label="2026 랭킹" value="#1" icon={<Icons.Trophy size={12}/>} delta="유지"/>
+        <StatTile label={t('mine_registered')} value={mine.length} icon={<Icons.Box size={12}/>} />
+        <StatTile label={t('mine_total_stars')} value={totals.stars} icon={<Icons.Star size={12}/>} delta="+12"/>
+        <StatTile label={t('mine_total_dl')} value={totals.downloads} icon={<Icons.Download size={12}/>} delta="+38"/>
+        <StatTile label={t('mine_ranking')} value="#1" icon={<Icons.Trophy size={12}/>}/>
       </div>
 
       <div className="tabs">
         {[
-          ['published', '게시됨', mine.length],
-          ['drafts', '초안 / 심사 중', drafts.length],
-          ['activity', '활동', activity.length],
+          ['published', t('tab_published'), mine.length],
+          ['drafts', t('tab_drafts'), drafts.length],
+          ['activity', t('tab_activity'), activity.length],
         ].map(([id, label, count]) => (
           <button key={id} className={`tab ${tab===id?'active':''}`} onClick={() => setTab(id)}>
             {label} <span className="tab-count">{count}</span>
@@ -178,8 +179,9 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
 // 2026 랭킹 — leaderboard
 // ─────────────────────────────────────────────────────────────────────
 function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
-  const [scope, setScope] = React.useState('all'); // all | py | json
-  const [period, setPeriod] = React.useState('h1'); // h1 | week | month
+  const { t } = useI18n();
+  const [scope, setScope] = React.useState('all');
+  const [period, setPeriod] = React.useState('h1');
 
   const ranked = [...COMPONENTS]
     .filter(c => scope === 'all' ? true : c.type === scope)
@@ -200,18 +202,18 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
     <div className="page fade-in">
       <div className="row" style={{justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 18}}>
         <div>
-          <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6, color: 'var(--accent-fg)'}}>2026 상반기</div>
-          <div className="h1">랭킹</div>
-          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>매일 오전 9시 갱신 · 자기 Star·다운로드 제외</div>
+          <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6, color: 'var(--accent-fg)'}}>{t('ranking_eyebrow')}</div>
+          <div className="h1">{t('ranking_title')}</div>
+          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>{t('ranking_subtitle')}</div>
         </div>
         <div className="row gap-8">
           <div className="segmented">
-            {[['h1', '상반기'], ['month', '이번 달'], ['week', '이번 주']].map(([v, l]) => (
+            {[['h1', t('ranking_h1')], ['month', t('ranking_month')], ['week', t('ranking_week')]].map(([v, l]) => (
               <button key={v} className={`segmented-item ${period===v?'active':''}`} onClick={() => setPeriod(v)}>{l}</button>
             ))}
           </div>
           <div className="segmented">
-            {[['all', '전체'], ['py', '.py'], ['json', '.json']].map(([v, l]) => (
+            {[['all', t('filter_all')], ['py', '.py'], ['json', '.json']].map(([v, l]) => (
               <button key={v} className={`segmented-item ${scope===v?'active':''}`} onClick={() => setScope(v)}>{l}</button>
             ))}
           </div>
@@ -222,7 +224,7 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
       <div className="score-formula">
         <div className="score-formula-label">
           <Icons.Sparkle size={11}/>
-          <span>점수 계산식</span>
+          <span>{t('ranking_formula')}</span>
         </div>
         <div className="score-formula-eq">
           <span className="sf-token">Score</span>
@@ -235,7 +237,7 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
           <span className="sf-op">×</span>
           <span className="sf-num">{downloadWeight}</span>
         </div>
-        <div className="score-formula-hint">매일 오전 9시 갱신</div>
+        <div className="score-formula-hint">{t('ranking_formula_hint')}</div>
       </div>
 
       {/* Podium */}
@@ -271,16 +273,16 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
 
       {/* Full table */}
       <div style={{marginTop: 36}}>
-        <div className="h2" style={{marginBottom: 14}}>전체 순위</div>
+        <div className="h2" style={{marginBottom: 14}}>{t('ranking_full')}</div>
         <div className="rank-table">
           <div className="rank-table-head">
-            <div style={{width: 56}}>#</div>
-            <div>Component / Flow</div>
-            <div style={{width: 140}}>개발자</div>
-            <div style={{width: 96, textAlign: 'right'}}>Star</div>
-            <div style={{width: 110, textAlign: 'right'}}>다운로드</div>
-            <div style={{width: 90, textAlign: 'right'}}>점수</div>
-            <div style={{width: 80, textAlign: 'right'}}>변동</div>
+            <div style={{width: 56}}>{t('ranking_col_rank')}</div>
+            <div>{t('ranking_col_component')}</div>
+            <div style={{width: 140}}>{t('ranking_col_developer')}</div>
+            <div style={{width: 96, textAlign: 'right'}}>{t('ranking_col_star')}</div>
+            <div style={{width: 110, textAlign: 'right'}}>{t('ranking_col_download')}</div>
+            <div style={{width: 90, textAlign: 'right'}}>{t('ranking_col_score')}</div>
+            <div style={{width: 80, textAlign: 'right'}}>{t('ranking_col_trend')}</div>
           </div>
           {ranked.map((c, i) => {
             const Icon = Icons[c.icon] || Icons.Box;
@@ -323,6 +325,7 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
 // 가이드 — documentation hub
 // ─────────────────────────────────────────────────────────────────────
 function GuidePage() {
+  const { t } = useI18n();
   const [active, setActive] = React.useState('quickstart');
 
   const sections = [
@@ -360,9 +363,9 @@ function GuidePage() {
   return (
     <div className="page fade-in">
       <div style={{marginBottom: 24}}>
-        <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>Documentation</div>
-        <div className="h1">AgentHub 가이드</div>
-        <div className="muted" style={{fontSize: 13.5, marginTop: 4, maxWidth: 720}}>Langflow Component·Flow를 사내에서 안전하게 공유하기 위한 표준과 절차를 안내합니다. 처음이라면 빠른 시작부터 읽어보세요.</div>
+        <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>{t('guide_eyebrow')}</div>
+        <div className="h1">{t('guide_title')}</div>
+        <div className="muted" style={{fontSize: 13.5, marginTop: 4, maxWidth: 720}}>{t('guide_subtitle')}</div>
       </div>
 
       {/* External Langflow guide promo */}
@@ -392,9 +395,9 @@ function GuidePage() {
             );
           })}
           <div className="guide-side-foot">
-            <div className="muted-sm" style={{fontSize: 11.5, marginBottom: 6}}>외부 자료</div>
-            <a className="guide-side-link" href="https://docs.langflow.org/" target="_blank" rel="noopener"><Icons.Globe size={11}/> Langflow 공식 문서</a>
-            <a className="guide-side-link" href="https://langflow-guide.posong.space" target="_blank" rel="noopener"><Icons.Globe size={11}/> Langflow 사내 가이드</a>
+            <div className="muted-sm" style={{fontSize: 11.5, marginBottom: 6}}>{t('guide_external')}</div>
+            <a className="guide-side-link" href="https://docs.langflow.org/" target="_blank" rel="noopener"><Icons.Globe size={11}/> Langflow Docs</a>
+            <a className="guide-side-link" href="https://langflow-guide.posong.space" target="_blank" rel="noopener"><Icons.Globe size={11}/> Langflow Guide (internal)</a>
             <a className="guide-side-link"><Icons.Comment size={11}/> #agenthub-help</a>
             <a className="guide-side-link"><Icons.FileText size={11}/> 정책 문서 (Confluence)</a>
           </div>

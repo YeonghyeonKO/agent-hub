@@ -16,29 +16,30 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
     return false;
   }).sort((a, b) => {
     if (sortBy === 'new') return (b.updatedAgo < a.updatedAgo ? -1 : 1);
-    // popular: by stars + downloads
     return (b.stars + b.downloads) - (a.stars + a.downloads);
   });
+
+  const catI18n = { all: t('filter_all'), rag: t('cat_rag'), doc: t('cat_doc'), data: t('cat_data'), workflow: t('cat_workflow'), agent: t('cat_agent'), utility: t('cat_util') };
 
   return (
     <div className="page fade-in">
       {/* Hero / season banner */}
       <div className="season-banner">
         <div>
-          <div className="season-eyebrow">2026 · 상반기</div>
-          <div className="season-title">AI Agent Builder Component · Flow</div>
+          <div className="season-eyebrow">{t('season_eyebrow')}</div>
+          <div className="season-title">{t('season_title')}</div>
           <div className="season-meta">
-            <span><Icons.Clock size={11}/> 제출 마감 D-23</span>
-            <span><Icons.Users size={11}/> 참여 38명 · 제출 62건</span>
-            <span><Icons.Trophy size={11}/> 2026 1위 SmartChunker</span>
+            <span><Icons.Clock size={11}/> {t('season_deadline')}</span>
+            <span><Icons.Users size={11}/> {t('season_participants')}</span>
+            <span><Icons.Trophy size={11}/> {t('season_first')}</span>
           </div>
         </div>
         <div className="season-cta row gap-8">
           <button className="btn btn-secondary" onClick={onGoAdmin} style={{background: 'transparent', borderColor: '#3d3d3a', color: 'var(--bg)'}}>
-            <Icons.Settings size={13}/> 관리자
+            <Icons.Settings size={13}/> {t('season_admin')}
           </button>
           <button className="btn btn-accent" onClick={onOpenUpload}>
-            <Icons.Plus/> 새 Component / Flow
+            <Icons.Plus/> {t('season_new')}
           </button>
         </div>
       </div>
@@ -56,7 +57,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
             }}
             onMouseOver={e => e.currentTarget.style.background = 'var(--bg-muted)'}
             onMouseOut={e => e.currentTarget.style.background = 'var(--bg-elev)'}>
-              <span style={{fontWeight: 700, color: 'var(--accent-fg)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em'}}>공지</span>
+              <span style={{fontWeight: 700, color: 'var(--accent-fg)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em'}}>{t('pinned_label')}</span>
               <span style={{fontWeight: 600, flex: 1}}>{n.title}</span>
               <span className="muted-sm">{n.created_at}</span>
               <Icons.ChevronRight size={12} style={{color: 'var(--text-4)'}}/>
@@ -87,13 +88,13 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
             className={`filter-pill ${activeCat === cat.id ? 'active' : ''}`}
             onClick={() => setActiveCat(cat.id)}
           >
-            {cat.label} <span className="filter-pill-count">{cat.count}</span>
+            {catI18n[cat.id] || cat.label} <span className="filter-pill-count">{cat.count}</span>
           </button>
         ))}
         <div className="spacer"/>
         <div className="nav-search" style={{width: 240, height: 32}}>
           <Icons.Search size={13}/>
-          <input placeholder="이름·설명 검색…" value={query} onChange={e => setQuery(e.target.value)}/>
+          <input placeholder={t('search_inline')} value={query} onChange={e => setQuery(e.target.value)}/>
         </div>
       </div>
 
@@ -104,8 +105,8 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
 
       {filtered.length === 0 && (
         <div className="empty-state card card-pad">
-          <div style={{fontSize: 14, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4}}>검색 결과가 없습니다</div>
-          <div style={{fontSize: 12.5}}>다른 키워드로 시도해보거나, 직접 만들어 제출해보세요.</div>
+          <div style={{fontSize: 14, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4}}>{t('empty_title')}</div>
+          <div style={{fontSize: 12.5}}>{t('empty_desc')}</div>
         </div>
       )}
     </div>
@@ -116,6 +117,7 @@ function ComponentCard({ c, onClick }) {
   const Icon = Icons[c.icon] || Icons.Box;
   const chipClass = c.type === 'py' ? 'chip-py' : 'chip-json';
   const isIncompat = c.incompat;
+  const { t } = useI18n();
 
   return (
     <div className={`cc ${isIncompat ? 'cc-incompat' : ''}`} onClick={onClick}>
@@ -130,10 +132,10 @@ function ComponentCard({ c, onClick }) {
             {c.type === 'py' ? '.py' : '.json'}
           </span>
           <span className="chip chip-neutral">
-            {c.type === 'py' ? 'Component' : 'Flow'}
+            {c.type === 'py' ? t('type_component') : t('type_flow')}
           </span>
-          {c.standard && <span className="chip chip-ok"><Icons.Check size={10}/> 표준</span>}
-          {isIncompat && <span className="chip chip-warn"><Icons.Warn size={10}/> 호환 주의</span>}
+          {c.standard && <span className="chip chip-ok"><Icons.Check size={10}/> {t('chip_standard')}</span>}
+          {isIncompat && <span className="chip chip-warn"><Icons.Warn size={10}/> {t('chip_incompat')}</span>}
         </div>
       </div>
       <div>
@@ -152,7 +154,7 @@ function ComponentCard({ c, onClick }) {
         justifyContent: 'space-between',
       }}>
         <span>Langflow {c.minLF === c.maxLF ? c.minLF : `${c.minLF} ~ ${c.maxLF}`}</span>
-        {c.nodes && <span>{c.nodes} 노드</span>}
+        {c.nodes && <span>{c.nodes} nodes</span>}
       </div>
       <div className="cc-meta">
         <div className="cc-meta-item"><Icons.Star size={12}/> {c.stars}</div>

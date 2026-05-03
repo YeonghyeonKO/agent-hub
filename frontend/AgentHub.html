@@ -131,13 +131,13 @@ function App() {
           <div className="page-footer-mark">
             <span className="page-footer-logo">SK<span style={{color: 'var(--accent-fg)'}}>hynix</span></span>
             <span className="page-footer-divider"/>
-            <span className="page-footer-team">AI / Data Platform</span>
+            <span className="page-footer-team">{(useI18n().t('footer_team'))}</span>
           </div>
           <div className="page-footer-meta">
             <span>© 2026 SK hynix Inc.</span>
             <span className="page-footer-dot">·</span>
             <span className="page-footer-contact">
-              문의
+              {(useI18n().t('footer_contact'))}
               <span className="page-footer-tooltip">AI/Data Platform 고영현TL</span>
             </span>
           </div>
