@@ -27,14 +27,13 @@ const MOCK_VOC = [
 // ─── Notice Board ───────────────────────────────────────────────────
 function NoticePage() {
   const { t } = useI18n();
-  const [notices, setNotices] = React.useState(() => {
-    try { const saved = localStorage.getItem('agenthub_notices'); return saved ? JSON.parse(saved) : MOCK_NOTICES; }
-    catch { return MOCK_NOTICES; }
-  });
+  const [notices, setNotices] = React.useState(MOCK_NOTICES);
   const [selected, setSelected] = React.useState(null);
   const [showForm, setShowForm] = React.useState(false);
 
-  React.useEffect(() => { localStorage.setItem('agenthub_notices', JSON.stringify(notices)); }, [notices]);
+  // Fetch from API
+  const loadNotices = () => { api.notices.list().then(d => { if (d && d.length > 0) setNotices(d); }).catch(() => {}); };
+  React.useEffect(loadNotices, []);
 
   const [formTitle, setFormTitle] = React.useState('');
   const [formContent, setFormContent] = React.useState('');
@@ -43,21 +42,18 @@ function NoticePage() {
 
   const handleSubmit = () => {
     if (!formTitle.trim() || !formContent.trim()) return;
-    const newNotice = {
-      id: 'n-' + Date.now(),
-      title: formTitle.trim(),
-      content: formContent.trim(),
-      author: { name: '고영현', id: '2074795', initial: '고' },
-      is_pinned: formPinned,
-      created_at: new Date().toISOString().slice(0, 10),
-    };
-    setNotices([newNotice, ...notices]);
-    setFormTitle(''); setFormContent(''); setFormPinned(false);
-    setShowForm(false); setShowPreview(false);
+    api.notices.create({ title: formTitle.trim(), content: formContent.trim(), is_pinned: formPinned })
+      .then(() => { loadNotices(); setFormTitle(''); setFormContent(''); setFormPinned(false); setShowForm(false); setShowPreview(false); })
+      .catch(() => {});
   };
 
-  const togglePin = (id) => { setNotices(notices.map(n => n.id === id ? { ...n, is_pinned: !n.is_pinned } : n)); };
-  const deleteNotice = (id) => { setNotices(notices.filter(n => n.id !== id)); setSelected(null); };
+  const togglePin = (id) => {
+    const n = notices.find(x => x.id === id);
+    if (n) api.notices.update(id, { is_pinned: !n.is_pinned }).then(loadNotices).catch(() => {});
+  };
+  const deleteNotice = (id) => {
+    api.notices.del(id).then(() => { loadNotices(); setSelected(null); }).catch(() => {});
+  };
 
   const sorted = [...notices].sort((a, b) => {
     if (a.is_pinned && !b.is_pinned) return -1;
@@ -187,11 +183,9 @@ function VocPage() {
   const [sort, setSort] = React.useState('popular');
   const [selected, setSelected] = React.useState(null);
   const [showForm, setShowForm] = React.useState(false);
-  const [posts, setPosts] = React.useState(() => {
-    try { const saved = localStorage.getItem('agenthub_voc'); return saved ? JSON.parse(saved) : MOCK_VOC; }
-    catch { return MOCK_VOC; }
-  });
-  React.useEffect(() => { localStorage.setItem('agenthub_voc', JSON.stringify(posts)); }, [posts]);
+  const [posts, setPosts] = React.useState(MOCK_VOC);
+  const loadVoc = () => { api.voc.list({ sort: sort === 'popular' ? 'popular' : 'newest' }).then(d => { if (d && d.length > 0) setPosts(d); }).catch(() => {}); };
+  React.useEffect(loadVoc, []);
 
   const [formCat, setFormCat] = React.useState('suggestion');
   const [formTitle, setFormTitle] = React.useState('');
@@ -204,19 +198,9 @@ function VocPage() {
 
   const handleSubmit = () => {
     if (!formTitle.trim() || !formContent.trim()) return;
-    const newPost = {
-      id: 'v-' + Date.now(),
-      title: formTitle.trim(),
-      content: formContent.trim(),
-      category: formCat,
-      author: { name: '고영현', id: '2074795', initial: '고' },
-      status: 'open',
-      upvotes: 0, comments: 0,
-      created_at: new Date().toISOString().slice(0, 10),
-    };
-    setPosts([newPost, ...posts]);
-    setFormTitle(''); setFormContent(''); setFormCat('suggestion');
-    setShowForm(false); setShowPreview(false);
+    api.voc.create({ title: formTitle.trim(), content: formContent.trim(), category: formCat })
+      .then(() => { loadVoc(); setFormTitle(''); setFormContent(''); setFormCat('suggestion'); setShowForm(false); setShowPreview(false); })
+      .catch(() => {});
   };
 
   const filtered = posts

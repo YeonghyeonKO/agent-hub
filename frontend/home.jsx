@@ -1,13 +1,43 @@
 // Home page (landing / browse)
 
+// Map API response to card-compatible shape
+function apiToCard(item) {
+  return {
+    ...item,
+    desc: item.description || item.desc || '',
+    stars: item.stars_count ?? item.stars ?? 0,
+    downloads: item.downloads_count ?? item.downloads ?? 0,
+    author: item.author || { name: '', id: '', initial: '' },
+    minLF: item.min_langflow_ver || item.minLF || '',
+    maxLF: item.max_langflow_ver || item.maxLF || '',
+    standard: item.is_standard ?? item.standard ?? false,
+    incompat: item.min_langflow_ver && item.max_langflow_ver && item.min_langflow_ver === item.max_langflow_ver && item.min_langflow_ver < '1.8.0',
+    updatedAgo: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : item.updatedAgo || '',
+  };
+}
+window.apiToCard = apiToCard;
+
 function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   const [activeCat, setActiveCat] = React.useState('all');
   const [sortBy, setSortBy] = React.useState('popular');
   const [query, setQuery] = React.useState('');
   const { t } = useI18n();
 
-  const filtered = COMPONENTS.filter(c => {
-    if (query && !c.title.toLowerCase().includes(query.toLowerCase()) && !c.desc.includes(query)) return false;
+  // Fetch from API, fallback to mock
+  const [components, setComponents] = React.useState(COMPONENTS);
+  const [notices, setNotices] = React.useState(MOCK_NOTICES);
+  React.useEffect(() => {
+    api.components.list({ sort: sortBy, search: query || undefined, category: activeCat === 'all' ? undefined : activeCat })
+      .then(d => { if (d.items && d.items.length > 0) setComponents(d.items.map(apiToCard)); })
+      .catch(() => {});
+    api.notices.list()
+      .then(d => { if (d && d.length > 0) setNotices(d.map(n => ({...n, is_pinned: n.is_pinned, author: n.author || {name:'', id:'', initial:''}}))); })
+      .catch(() => {});
+  }, []);
+
+  const filtered = components.filter(c => {
+    const desc = c.desc || c.description || '';
+    if (query && !c.title.toLowerCase().includes(query.toLowerCase()) && !desc.includes(query)) return false;
     if (activeCat === 'all') return true;
     if (activeCat === 'rag') return c.category === 'RAG / 검색';
     if (activeCat === 'doc') return c.category === '문서 처리';
@@ -15,8 +45,8 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
     if (activeCat === 'workflow') return c.category === '워크플로우';
     return false;
   }).sort((a, b) => {
-    if (sortBy === 'new') return (b.updatedAgo < a.updatedAgo ? -1 : 1);
-    return (b.stars + b.downloads) - (a.stars + a.downloads);
+    if (sortBy === 'new') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    return ((b.stars || b.stars_count || 0) + (b.downloads || b.downloads_count || 0)) - ((a.stars || a.stars_count || 0) + (a.downloads || a.downloads_count || 0));
   });
 
   const catI18n = { all: t('filter_all'), rag: t('cat_rag'), doc: t('cat_doc'), data: t('cat_data'), workflow: t('cat_workflow'), agent: t('cat_agent'), utility: t('cat_util') };
@@ -45,9 +75,9 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
       </div>
 
       {/* Pinned notices */}
-      {window.MOCK_NOTICES && window.MOCK_NOTICES.filter(n => n.is_pinned).length > 0 && (
+      {notices.filter(n => n.is_pinned).length > 0 && (
         <div style={{marginBottom: 22}}>
-          {window.MOCK_NOTICES.filter(n => n.is_pinned).map(n => (
+          {notices.filter(n => n.is_pinned).map(n => (
             <div key={n.id} onClick={onGoNotice} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 16px', marginBottom: 6,
@@ -113,7 +143,8 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   );
 }
 
-function ComponentCard({ c, onClick }) {
+function ComponentCard({ c: raw, onClick }) {
+  const c = raw.stars_count !== undefined ? apiToCard(raw) : raw;
   const Icon = Icons[c.icon] || Icons.Box;
   const chipClass = c.type === 'py' ? 'chip-py' : 'chip-json';
   const isIncompat = c.incompat;

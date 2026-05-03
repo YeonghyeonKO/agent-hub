@@ -3,15 +3,51 @@
 function UploadModal({ onClose }) {
   const [step, setStep] = React.useState(0); // 0: file, 1: meta, 2: confirm
   const [hasFile, setHasFile] = React.useState(false);
+  const [realFile, setRealFile] = React.useState(null);
   const [drag, setDrag] = React.useState(false);
   const [fileType, setFileType] = React.useState('py');
-  const [title, setTitle] = React.useState('SmartChunker');
-  const [desc, setDesc] = React.useState('의미 단위로 자동 분할하는 한국어 특화 청커');
+  const [title, setTitle] = React.useState('');
+  const [desc, setDesc] = React.useState('');
   const [category, setCategory] = React.useState('RAG / 검색');
   const [minVer, setMinVer] = React.useState('1.8.0');
   const [maxVer, setMaxVer] = React.useState('1.9.1');
   const [tested, setTested] = React.useState(['1.9.1', '1.9.0', '1.8.3']);
-  const [deps, setDeps] = React.useState('kss>=4.0, kiwipiepy');
+  const [deps, setDeps] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const handleRealFile = (file) => {
+    if (!file) return;
+    setRealFile(file);
+    setHasFile(true);
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext === 'json') setFileType('json');
+    else setFileType('py');
+    if (!title) setTitle(file.name.replace(/\.(py|json)$/i, ''));
+  };
+
+  const handleSubmitToAPI = async () => {
+    if (!realFile || !title.trim()) return;
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', realFile);
+      fd.append('title', title.trim());
+      fd.append('type', fileType);
+      fd.append('description', desc.trim());
+      fd.append('category', category);
+      fd.append('version', 'v1.0.0');
+      fd.append('min_langflow_ver', minVer);
+      fd.append('max_langflow_ver', maxVer === '제한 없음' ? '' : maxVer);
+      fd.append('tested_versions', tested.join(','));
+      fd.append('icon', fileType === 'json' ? 'Workflow' : 'Box');
+      await api.components.create(fd);
+      onClose();
+    } catch (e) {
+      console.error('Upload failed:', e);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const toggleVer = (v) => {
     setTested(t => t.includes(v) ? t.filter(x => x !== v) : [...t, v]);
@@ -70,15 +106,15 @@ function UploadModal({ onClose }) {
                 className={`dropzone ${drag ? 'drag' : ''} ${hasFile ? 'has-file' : ''}`}
                 onDragOver={e => { e.preventDefault(); setDrag(true); }}
                 onDragLeave={() => setDrag(false)}
-                onDrop={e => { e.preventDefault(); setDrag(false); setHasFile(true); }}
-                onClick={() => setHasFile(true)}
+                onDrop={e => { e.preventDefault(); setDrag(false); handleRealFile(e.dataTransfer.files[0]); }}
+                onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.py,.json'; inp.onchange = e => handleRealFile(e.target.files[0]); inp.click(); }}
               >
                 {hasFile ? (
                   <div>
                     <div style={{display: 'inline-flex', alignItems: 'center', gap: 10, padding: '10px 16px', background: 'var(--bg-elev)', borderRadius: 8, border: '1px solid var(--ok)'}}>
                       <Icons.Check size={14}/>
-                      <span className="mono" style={{fontWeight: 600, fontSize: 13}}>smart_chunker.py</span>
-                      <span className="muted-sm">· 4.2 KB</span>
+                      <span className="mono" style={{fontWeight: 600, fontSize: 13}}>{realFile ? realFile.name : 'file'}</span>
+                      <span className="muted-sm">· {realFile ? (realFile.size / 1024).toFixed(1) + ' KB' : ''}</span>
                     </div>
                     <div className="muted-sm" style={{marginTop: 10, fontSize: 11.5}}>다른 파일로 교체하려면 클릭하세요</div>
                   </div>
@@ -231,8 +267,8 @@ function UploadModal({ onClose }) {
                 다음 <Icons.ArrowRight size={11}/>
               </button>
             ) : (
-              <button className="btn btn-accent btn-sm" onClick={onClose}>
-                <Icons.Check size={11}/> 제출하기
+              <button className="btn btn-accent btn-sm" onClick={handleSubmitToAPI} disabled={submitting} style={{opacity: submitting ? 0.5 : 1}}>
+                <Icons.Check size={11}/> {submitting ? '제출 중...' : '제출하기'}
               </button>
             )}
           </div>
