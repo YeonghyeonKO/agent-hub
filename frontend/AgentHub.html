@@ -62,11 +62,41 @@ function DetailOverlay({ detail, onClose, onOpenComponent }) {
   );
 }
 
+// Hash-based routing with component detail support
+const ROUTES = ['home', 'mine', 'ranking', 'notice', 'voc', 'guide', 'admin'];
+function getRouteFromHash() {
+  const parts = window.location.hash.replace('#/', '').split('/');
+  const page = parts[0] || 'home';
+  if (ROUTES.includes(page)) return { name: page };
+  return { name: 'home' };
+}
+function getDetailFromHash() {
+  const parts = window.location.hash.replace('#/', '').split('/');
+  if ((parts[0] === 'component' || parts[0] === 'flow') && parts[1]) {
+    return { id: parts[1], type: parts[0] };
+  }
+  return null;
+}
+
 function App() {
-  const [route, setRoute] = React.useState({ name: 'home' });
+  const [route, setRoute] = React.useState(getRouteFromHash());
   const [showUpload, setShowUpload] = React.useState(false);
-  const [detailModal, setDetailModal] = React.useState(null); // { component, type: 'component'|'flow' }
+  const [detailModal, setDetailModal] = React.useState(null);
+
+  // Open detail from URL on load (e.g. #/component/{uuid})
+  React.useEffect(() => {
+    const d = getDetailFromHash();
+    if (d && d.id) {
+      api.components.get(d.id)
+        .then(c => setDetailModal({ component: c, type: d.type }))
+        .catch(() => {});
+    }
+  }, []);
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [userRole, setUserRole] = React.useState('user');
+  React.useEffect(() => {
+    api.users.me().then(u => setUserRole(u.role || 'user')).catch(() => {});
+  }, []);
   const [lang, setLang] = React.useState('ko');
   const toggleLang = () => {
     const next = lang === 'ko' ? 'en' : 'ko';
@@ -74,6 +104,29 @@ function App() {
     window.__agenthub_lang = next;
     window.dispatchEvent(new Event('langchange'));
   };
+
+  // Sync route → hash
+  React.useEffect(() => {
+    const hash = '#/' + route.name;
+    if (window.location.hash !== hash) window.history.pushState(null, '', hash);
+  }, [route.name]);
+
+  // Listen for browser back/forward
+  React.useEffect(() => {
+    const onPop = () => {
+      const d = getDetailFromHash();
+      if (d && d.id) {
+        api.components.get(d.id)
+          .then(c => setDetailModal({ component: c, type: d.type }))
+          .catch(() => setDetailModal(null));
+      } else {
+        setDetailModal(null);
+        setRoute(getRouteFromHash());
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Apply tweaks to CSS vars
   React.useEffect(() => {
@@ -93,9 +146,14 @@ function App() {
 
   const goHome = () => setRoute({ name: 'home' });
   const openComponent = (c) => {
-    setDetailModal({ component: c, type: c.type === 'json' ? 'flow' : 'component' });
+    const type = c.type === 'json' ? 'flow' : 'component';
+    setDetailModal({ component: c, type });
+    if (c.id) window.history.pushState(null, '', `#/${type}/${c.id}`);
   };
-  const closeDetail = () => setDetailModal(null);
+  const closeDetail = () => {
+    setDetailModal(null);
+    window.history.pushState(null, '', `#/${route.name}`);
+  };
   const goAdmin = () => setRoute({ name: 'admin' });
   const goMine = () => setRoute({ name: 'mine' });
   const goRanking = () => setRoute({ name: 'ranking' });
@@ -117,7 +175,7 @@ function App() {
         onOpenUpload={() => setShowUpload(true)}
         onToggleLang={toggleLang}
         lang={lang}
-        role={tweaks.role}
+        role={userRole}
       />
 
       {route.name === 'home' && (
@@ -168,32 +226,6 @@ function App() {
         </div>
       </footer>
 
-      <TweaksPanel title="Tweaks">
-        <TweakSection title="브랜드">
-          <TweakColor label="강조 색상" value={tweaks.accent} onChange={v => setTweak('accent', v)} swatches={['#4f46e5', '#0ea5e9', '#16a34a', '#dc2626', '#a855f7', '#1a1a18']}/>
-        </TweakSection>
-        <TweakSection title="레이아웃">
-          <TweakRadio label="밀도" value={tweaks.density} onChange={v => setTweak('density', v)} options={[
-            { value: 'comfortable', label: '여유' },
-            { value: 'compact', label: '컴팩트' },
-          ]}/>
-          <TweakToggle label="2026 배너 표시" value={tweaks.showSeasonBanner} onChange={v => setTweak('showSeasonBanner', v)}/>
-          <TweakToggle label="순위 트로피 표시" value={tweaks.showTrophies} onChange={v => setTweak('showTrophies', v)}/>
-        </TweakSection>
-        <TweakSection title="역할">
-          <TweakRadio label="사용자 역할" value={tweaks.role} onChange={v => setTweak('role', v)} options={[
-            { value: 'user', label: '일반' },
-            { value: 'admin', label: '관리자' },
-          ]}/>
-        </TweakSection>
-
-      </TweaksPanel>
-
-      {/* expose tweaks to children via dataset for things like trophy/banner toggles */}
-      <style>{`
-        ${!tweaks.showTrophies ? '.trophy { display: none !important; }' : ''}
-        ${!tweaks.showSeasonBanner ? '.season-banner { display: none !important; }' : ''}
-      `}</style>
     </div>
   );
 }
