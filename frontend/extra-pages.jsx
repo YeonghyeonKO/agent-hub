@@ -393,7 +393,8 @@ function GuidePage() {
           })}
           <div className="guide-side-foot">
             <div className="muted-sm" style={{fontSize: 11.5, marginBottom: 6}}>외부 자료</div>
-            <a className="guide-side-link" href="https://langflow-guide.posong.space" target="_blank" rel="noopener"><Icons.Globe size={11}/> Langflow 공식 가이드</a>
+            <a className="guide-side-link" href="https://docs.langflow.org/" target="_blank" rel="noopener"><Icons.Globe size={11}/> Langflow 공식 문서</a>
+            <a className="guide-side-link" href="https://langflow-guide.posong.space" target="_blank" rel="noopener"><Icons.Globe size={11}/> Langflow 사내 가이드</a>
             <a className="guide-side-link"><Icons.Comment size={11}/> #agenthub-help</a>
             <a className="guide-side-link"><Icons.FileText size={11}/> 정책 문서 (Confluence)</a>
           </div>

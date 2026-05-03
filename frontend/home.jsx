@@ -4,6 +4,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   const [activeCat, setActiveCat] = React.useState('all');
   const [sortBy, setSortBy] = React.useState('popular');
   const [query, setQuery] = React.useState('');
+  const { t } = useI18n();
 
   const filtered = COMPONENTS.filter(c => {
     if (query && !c.title.toLowerCase().includes(query.toLowerCase()) && !c.desc.includes(query)) return false;
@@ -13,6 +14,10 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
     if (activeCat === 'data') return c.category === '데이터 / ERP';
     if (activeCat === 'workflow') return c.category === '워크플로우';
     return false;
+  }).sort((a, b) => {
+    if (sortBy === 'new') return (b.updatedAgo < a.updatedAgo ? -1 : 1);
+    // popular: by stars + downloads
+    return (b.stars + b.downloads) - (a.stars + a.downloads);
   });
 
   return (
@@ -63,13 +68,13 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
       {/* Title row */}
       <div className="gallery-head">
         <div>
-          <div className="h1">홈</div>
-          <div className="gallery-tagline">구성원이 직접 개발하여 공유한 Component·Flow를 활용하여 내 Agent를 업그레이드해보세요.</div>
+          <div className="h1">{t('home_title')}</div>
+          <div className="gallery-tagline">{t('home_tagline')}</div>
         </div>
         <div className="row gap-8">
           <div className="segmented" style={{height: 32}}>
-            <button className={`segmented-item ${sortBy==='popular'?'active':''}`} onClick={() => setSortBy('popular')}>인기순</button>
-            <button className={`segmented-item ${sortBy==='new'?'active':''}`} onClick={() => setSortBy('new')}>최신순</button>
+            <button className={`segmented-item ${sortBy==='popular'?'active':''}`} onClick={() => setSortBy('popular')}>{t('sort_popular')}</button>
+            <button className={`segmented-item ${sortBy==='new'?'active':''}`} onClick={() => setSortBy('new')}>{t('sort_new')}</button>
           </div>
         </div>
       </div>

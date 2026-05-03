@@ -15,6 +15,7 @@
 <div id="root"></div>
 
 <script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="i18n.jsx"></script>
 <script type="text/babel" src="data.jsx"></script>
 <script type="text/babel" src="home.jsx"></script>
 <script type="text/babel" src="component-detail.jsx"></script>
@@ -38,7 +39,12 @@ function App() {
   const [showUpload, setShowUpload] = React.useState(false);
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [lang, setLang] = React.useState('ko');
-  const toggleLang = () => setLang(l => l === 'ko' ? 'en' : 'ko');
+  const toggleLang = () => {
+    const next = lang === 'ko' ? 'en' : 'ko';
+    setLang(next);
+    window.__agenthub_lang = next;
+    window.dispatchEvent(new Event('langchange'));
+  };
 
   // Apply tweaks to CSS vars
   React.useEffect(() => {
@@ -169,6 +175,7 @@ function App() {
 }
 
 function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, onToggleLang, lang, role }) {
+  const { t } = useI18n();
   return (
     <div className="topbar">
       <div className="brand" onClick={onGoHome}>
@@ -176,30 +183,29 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
         <span><span style={{color: 'var(--accent)'}}>AgentH</span>ub</span>
       </div>
       <div className="nav-links">
-        <a className={`nav-link ${route.name === 'home' ? 'active' : ''}`} onClick={onGoHome}>홈</a>
-        <a className={`nav-link ${route.name === 'mine' ? 'active' : ''}`} onClick={onGoMine}>내 Component / Flow</a>
-        <a className={`nav-link ${route.name === 'ranking' ? 'active' : ''}`} onClick={onGoRanking}>2026 랭킹</a>
-        <a className={`nav-link ${route.name === 'notice' ? 'active' : ''}`} onClick={onGoNotice}>공지사항</a>
-        <a className={`nav-link ${route.name === 'voc' ? 'active' : ''}`} onClick={onGoVoc}>VoC</a>
-        <a className={`nav-link ${route.name === 'guide' ? 'active' : ''}`} onClick={onGoGuide}>가이드</a>
+        <a className={`nav-link ${route.name === 'home' ? 'active' : ''}`} onClick={onGoHome}>{t('nav_home')}</a>
+        <a className={`nav-link ${route.name === 'mine' ? 'active' : ''}`} onClick={onGoMine}>{t('nav_mine')}</a>
+        <a className={`nav-link ${route.name === 'ranking' ? 'active' : ''}`} onClick={onGoRanking}>{t('nav_ranking')}</a>
+        <a className={`nav-link ${route.name === 'notice' ? 'active' : ''}`} onClick={onGoNotice}>{t('nav_notice')}</a>
+        <a className={`nav-link ${route.name === 'voc' ? 'active' : ''}`} onClick={onGoVoc}>{t('nav_voc')}</a>
+        <a className={`nav-link ${route.name === 'guide' ? 'active' : ''}`} onClick={onGoGuide}>{t('nav_guide')}</a>
         {role === 'admin' && (
-          <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>관리자</a>
+          <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>{t('nav_admin')}</a>
         )}
       </div>
       <div className="nav-spacer"/>
       <div className="nav-search">
         <Icons.Search size={13}/>
-        <input placeholder="Component · Flow · 개발자 검색…"/>
+        <input placeholder={t('search_placeholder')}/>
       </div>
       <button className="btn btn-secondary btn-sm" onClick={onOpenUpload}>
-        <Icons.Plus size={12}/> 제출
+        <Icons.Plus size={12}/> {t('btn_submit')}
       </button>
       <button className="btn btn-ghost" onClick={onToggleLang} title="한국어/English" style={{fontSize: 15, padding: '4px 8px'}}>
         {lang === 'en' ? '🇺🇸' : '🇰🇷'}
       </button>
-      <div className="user-chip">
+      <div className="user-chip" style={{padding: 3}}>
         <div className="avatar">고</div>
-        <div className="user-chip-label">고영현</div>
       </div>
     </div>
   );
