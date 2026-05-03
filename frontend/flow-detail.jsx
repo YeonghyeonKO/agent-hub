@@ -61,7 +61,7 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
           </div>
         </div>
         <div className="detail-actions">
-          <button className="btn btn-secondary" onClick={() => { if (c.id) api.components.star(c.id).catch(() => {}); }}><Icons.Star size={13}/> {c.stars_count ?? c.stars}</button>
+          <button className="btn btn-secondary" onClick={() => { const id = c.id; if (id && String(id).includes('-')) api.components.star(id).catch(() => {}); }}><Icons.Star size={13}/> {c.stars_count ?? c.stars}</button>
           <button className="btn btn-secondary" onClick={() => { navigator.clipboard?.writeText(JSON.stringify({name: c.title, version: c.version, nodes: FLOW_NODES.map(n => ({id: n.id, type: n.label})), edges: FLOW_EDGES}, null, 2)); }}><Icons.Code size={13}/> JSON 복사</button>
           <button className="btn btn-primary" onClick={() => {
             const json = JSON.stringify({name: c.title, version: c.version, langflow: `>=${c.minLF},<=${c.maxLF}`, nodes: FLOW_NODES.map(n => ({id: n.id, type: n.label, config: n.tooltip?.meta || {}})), edges: FLOW_EDGES.map(([f,t,d]) => ({from: f, to: t, dashed: !!d}))}, null, 2);

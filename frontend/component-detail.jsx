@@ -73,7 +73,7 @@ function ComponentDetail({ component, onBack }) {
           </div>
         </div>
         <div className="detail-actions">
-          <button className="btn btn-secondary" onClick={() => { if (c.id) api.components.star(c.id).catch(() => {}); }}><Icons.Star size={13}/> {c.stars_count ?? c.stars}</button>
+          <button className="btn btn-secondary" onClick={() => { const id = c.id; if (id && String(id).includes('-')) api.components.star(id).catch(() => {}); }}><Icons.Star size={13}/> {c.stars_count ?? c.stars}</button>
           <button className="btn btn-secondary" onClick={() => { navigator.clipboard?.writeText(SAMPLE_PY_CODE); }}><Icons.Copy size={13}/> 코드 복사</button>
           <button className="btn btn-primary" onClick={() => {
             const blob = new Blob([SAMPLE_PY_CODE], {type: 'text/plain'});

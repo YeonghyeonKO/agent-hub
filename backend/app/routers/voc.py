@@ -61,6 +61,7 @@ class VocPostDetail(VocPostResponse):
 @router.get("", response_model=list[VocPostResponse])
 async def list_voc_posts(
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
     category: str | None = None,
     status: str | None = None,
     sort: str = "newest",
@@ -93,6 +94,7 @@ async def list_voc_posts(
     for p in posts:
         upvote_count = (await db.execute(select(func.count()).where(VocUpvote.post_id == p.id))).scalar() or 0
         comment_count = (await db.execute(select(func.count()).where(VocComment.post_id == p.id))).scalar() or 0
+        is_upvoted = (await db.execute(select(VocUpvote).where(VocUpvote.post_id == p.id, VocUpvote.user_id == user.employee_id))).scalar_one_or_none() is not None
         items.append(
             VocPostResponse(
                 id=p.id,
@@ -103,6 +105,7 @@ async def list_voc_posts(
                 status=p.status,
                 upvote_count=upvote_count,
                 comment_count=comment_count,
+                is_upvoted=is_upvoted,
                 created_at=p.created_at.isoformat(),
                 updated_at=p.updated_at.isoformat(),
             )

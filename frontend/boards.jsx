@@ -356,8 +356,8 @@ function VocPage() {
                onMouseOut={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.transform = ''; }}>
             <div className="row" style={{gap: 16}}>
               <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 44}}>
-                <button className="btn btn-icon btn-ghost" style={{color: 'var(--text-3)'}} onClick={e => { e.stopPropagation(); api.voc.upvote(v.id).then(loadVoc).catch(() => {}); }}><Icons.Star size={16}/></button>
-                <span className="mono" style={{fontSize: 13, fontWeight: 700}}>{v.upvote_count ?? v.upvotes ?? 0}</span>
+                <button className="btn btn-icon btn-ghost" style={{color: v.is_upvoted ? '#f59e0b' : 'var(--text-3)'}} onClick={e => { e.stopPropagation(); api.voc.upvote(v.id).then(() => { loadVoc(); }).catch(() => {}); }}><Icons.Star size={16} filled={v.is_upvoted}/></button>
+                <span className="mono" style={{fontSize: 13, fontWeight: 700, color: v.is_upvoted ? '#f59e0b' : undefined}}>{v.upvote_count ?? v.upvotes ?? 0}</span>
               </div>
               <div style={{flex: 1, minWidth: 0}}>
                 <div className="row gap-8" style={{marginBottom: 6}}>
