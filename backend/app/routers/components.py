@@ -3,6 +3,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse, PlainTextResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -230,3 +231,39 @@ async def record_download(
     await db.commit()
 
     return {"file_path": component.file_path, "message": "Download recorded"}
+
+
+@router.get("/{component_id}/file")
+async def get_file_content(
+    component_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    component = await db.get(Component, component_id)
+    if not component or not component.file_path:
+        raise HTTPException(status_code=404, detail="File not found")
+    if not os.path.exists(component.file_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    with open(component.file_path, "r", encoding="utf-8", errors="replace") as f:
+        content = f.read()
+    return {"filename": os.path.basename(component.file_path), "content": content, "type": component.type}
+
+
+@router.get("/{component_id}/download-file")
+async def download_file(
+    component_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+):
+    component = await db.get(Component, component_id)
+    if not component or not component.file_path:
+        raise HTTPException(status_code=404, detail="File not found")
+    if not os.path.exists(component.file_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    download = Download(user_id=user.employee_id, component_id=component_id)
+    db.add(download)
+    await db.commit()
+
+    ext = os.path.splitext(component.file_path)[1]
+    filename = component.title.replace(" ", "_") + ext
+    return FileResponse(component.file_path, filename=filename)

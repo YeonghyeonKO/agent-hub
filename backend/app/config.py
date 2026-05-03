@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     KEYCLOAK_CLIENT_SECRET: str = ""
     CORS_ORIGINS: str = "http://localhost:8080,https://agent-hub.internal"
     UPLOAD_DIR: str = "/data/uploads"
+    DEV_MODE: bool = True  # Skip Keycloak auth, use dev user
 
     @property
     def keycloak_issuer(self) -> str:

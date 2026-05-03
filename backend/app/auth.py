@@ -11,7 +11,7 @@ from app.config import settings
 from app.database import get_db
 from app.models.models import User
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=not settings.DEV_MODE)
 
 _jwks_cache: dict | None = None
 
@@ -49,17 +49,43 @@ def _decode_token(token: str, jwks: dict) -> dict:
     return payload
 
 
+async def _get_or_create_dev_user(db: AsyncSession) -> User:
+    """Dev mode: return a default admin user without auth."""
+    result = await db.execute(select(User).where(User.employee_id == "2074795"))
+    user = result.scalar_one_or_none()
+    if user is None:
+        user = User(
+            employee_id="2074795",
+            name="고영현",
+            email="yeonghyeon.ko@skhynix.com",
+            team="AI플랫폼팀",
+            org="AI/Data Platform",
+            role="admin",
+            keycloak_sub="dev-user",
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    return user
+
+
 async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)] = None,
 ) -> User:
+    # Dev mode: skip auth
+    if settings.DEV_MODE:
+        return await _get_or_create_dev_user(db)
+
+    if credentials is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
     token = credentials.credentials
     jwks = await _get_jwks()
 
     try:
         payload = _decode_token(token, jwks)
     except JWTError:
-        # Retry with fresh JWKS (key rotation)
         global _jwks_cache
         _jwks_cache = None
         jwks = await _get_jwks()
@@ -77,7 +103,6 @@ async def get_current_user(
     if not sub:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing sub claim")
 
-    # Upsert user
     result = await db.execute(select(User).where(User.keycloak_sub == sub))
     user = result.scalar_one_or_none()
 
