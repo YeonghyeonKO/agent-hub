@@ -91,6 +91,11 @@ const I18N = {
     guide_quickstart: '빠른 시작', guide_naming: '네이밍 규칙',
     guide_standard: '표준 인증 기준', guide_review: '심사 프로세스',
     guide_versioning: '버전 호환성', guide_faq: '자주 묻는 질문',
+    guide_lf_promo_eyebrow: 'Langflow 공식 가이드',
+    guide_lf_promo_desc: '설치, 노드 구성, 디버깅, 배포까지 Langflow 자체의 사용법은 외부 가이드에서 확인하세요.',
+    guide_lf_docs: 'Langflow 공식 문서',
+    guide_lf_internal: 'Langflow 사내 가이드',
+    guide_contact_channel: '문의 채널',
 
     // Footer
     footer_contact: '문의', footer_team: 'AI / Data Platform',
@@ -186,6 +191,11 @@ const I18N = {
     guide_quickstart: 'Quick Start', guide_naming: 'Naming Rules',
     guide_standard: 'Standard Certification', guide_review: 'Review Process',
     guide_versioning: 'Version Compatibility', guide_faq: 'FAQ',
+    guide_lf_promo_eyebrow: 'Langflow Official Guide',
+    guide_lf_promo_desc: 'For Langflow usage — installation, node setup, debugging, and deployment — refer to the external guide.',
+    guide_lf_docs: 'Langflow Official Docs',
+    guide_lf_internal: 'Langflow Internal Guide',
+    guide_contact_channel: 'Contact Channel',
 
     // Footer
     footer_contact: 'Contact', footer_team: 'AI / Data Platform',

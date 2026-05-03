@@ -337,12 +337,12 @@ function GuidePage() {
   const [active, setActive] = React.useState('quickstart');
 
   const sections = [
-    { id: 'quickstart', title: '빠른 시작', icon: 'Zap' },
-    { id: 'naming', title: '네이밍 규칙', icon: 'Code' },
-    { id: 'standard', title: '표준 인증 기준', icon: 'Check' },
-    { id: 'review', title: '심사 프로세스', icon: 'Settings' },
-    { id: 'versioning', title: '버전 호환성', icon: 'Layers2' },
-    { id: 'faq', title: '자주 묻는 질문', icon: 'Comment' },
+    { id: 'quickstart', title: t('guide_quickstart'), icon: 'Zap' },
+    { id: 'naming', title: t('guide_naming'), icon: 'Code' },
+    { id: 'standard', title: t('guide_standard'), icon: 'Check' },
+    { id: 'review', title: t('guide_review'), icon: 'Settings' },
+    { id: 'versioning', title: t('guide_versioning'), icon: 'Layers2' },
+    { id: 'faq', title: t('guide_faq'), icon: 'Comment' },
   ];
 
   const steps = [
@@ -382,9 +382,9 @@ function GuidePage() {
           <Icons.Globe size={22}/>
         </div>
         <div style={{flex: 1, minWidth: 0}}>
-          <div className="lf-promo-eyebrow">Langflow 공식 가이드</div>
+          <div className="lf-promo-eyebrow">{t('guide_lf_promo_eyebrow')}</div>
           <div className="lf-promo-title">langflow-guide.posong.space</div>
-          <div className="lf-promo-desc">설치, 노드 구성, 디버깅, 배포까지 Langflow 자체의 사용법은 외부 가이드에서 확인하세요.</div>
+          <div className="lf-promo-desc">{t('guide_lf_promo_desc')}</div>
         </div>
         <div className="lf-promo-arrow">
           <Icons.ArrowRight size={16}/>
@@ -404,10 +404,9 @@ function GuidePage() {
           })}
           <div className="guide-side-foot">
             <div className="muted-sm" style={{fontSize: 11.5, marginBottom: 6}}>{t('guide_external')}</div>
-            <a className="guide-side-link" href="https://docs.langflow.org/" target="_blank" rel="noopener"><Icons.Globe size={11}/> Langflow Docs</a>
-            <a className="guide-side-link" href="https://langflow-guide.posong.space" target="_blank" rel="noopener"><Icons.Globe size={11}/> Langflow Guide (internal)</a>
-            <a className="guide-side-link"><Icons.Comment size={11}/> #agenthub-help</a>
-            <a className="guide-side-link"><Icons.FileText size={11}/> 정책 문서 (Confluence)</a>
+            <a className="guide-side-link" href="https://docs.langflow.org/" target="_blank" rel="noopener"><Icons.Globe size={11}/> {t('guide_lf_docs')}</a>
+            <a className="guide-side-link" href="https://langflow-guide.posong.space" target="_blank" rel="noopener"><Icons.Globe size={11}/> {t('guide_lf_internal')}</a>
+            <a className="guide-side-link"><Icons.Comment size={11}/> {t('guide_contact_channel')}</a>
           </div>
         </aside>
 
