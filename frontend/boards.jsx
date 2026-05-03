@@ -209,7 +209,25 @@ function VocPage() {
 
   const post = selected ? posts.find(v => v.id === selected) : null;
 
-  if (selected && post) {
+  // Fetch detail (with comments) from API when a post is selected
+  const [detail, setDetail] = React.useState(null);
+  const [commentText, setCommentText] = React.useState('');
+  React.useEffect(() => {
+    if (!selected) { setDetail(null); return; }
+    api.voc.get(selected).then(setDetail).catch(() => {});
+  }, [selected]);
+
+  const submitComment = () => {
+    if (!commentText.trim() || !selected) return;
+    api.voc.comment(selected, { content: commentText.trim() })
+      .then(() => { setCommentText(''); api.voc.get(selected).then(setDetail).catch(() => {}); })
+      .catch(() => {});
+  };
+
+  if (selected && (detail || post)) {
+    const d = detail || post;
+    const comments = d.comments || [];
+    const commentCount = typeof d.comment_count === 'number' ? d.comment_count : (Array.isArray(comments) ? comments.length : 0);
     return (
       <div className="page fade-in">
         <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} style={{marginBottom: 16}}>
@@ -217,36 +235,41 @@ function VocPage() {
         </button>
         <div className="card card-pad" style={{padding: 28}}>
           <div className="row gap-8" style={{marginBottom: 10}}>
-            <span className={`chip ${statusChip[post.status]}`}>{statusLabels[post.status]}</span>
-            <span className="chip chip-neutral">{catLabels[post.category]}</span>
+            <span className={`chip ${statusChip[d.status]}`}>{statusLabels[d.status]}</span>
+            <span className="chip chip-neutral">{catLabels[d.category]}</span>
           </div>
-          <h2 className="h2" style={{marginBottom: 12}}>{post.title}</h2>
+          <h2 className="h2" style={{marginBottom: 12}}>{d.title}</h2>
           <div className="row gap-8 muted-sm" style={{marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--line)'}}>
-            <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{post.author.initial}</div>
-            <span style={{fontWeight: 500, color: 'var(--text-2)'}}>{post.author.name}</span>
-            <span className="mono">({post.author.id})</span>
+            <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{(d.author?.name || '?')[0]}</div>
+            <span style={{fontWeight: 500, color: 'var(--text-2)'}}>{d.author?.name}</span>
+            <span className="mono">({d.author?.employee_id || d.author?.id})</span>
             <span>·</span>
-            <span>{post.created_at}</span>
+            <span>{d.created_at}</span>
             <span className="spacer"/>
-            <span style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Star size={12}/> {post.upvotes}</span>
-            <span style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Comment size={12}/> {post.comments}</span>
+            <span style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Star size={12}/> {d.upvote_count ?? d.upvotes ?? 0}</span>
+            <span style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Comment size={12}/> {commentCount}</span>
           </div>
           <div style={{marginBottom: 28}}>
-            <Markdown>{post.content}</Markdown>
+            <Markdown>{d.content}</Markdown>
           </div>
           <div style={{borderTop: '1px solid var(--line)', paddingTop: 20}}>
-            <div className="h3" style={{marginBottom: 14}}>{t('voc_comments')} {post.comments}</div>
-            <div style={{padding: 14, background: 'var(--bg-muted)', borderRadius: 8, marginBottom: 10}}>
-              <div className="row gap-8" style={{marginBottom: 6}}>
-                <div className="avatar sm" style={{background: '#dbeafe', color: '#1e40af'}}>정</div>
-                <span style={{fontWeight: 600, fontSize: 13}}>정승현</span>
-                <span className="muted-sm">· 1일 전</span>
+            <div className="h3" style={{marginBottom: 14}}>{t('voc_comments')} {commentCount}</div>
+            {Array.isArray(comments) && comments.map(c => (
+              <div key={c.id} style={{padding: 14, background: 'var(--bg-muted)', borderRadius: 8, marginBottom: 10}}>
+                <div className="row gap-8" style={{marginBottom: 6}}>
+                  <div className="avatar sm" style={{background: 'var(--accent-bg)', color: 'var(--accent-fg)'}}>{(c.author?.name || '?')[0]}</div>
+                  <span style={{fontWeight: 600, fontSize: 13}}>{c.author?.name}</span>
+                  <span className="muted-sm">· {c.created_at}</span>
+                </div>
+                <div style={{fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6}}>{c.content}</div>
               </div>
-              <div style={{fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6}}>좋은 제안입니다. 다음 스프린트에 반영 검토하겠습니다.</div>
-            </div>
+            ))}
+            {commentCount === 0 && !Array.isArray(comments) && (
+              <div className="muted-sm" style={{padding: 14}}>아직 댓글이 없습니다.</div>
+            )}
             <div className="row gap-8" style={{marginTop: 16}}>
-              <input className="input" placeholder={t('voc_comment_write')} style={{flex: 1}}/>
-              <button className="btn btn-accent btn-sm">{t('voc_comment_submit')}</button>
+              <input className="input" placeholder={t('voc_comment_write')} style={{flex: 1}} value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submitComment(); }}/>
+              <button className="btn btn-accent btn-sm" onClick={submitComment}>{t('voc_comment_submit')}</button>
             </div>
           </div>
         </div>
