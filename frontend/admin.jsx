@@ -34,16 +34,48 @@ function PeopleHover({ id, name, initial, children, side = 'bottom' }) {
 
 function AdminDashboard({ onBack }) {
   const [activeTab, setActiveTab] = React.useState('pending');
-  const [activeSubId, setActiveSubId] = React.useState('sub-1');
+  const [pendingList, setPendingList] = React.useState([]);
+  const [activeSubId, setActiveSubId] = React.useState(null);
   const [scores, setScores] = React.useState({
     functionality: 9,
     originality: 8,
     internalUtility: 10,
     documentation: 8,
   });
-  const [comment, setComment] = React.useState('한국어 청킹 품질이 우수합니다. README의 예시 입력/출력을 한 두 개 더 보강해주시면 좋겠어요.');
+  const [comment, setComment] = React.useState('');
 
-  const activeSub = SUBMISSIONS.find(s => s.id === activeSubId) || SUBMISSIONS[0];
+  // Fetch pending submissions from API
+  const loadPending = () => {
+    api.admin.pending().then(d => {
+      const items = (d || []).map(c => ({
+        id: c.id, type: c.type, title: c.title,
+        author: c.author?.name || '', authorId: c.author?.employee_id || '',
+        authorInitial: (c.author?.name || '?')[0],
+        version: c.version,
+        minLF: c.min_langflow_ver, maxLF: c.max_langflow_ver,
+        submittedAgo: fmtDate(c.created_at), status: 'pending', flagged: false,
+      }));
+      setPendingList(items);
+      if (items.length > 0 && !activeSubId) setActiveSubId(items[0].id);
+    }).catch(() => setPendingList(SUBMISSIONS));
+  };
+  React.useEffect(loadPending, []);
+
+  const handleApprove = () => {
+    if (!activeSubId) return;
+    api.admin.review(activeSubId, { scores, comment, decision: 'approve' })
+      .then(() => { loadPending(); setComment(''); })
+      .catch(e => console.error(e));
+  };
+  const handleReject = () => {
+    if (!activeSubId) return;
+    api.admin.review(activeSubId, { scores, comment, decision: 'reject' })
+      .then(() => { loadPending(); setComment(''); })
+      .catch(e => console.error(e));
+  };
+
+  const submissions = pendingList.length > 0 ? pendingList : SUBMISSIONS;
+  const activeSub = submissions.find(s => s.id === activeSubId) || submissions[0];
 
   return (
     <div className="page fade-in">
@@ -195,9 +227,8 @@ function AdminDashboard({ onBack }) {
               <Icons.Users size={11}/> 심사위원 3명 중 <strong style={{color: 'var(--text)'}}>1명 완료</strong>
             </div>
             <div className="row gap-8">
-              <button className="btn btn-danger btn-sm"><Icons.X size={11}/> 반려</button>
-              <button className="btn btn-secondary btn-sm">수정 요청</button>
-              <button className="btn btn-sm" style={{background: 'var(--ok)', color: 'white'}}><Icons.Check size={11}/> 승인 + 게시</button>
+              <button className="btn btn-danger btn-sm" onClick={handleReject}><Icons.X size={11}/> 반려</button>
+              <button className="btn btn-sm" style={{background: 'var(--ok)', color: 'white'}} onClick={handleApprove}><Icons.Check size={11}/> 승인 + 게시</button>
             </div>
           </div>
         </div>

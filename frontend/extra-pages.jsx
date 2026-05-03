@@ -148,10 +148,9 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
               </div>
 
               <div className="row gap-8" style={{marginTop: 16}}>
-                <button className="btn btn-secondary btn-sm">이어서 작성</button>
-                <button className="btn btn-ghost btn-sm">미리보기</button>
+                <button className="btn btn-secondary btn-sm" onClick={() => onOpenComponent && onOpenComponent(apiToCard(d))}>{t('draft_preview')}</button>
                 <span className="spacer"/>
-                {d.state === 'review' && <button className="btn btn-ghost btn-sm btn-ghost-danger">제출 취소</button>}
+                {d.state === 'review' && <span className="chip chip-warn" style={{fontSize: 11}}><Icons.Clock size={10}/> {t('draft_reviewing')}</span>}
               </div>
             </div>
           ))}

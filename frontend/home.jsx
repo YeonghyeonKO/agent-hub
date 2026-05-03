@@ -23,16 +23,23 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   const [query, setQuery] = React.useState('');
   const { t } = useI18n();
 
-  // Fetch from API, fallback to mock
-  const [components, setComponents] = React.useState(COMPONENTS);
-  const [notices, setNotices] = React.useState(MOCK_NOTICES);
+  // Fetch from API only — DB is seeded with real data
+  const [components, setComponents] = React.useState([]);
+  const [notices, setNotices] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const loadComponents = () => {
+    setLoading(true);
+    api.components.list({ sort: sortBy, search: query || undefined })
+      .then(d => { setComponents((d.items || []).map(apiToCard)); setLoading(false); })
+      .catch(() => { setComponents(COMPONENTS); setLoading(false); });
+  };
+
+  React.useEffect(loadComponents, [sortBy]);
   React.useEffect(() => {
-    api.components.list({ sort: sortBy, search: query || undefined, category: activeCat === 'all' ? undefined : activeCat })
-      .then(d => { if (d.items && d.items.length > 0) setComponents(d.items.map(apiToCard)); })
-      .catch(() => {});
     api.notices.list()
-      .then(d => { if (d && d.length > 0) setNotices(d.map(n => ({...n, is_pinned: n.is_pinned, author: n.author || {name:'', id:'', initial:''}}))); })
-      .catch(() => {});
+      .then(d => { if (d) setNotices(d); })
+      .catch(() => setNotices(MOCK_NOTICES));
   }, []);
 
   const filtered = components.filter(c => {
@@ -65,9 +72,6 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
           </div>
         </div>
         <div className="season-cta row gap-8">
-          <button className="btn btn-secondary" onClick={onGoAdmin} style={{background: 'transparent', borderColor: '#3d3d3a', color: 'var(--bg)'}}>
-            <Icons.Settings size={13}/> {t('season_admin')}
-          </button>
           <button className="btn btn-accent" onClick={onOpenUpload}>
             <Icons.Plus/> {t('season_new')}
           </button>
@@ -124,7 +128,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
         <div className="spacer"/>
         <div className="nav-search" style={{width: 240, height: 32}}>
           <Icons.Search size={13}/>
-          <input placeholder={t('search_inline')} value={query} onChange={e => setQuery(e.target.value)}/>
+          <input placeholder={t('search_inline')} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') loadComponents(); }}/>
         </div>
       </div>
 
