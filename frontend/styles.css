@@ -1830,8 +1830,19 @@ input[type=range].native-slider {
 
 
 /* ──────── Page footer ──────── */
+/* Sticky footer: app wrapper fills viewport, content grows */
+[data-screen-label] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+[data-screen-label] > .page,
+[data-screen-label] > .page-narrow {
+  flex: 1;
+}
+
 .page-footer {
-  margin-top: 80px;
+  margin-top: auto;
   border-top: 1px solid var(--line);
   background: var(--bg-elev);
 }
