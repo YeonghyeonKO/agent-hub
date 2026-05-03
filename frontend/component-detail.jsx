@@ -74,8 +74,13 @@ function ComponentDetail({ component, onBack }) {
         </div>
         <div className="detail-actions">
           <button className="btn btn-secondary"><Icons.Star size={13}/> {c.stars}</button>
-          <button className="btn btn-secondary"><Icons.Copy size={13}/> 코드 복사</button>
-          <button className="btn btn-primary"><Icons.Download size={13}/> 다운로드</button>
+          <button className="btn btn-secondary" onClick={() => { navigator.clipboard?.writeText(SAMPLE_PY_CODE); }}><Icons.Copy size={13}/> 코드 복사</button>
+          <button className="btn btn-primary" onClick={() => {
+            const blob = new Blob([SAMPLE_PY_CODE], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'smart_chunker.py'; a.click();
+            URL.revokeObjectURL(url);
+          }}><Icons.Download size={13}/> 다운로드</button>
         </div>
       </div>
 

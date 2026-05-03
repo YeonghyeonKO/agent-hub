@@ -181,6 +181,7 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
       <div className="brand" onClick={onGoHome}>
         <div className="brand-mark"/>
         <span><span style={{color: 'var(--accent)'}}>AgentH</span>ub</span>
+        <img src="assets/sk-ribbon.png" alt="" style={{width: 22, height: 22, marginLeft: 2}}/>
       </div>
       <div className="nav-links">
         <a className={`nav-link ${route.name === 'home' ? 'active' : ''}`} onClick={onGoHome}>{t('nav_home')}</a>

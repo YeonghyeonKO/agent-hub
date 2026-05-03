@@ -45,7 +45,15 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
           <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>{t('mine_desc')}</div>
         </div>
         <div className="row gap-8">
-          <button className="btn btn-secondary"><Icons.Download size={13}/> {t('mine_export')}</button>
+          <button className="btn btn-secondary" onClick={() => {
+            const rows = [['Title','Type','Version','Stars','Downloads','Updated']];
+            mine.forEach(c => rows.push([c.title, c.type, c.version, c.stars, c.downloads, c.updatedAgo]));
+            const csv = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'my-components.csv'; a.click();
+            URL.revokeObjectURL(url);
+          }}><Icons.Download size={13}/> {t('mine_export')}</button>
           <button className="btn btn-accent" onClick={onOpenUpload}><Icons.Plus/> {t('mine_new')}</button>
         </div>
       </div>
@@ -420,13 +428,6 @@ function GuidePage() {
                 ))}
               </div>
 
-              <div className="callout" style={{marginTop: 28}}>
-                <Icons.Zap size={14} style={{flexShrink: 0, marginTop: 2, color: 'var(--accent-fg)'}}/>
-                <div>
-                  <div style={{fontWeight: 600, marginBottom: 2}}>팁 — 표준 인증을 노리세요</div>
-                  <div className="muted" style={{fontSize: 13}}>표준 마크가 붙은 Component·Flow는 검색 노출이 2배, 내 부서 KPI에도 가산됩니다. 체크리스트는 옆 메뉴 "표준 인증 기준"에서 확인하세요.</div>
-                </div>
-              </div>
             </div>
           )}
 
