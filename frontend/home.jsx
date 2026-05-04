@@ -41,12 +41,18 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
 
   const loadComponents = () => {
     setLoading(true);
-    api.components.list({ sort: sortBy, search: query || undefined })
+    api.components.list({ sort: sortBy, search: query || undefined, limit: 50 })
       .then(d => { setComponents((d.items || []).map(apiToCard)); setLoading(false); })
-      .catch(() => { setComponents(COMPONENTS); setLoading(false); });
+      .catch(e => { console.error('Failed to load components:', e); setLoading(false); });
   };
 
+  // Load on mount, sort change, and when page gets focus (e.g. after admin approval)
   React.useEffect(loadComponents, [sortBy]);
+  React.useEffect(() => {
+    const onFocus = () => loadComponents();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [sortBy]);
   React.useEffect(() => {
     api.notices.list()
       .then(d => { if (d) setNotices(d); })

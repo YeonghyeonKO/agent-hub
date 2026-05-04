@@ -97,6 +97,25 @@ const I18N = {
     guide_lf_internal: 'Langflow 사내 가이드',
     guide_contact_channel: '문의 채널',
 
+    // Upload
+    upload_title: '새 Component / Flow 제출',
+    upload_subtitle: '.py Component 또는 .json Flow를 등록하세요',
+    upload_step_file: '파일', upload_step_meta: '기준 정보', upload_step_compat: '호환성·확인',
+    upload_type: '유형', upload_drop: '파일을 끌어 놓거나 클릭하여 선택',
+    upload_drop_hint: '.py · .json · 최대 5MB', upload_drop_replace: '다른 파일로 교체하려면 클릭하세요',
+    upload_validation: '사전 검증',
+    upload_field_title: '제목', upload_field_desc: '한 줄 설명',
+    upload_desc_hint: '홈 카드와 검색 결과에 표시됩니다',
+    upload_field_category: '카테고리', upload_field_icon: '아이콘',
+    upload_field_tags: '태그 (선택)', upload_tag_add: '추가', upload_tag_placeholder: '태그 입력',
+    upload_compat_title: 'Langflow 호환 버전', upload_compat_hint: '동작을 확인한 버전을 명시해주세요.',
+    upload_min_ver: '최소 버전', upload_max_ver: '최대 버전 (선택)', upload_tested: '동작 확인한 버전 (체크)',
+    upload_no_limit: '제한 없음',
+    upload_deps: '추가 의존성 (선택)', upload_deps_hint: 'requirements.txt 형식 · 쉼표로 구분',
+    upload_cancel: '취소', upload_prev: '이전', upload_next: '다음',
+    upload_submit: '제출하기', upload_submitting: '제출 중...',
+    upload_done_title: '제출 완료', upload_done_desc: '심사 대기 상태로 등록되었습니다.',
+
     // Admin
     admin_pending: '심사 대기', admin_approved: '승인됨', admin_rejected: '반려됨',
     admin_users: '사용자 관리', admin_settings: '설정',
@@ -201,6 +220,25 @@ const I18N = {
     guide_lf_docs: 'Langflow Official Docs',
     guide_lf_internal: 'Langflow Internal Guide',
     guide_contact_channel: 'Contact Channel',
+
+    // Upload
+    upload_title: 'Submit New Component / Flow',
+    upload_subtitle: 'Register a .py Component or .json Flow',
+    upload_step_file: 'File', upload_step_meta: 'Metadata', upload_step_compat: 'Compatibility',
+    upload_type: 'Type', upload_drop: 'Drag & drop or click to select',
+    upload_drop_hint: '.py · .json · max 5MB', upload_drop_replace: 'Click to replace file',
+    upload_validation: 'Validation',
+    upload_field_title: 'Title', upload_field_desc: 'Short description',
+    upload_desc_hint: 'Shown on home cards and search results',
+    upload_field_category: 'Category', upload_field_icon: 'Icon',
+    upload_field_tags: 'Tags (optional)', upload_tag_add: 'Add', upload_tag_placeholder: 'Enter tag',
+    upload_compat_title: 'Langflow Compatibility', upload_compat_hint: 'Specify tested versions.',
+    upload_min_ver: 'Min version', upload_max_ver: 'Max version (optional)', upload_tested: 'Tested versions',
+    upload_no_limit: 'No limit',
+    upload_deps: 'Dependencies (optional)', upload_deps_hint: 'requirements.txt format, comma separated',
+    upload_cancel: 'Cancel', upload_prev: 'Previous', upload_next: 'Next',
+    upload_submit: 'Submit', upload_submitting: 'Submitting...',
+    upload_done_title: 'Submitted', upload_done_desc: 'Registered as pending review.',
 
     // Admin
     admin_pending: 'Pending', admin_approved: 'Approved', admin_rejected: 'Rejected',
