@@ -98,17 +98,18 @@ function App() {
   const [userName, setUserName] = React.useState('');
   const [authReady, setAuthReady] = React.useState(false);
 
-  // Handle Keycloak OIDC callback + fetch user
+  // Initialize auth config + handle OIDC callback + fetch user
   React.useEffect(() => {
     (async () => {
+      await auth.init();
       await auth.handleCallback();
       try {
         const u = await api.users.me();
         setUserRole(u.role || 'user');
         setUserName(u.name || '');
       } catch (e) {
-        // If 401 and keycloak is configured, redirect to login
-        if (AUTH_CONFIG.keycloakUrl && !auth.isLoggedIn()) {
+        // If not dev mode and not logged in, redirect to Keycloak
+        if (!AUTH_CONFIG.devMode && !auth.isLoggedIn()) {
           auth.login();
           return;
         }
