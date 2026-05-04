@@ -15,6 +15,7 @@
 <div id="root"></div>
 
 <script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="auth.jsx"></script>
 <script type="text/babel" src="i18n.jsx"></script>
 <script type="text/babel" src="api.jsx"></script>
 <script type="text/babel" src="data.jsx"></script>
@@ -94,8 +95,26 @@ function App() {
   }, []);
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [userRole, setUserRole] = React.useState('user');
+  const [userName, setUserName] = React.useState('');
+  const [authReady, setAuthReady] = React.useState(false);
+
+  // Handle Keycloak OIDC callback + fetch user
   React.useEffect(() => {
-    api.users.me().then(u => setUserRole(u.role || 'user')).catch(() => {});
+    (async () => {
+      await auth.handleCallback();
+      try {
+        const u = await api.users.me();
+        setUserRole(u.role || 'user');
+        setUserName(u.name || '');
+      } catch (e) {
+        // If 401 and keycloak is configured, redirect to login
+        if (AUTH_CONFIG.keycloakUrl && !auth.isLoggedIn()) {
+          auth.login();
+          return;
+        }
+      }
+      setAuthReady(true);
+    })();
   }, []);
   const [lang, setLang] = React.useState('ko');
   const toggleLang = () => {
@@ -176,6 +195,7 @@ function App() {
         onToggleLang={toggleLang}
         lang={lang}
         role={userRole}
+        userName={userName}
       />
 
       {route.name === 'home' && (
@@ -230,7 +250,7 @@ function App() {
   );
 }
 
-function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, onToggleLang, lang, role }) {
+function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, onToggleLang, lang, role, userName }) {
   const { t } = useI18n();
   return (
     <div className="topbar">
@@ -261,8 +281,8 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
       <button className="btn btn-ghost" onClick={onToggleLang} title="한국어/English" style={{fontSize: 15, padding: '4px 8px'}}>
         {lang === 'en' ? '🇺🇸' : '🇰🇷'}
       </button>
-      <div className="user-chip" style={{padding: 3}}>
-        <div className="avatar">고</div>
+      <div className="user-chip" style={{padding: 3, cursor: 'pointer'}} onClick={() => { if (confirm('로그아웃 하시겠습니까?')) auth.logout(); }} title={userName || 'User'}>
+        <div className="avatar">{(userName || '?')[0]}</div>
       </div>
     </div>
   );

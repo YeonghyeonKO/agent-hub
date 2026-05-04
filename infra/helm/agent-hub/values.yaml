@@ -93,7 +93,7 @@ postgresql:
 
 # -- Application settings
 app:
-  devMode: false           # skip Keycloak auth, use dev admin user
+  devMode: true            # skip Keycloak auth, use dev admin user (set false when keycloak.enabled=true)
   uploadDir: /data/uploads
   corsOrigins: ""          # auto-derived from ingress if empty
   storage: 5Gi

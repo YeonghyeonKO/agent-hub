@@ -28,6 +28,12 @@ data:
         root /usr/share/nginx/html;
         index AgentHub.html;
 
+        {{- if .Values.keycloak.enabled }}
+        # Inject Keycloak config for frontend OIDC
+        sub_filter '</head>' '<script>window.__AGENTHUB_KEYCLOAK_URL="{{ .Values.keycloak.serverUrl }}";window.__AGENTHUB_KEYCLOAK_REALM="{{ .Values.keycloak.realm }}";window.__AGENTHUB_KEYCLOAK_CLIENT_ID="{{ .Values.keycloak.clientId }}";</script></head>';
+        sub_filter_once on;
+        {{- end }}
+
         location / {
             try_files $uri $uri/ /AgentHub.html;
         }
