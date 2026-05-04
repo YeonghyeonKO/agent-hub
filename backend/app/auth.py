@@ -1,7 +1,10 @@
+import logging
 from typing import Annotated
 
 import httpx
 from fastapi import Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
@@ -16,10 +19,20 @@ security = HTTPBearer(auto_error=not settings.DEV_MODE)
 _jwks_cache: dict | None = None
 
 
+def _get_ssl_context():
+    """Use corporate CA cert if mounted, else disable verify for air-gapped."""
+    import ssl, os
+    ca_path = "/etc/ssl/certs/corporate-ca.crt"
+    if os.path.exists(ca_path):
+        ctx = ssl.create_default_context(cafile=ca_path)
+        return ctx
+    return False  # disable SSL verify as fallback
+
+
 async def _get_jwks() -> dict:
     global _jwks_cache
     if _jwks_cache is None:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=_get_ssl_context()) as client:
             resp = await client.get(settings.keycloak_jwks_url)
             resp.raise_for_status()
             _jwks_cache = resp.json()
@@ -85,14 +98,16 @@ async def get_current_user(
 
     try:
         payload = _decode_token(token, jwks)
-    except JWTError:
+    except JWTError as e:
+        logger.warning(f"Token decode failed (retry with fresh JWKS): {e}")
         global _jwks_cache
         _jwks_cache = None
-        jwks = await _get_jwks()
         try:
+            jwks = await _get_jwks()
             payload = _decode_token(token, jwks)
-        except JWTError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        except Exception as e2:
+            logger.error(f"Token validation failed after JWKS refresh: {e2}")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {e2}")
 
     sub = payload.get("sub")
     employee_claim = settings.KEYCLOAK_EMPLOYEE_CLAIM
@@ -109,6 +124,7 @@ async def get_current_user(
 
     if user is None:
         employee_id = empno if empno else sub[:7]
+        logger.info(f"Creating new user: employee_id={employee_id}, name={username or empno}, sub={sub}")
         user = User(
             employee_id=employee_id,
             name=username or empno,
@@ -120,6 +136,7 @@ async def get_current_user(
         db.add(user)
         await db.commit()
         await db.refresh(user)
+        logger.info(f"User created: {employee_id}")
     else:
         changed = False
         if picture and user.profile_image_url != picture:
