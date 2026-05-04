@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import admin, auth_callback, components, notices, rankings, seed, users, voc
+from app.routers import admin, auth_callback, components, images, notices, rankings, seed, users, voc
 
 
 @asynccontextmanager
@@ -33,6 +33,7 @@ app.include_router(admin.router)
 app.include_router(rankings.router)
 app.include_router(notices.router)
 app.include_router(voc.router)
+app.include_router(images.router)
 app.include_router(auth_callback.router)
 app.include_router(seed.router)
 

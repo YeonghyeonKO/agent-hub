@@ -88,9 +88,12 @@ function NoticePage() {
           <div className="field">
             <div className="row" style={{justifyContent: 'space-between', marginBottom: 6}}>
               <label className="field-label" style={{margin: 0}}>{t('notice_field_content')} <span className="req">*</span></label>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowPreview(!showPreview)} style={{fontSize: 12}}>
-                <Icons.Eye size={11}/> {showPreview ? t('voc_edit') : t('voc_preview')}
-              </button>
+              <div className="row gap-8">
+                <ImageUploadButton onInsert={md => setFormContent(c => c + '\n' + md)}/>
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowPreview(!showPreview)} style={{fontSize: 12}}>
+                  <Icons.Eye size={11}/> {showPreview ? t('voc_edit') : t('voc_preview')}
+                </button>
+              </div>
             </div>
             {!showPreview ? (
               <>
@@ -310,9 +313,12 @@ function VocPage() {
           <div className="field">
             <div className="row" style={{justifyContent: 'space-between', marginBottom: 6}}>
               <label className="field-label" style={{margin: 0}}>{t('voc_field_content')} <span className="req">*</span></label>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowPreview(!showPreview)} style={{fontSize: 12}}>
-                <Icons.Eye size={11}/> {showPreview ? t('voc_edit') : t('voc_preview')}
-              </button>
+              <div className="row gap-8">
+                <ImageUploadButton onInsert={md => setFormContent(c => c + '\n' + md)}/>
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowPreview(!showPreview)} style={{fontSize: 12}}>
+                  <Icons.Eye size={11}/> {showPreview ? t('voc_edit') : t('voc_preview')}
+                </button>
+              </div>
             </div>
             {!showPreview ? (
               <>
