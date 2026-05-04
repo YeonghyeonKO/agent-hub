@@ -4,7 +4,7 @@ instanceName: ""
 backend:
   image:
     repository: dk02315/agent-hub-backend
-    tag: v0.2.0
+    tag: v0.3.0
     pullPolicy: IfNotPresent
   replicaCount: 2
   resources:
@@ -29,7 +29,7 @@ backend:
 frontend:
   image:
     repository: dk02315/agent-hub-frontend
-    tag: v0.2.0
+    tag: v0.3.0
     pullPolicy: IfNotPresent
   replicaCount: 2
   port: 80
