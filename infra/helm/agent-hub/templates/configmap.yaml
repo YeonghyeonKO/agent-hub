@@ -12,6 +12,7 @@ data:
   KEYCLOAK_URL: {{ .Values.keycloak.serverUrl | quote }}
   KEYCLOAK_REALM: {{ .Values.keycloak.realm | quote }}
   KEYCLOAK_CLIENT_ID: {{ .Values.keycloak.clientId | quote }}
+  KEYCLOAK_EMPLOYEE_CLAIM: {{ .Values.keycloak.employeeClaim | quote }}
   {{- end }}
 ---
 apiVersion: v1

@@ -95,8 +95,9 @@ async def get_current_user(
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     sub = payload.get("sub")
-    username = payload.get("preferred_username", "")
-    empno = payload.get("empno", "")
+    employee_claim = settings.KEYCLOAK_EMPLOYEE_CLAIM
+    empno = payload.get(employee_claim, "") or payload.get("empno", "")
+    username = payload.get("name", "") or payload.get("preferred_username", "")
     picture = payload.get("picture", "")
     email = payload.get("email", "")
 
@@ -110,7 +111,7 @@ async def get_current_user(
         employee_id = empno if empno else sub[:7]
         user = User(
             employee_id=employee_id,
-            name=username,
+            name=username or empno,
             email=email,
             keycloak_sub=sub,
             profile_image_url=picture,
