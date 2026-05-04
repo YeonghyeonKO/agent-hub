@@ -33,6 +33,7 @@ function PeopleHover({ id, name, initial, children, side = 'bottom' }) {
 }
 
 function AdminDashboard({ onBack }) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = React.useState('pending');
   const [pendingList, setPendingList] = React.useState([]);
   const [activeSubId, setActiveSubId] = React.useState(null);
@@ -87,55 +88,27 @@ function AdminDashboard({ onBack }) {
 
       <div style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24}}>
         <div>
-          <h1 className="h1">관리자 대시보드</h1>
-          <div className="muted" style={{marginTop: 6, fontSize: 13.5}}>
-            2026년 상반기 · 제출 마감 D-23 · 심사위원 3명
-          </div>
+          <h1 className="h1">{t('nav_admin')}</h1>
         </div>
         <div className="status-pills">
           <div className="status-pill" style={{background: 'var(--warn-bg)', borderColor: '#fde68a', color: 'var(--warn-fg)'}}>
-            심사 대기 <span className="status-pill-num">12</span>
-          </div>
-          <div className="status-pill" style={{background: 'var(--ok-bg)', borderColor: '#bbf7d0', color: 'var(--ok-fg)'}}>
-            승인 <span className="status-pill-num">47</span>
-          </div>
-          <div className="status-pill" style={{background: 'var(--err-bg)', borderColor: '#fecaca', color: 'var(--err-fg)'}}>
-            반려 <span className="status-pill-num">3</span>
+            {t('admin_pending')} <span className="status-pill-num">{pendingList.length}</span>
           </div>
         </div>
-      </div>
-
-      <div className="grid-4" style={{marginBottom: 24}}>
-        <Stat label="총 제출" value="62" icon={<Icons.Upload size={12}/>} delta="+8 이번 주"/>
-        <Stat label="참여 인원" value="38명" icon={<Icons.Users size={12}/>}/>
-        <Stat label="총 다운로드" value="2,481" icon={<Icons.Download size={12}/>} delta="+312 이번 주"/>
-        <Stat label="평균 심사 시간" value="1.4일" icon={<Icons.Clock size={12}/>}/>
       </div>
 
       <div className="tabs">
         {[
-          ['pending', '심사 대기', 12, '자동 검증을 통과하고 심사원 검토를 기다리는 제출건'],
-          ['approved', '승인됨', 47, '심사 완료 · 홈에 게시중인 Component·Flow'],
-          ['rejected', '반려됨', 3, '반려 사유와 재제출 이력을 추적'],
-          ['issues', '신고 / 이슈', 2, '사용자 신고·버그·보안 이슈를 조치'],
-          ['users', '사용자 관리', null, '사용자 목록 및 역할 관리'],
-          ['settings', '설정', null, '시즌 기간, 심사 기준, 랭킹 정책 세팅'],
-        ].map(([id, label, count, desc]) => (
-          <button key={id} className={`tab ${activeTab===id?'active':''}`} onClick={() => setActiveTab(id)} title={desc}>
-            {label} {count != null && <span className="tab-count">{count}</span>}
+          ['pending', t('admin_pending'), pendingList.length],
+          ['approved', t('admin_approved'), null],
+          ['rejected', t('admin_rejected'), null],
+          ['users', t('admin_users'), null],
+          ['settings', t('admin_settings'), null],
+        ].map(([id, label, count]) => (
+          <button key={id} className={`tab ${activeTab===id?'active':''}`} onClick={() => setActiveTab(id)}>
+            {label} {count != null && count > 0 && <span className="tab-count">{count}</span>}
           </button>
         ))}
-      </div>
-
-      <div className="tab-desc">
-        {{
-          pending: '자동 검증을 통과하고 심사원 검토를 기다리는 제출건을 점수·심사평과 함께 승인·반려합니다.',
-          approved: '심사를 통과해 홈에 게시 중인 Component·Flow 목록. 게시 중단 및 버전 관리가 가능합니다.',
-          rejected: '반려 사유, 재제출 여부, 재심사 이력을 추적합니다.',
-          issues: '사용자가 신고한 문제, 자동 보안 스캔 경고, 버그 리포트를 모아 조치합니다.',
-          users: '등록된 사용자 목록을 확인하고, 역할(일반/관리자/심사위원)을 변경합니다.',
-          settings: '이번 시즌의 제출 기간, 심사 항목 가중치, 랭킹 점수 공식, 최소 호환 버전을 설정합니다.',
-        }[activeTab]}
       </div>
 
       <div className="admin-grid" style={{display: activeTab === 'pending' ? 'grid' : 'none'}}>
@@ -262,110 +235,64 @@ const ISSUE_ROWS = [
 ];
 
 function AdminTabPanel({ tab }) {
+  const { t } = useI18n();
+
   if (tab === 'approved') {
+    const [items, setItems] = React.useState([]);
+    React.useEffect(() => { api.admin.approved().then(setItems).catch(() => {}); }, []);
     return (
       <div className="card" style={{padding: 0, overflow: 'hidden'}}>
         <div className="admin-panel-head">
-          <div>
-            <div className="h3">게시 중인 Component · Flow</div>
-            <div className="muted-sm">총 47건 · 최신 승인 순</div>
-          </div>
-          <div className="row gap-8">
-            <button className="btn btn-secondary btn-sm"><Icons.Filter size={11}/> 필터</button>
-            <button className="btn btn-secondary btn-sm"><Icons.Download size={11}/> CSV 내보내기</button>
-          </div>
+          <div className="h3">{t('admin_approved')}</div>
         </div>
         <div className="admin-tab-table">
           <div className="admin-tab-row admin-tab-head">
-            <div>제목</div><div>개발자</div><div>버전</div><div>Star</div><div>다운로드</div><div>승인일</div><div></div>
+            <div>{t('col_name')}</div><div>{t('ranking_col_developer')}</div><div>{t('col_version')}</div><div>{t('col_star')}</div><div>{t('col_download')}</div><div></div><div></div>
           </div>
-          {APPROVED_ROWS.map(r => (
+          {items.map(r => (
             <div key={r.id} className="admin-tab-row">
               <div className="row gap-8" style={{minWidth: 0}}>
                 <span className={`chip chip-${r.type}`}>{r.type === 'py' ? '.py' : '.json'}</span>
                 <span style={{fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{r.title}</span>
               </div>
-              <div className="row gap-8" style={{minWidth: 0}}>
-                <PeopleHover id={r.authorId} name={r.author}>
-                  <span className="people-trigger row gap-8">
-                    <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)', fontSize: 10}}>{r.author[0]}</div>
-                    <span style={{fontSize: 12.5}}>{r.author}</span>
-                    <span className="mono muted-sm">({r.authorId})</span>
-                  </span>
-                </PeopleHover>
-              </div>
+              <div>{r.author?.name}</div>
               <div className="mono muted-sm">{r.version}</div>
-              <div><Icons.Star size={11}/> {r.stars}</div>
-              <div><Icons.Download size={11}/> {r.downloads}</div>
-              <div className="muted-sm">{r.approvedAgo}</div>
-              <div className="row gap-8">
-                <button className="btn btn-sm btn-ghost" title="상세 보기"><Icons.Eye size={11}/></button>
-              </div>
+              <div>{r.stars_count ?? 0}</div>
+              <div>{r.downloads_count ?? 0}</div>
+              <div className="muted-sm">{fmtDate(r.created_at)}</div>
+              <div></div>
             </div>
           ))}
+          {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No approved items</div>}
         </div>
       </div>
     );
   }
 
   if (tab === 'rejected') {
+    const [items, setItems] = React.useState([]);
+    React.useEffect(() => { api.admin.rejected().then(setItems).catch(() => {}); }, []);
     return (
       <div className="card" style={{padding: 0, overflow: 'hidden'}}>
         <div className="admin-panel-head">
-          <div>
-            <div className="h3">반려된 제출</div>
-            <div className="muted-sm">총 3건 · 반려 사유 및 재제출 이력</div>
-          </div>
+          <div className="h3">{t('admin_rejected')}</div>
         </div>
         <div className="rejected-list">
-          {REJECTED_ROWS.map(r => (
+          {items.map(r => (
             <div key={r.id} className="rejected-row">
               <div className="rejected-icon"><Icons.X size={14}/></div>
               <div style={{flex: 1, minWidth: 0}}>
-                <div className="row gap-8" style={{marginBottom: 4, flexWrap: 'wrap'}}>
+                <div className="row gap-8" style={{marginBottom: 4}}>
+                  <span className={`chip chip-${r.type}`}>{r.type === 'py' ? '.py' : '.json'}</span>
                   <span style={{fontWeight: 600}}>{r.title}</span>
-                  <PeopleHover id={r.authorId} name={r.author}>
-                    <span className="people-trigger muted-sm">· {r.author} <span className="mono">({r.authorId})</span></span>
-                  </PeopleHover>
-                  <span className="muted-sm">· {r.rejectedAgo}</span>
-                  {r.resubmitted && <span className="chip chip-info" style={{fontSize: 10.5}}>재제출됨</span>}
+                  <span className="muted-sm">· {r.author?.name}</span>
+                  <span className="muted-sm">· {fmtDate(r.created_at)}</span>
                 </div>
-                <div className="rejected-reason"><Icons.Warn size={11}/> {r.reason}</div>
               </div>
-              <button className="btn btn-secondary btn-sm">상세</button>
             </div>
           ))}
+          {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No rejected items</div>}
         </div>
-      </div>
-    );
-  }
-
-  if (tab === 'issues') {
-    return (
-      <div className="col" style={{gap: 12}}>
-        {ISSUE_ROWS.map(i => (
-          <div key={i.id} className={`issue-card sev-${i.severity}`}>
-            <div className="issue-card-head">
-              <div className="row gap-8">
-                <span className={`issue-sev sev-${i.severity}`}>{i.severity === 'high' ? '높음' : i.severity === 'medium' ? '중간' : '낮음'}</span>
-                <span className="chip" style={{background: 'var(--bg-muted)', color: 'var(--text-2)', fontSize: 11}}>
-                  {i.kind === 'security' ? '🔒 보안' : i.kind === 'bug' ? '🐛 버그' : '🚩 신고'}
-                </span>
-                <span className="mono muted-sm">{i.id}</span>
-              </div>
-              <span className="muted-sm">{i.reportedAgo}</span>
-            </div>
-            <div className="issue-card-title">{i.target}</div>
-            <div className="issue-card-summary">{i.summary}</div>
-            <div className="issue-card-foot">
-              <span className="muted-sm"><Icons.Users size={11}/> {i.reporterId ? <PeopleHover id={i.reporterId} name={i.reporter}><span className="people-trigger">{i.reporter} <span className="mono" style={{color: 'var(--text-3)'}}>({i.reporterId})</span></span></PeopleHover> : i.reporter}</span>
-              <div className="row gap-8">
-                <button className="btn btn-secondary btn-sm">조사 시작</button>
-                <button className="btn btn-sm btn-danger"><Icons.Eye size={11}/> 게시 중단</button>
-              </div>
-            </div>
-          </div>
-        ))}
       </div>
     );
   }

@@ -97,6 +97,10 @@ const I18N = {
     guide_lf_internal: 'Langflow 사내 가이드',
     guide_contact_channel: '문의 채널',
 
+    // Admin
+    admin_pending: '심사 대기', admin_approved: '승인됨', admin_rejected: '반려됨',
+    admin_users: '사용자 관리', admin_settings: '설정',
+
     // Footer
     footer_contact: '문의', footer_team: 'AI / Data Platform',
 
@@ -197,6 +201,10 @@ const I18N = {
     guide_lf_docs: 'Langflow Official Docs',
     guide_lf_internal: 'Langflow Internal Guide',
     guide_contact_channel: 'Contact Channel',
+
+    // Admin
+    admin_pending: 'Pending', admin_approved: 'Approved', admin_rejected: 'Rejected',
+    admin_users: 'User Management', admin_settings: 'Settings',
 
     // Footer
     footer_contact: 'Contact', footer_team: 'AI / Data Platform',

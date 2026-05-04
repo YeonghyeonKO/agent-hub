@@ -267,7 +267,7 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
         <a className={`nav-link ${route.name === 'notice' ? 'active' : ''}`} onClick={onGoNotice}>{t('nav_notice')}</a>
         <a className={`nav-link ${route.name === 'voc' ? 'active' : ''}`} onClick={onGoVoc}>{t('nav_voc')}</a>
         <a className={`nav-link ${route.name === 'guide' ? 'active' : ''}`} onClick={onGoGuide}>{t('nav_guide')}</a>
-        <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>{t('nav_admin')}</a>
+        {role === 'admin' && <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>{t('nav_admin')}</a>}
       </div>
       <div className="nav-spacer"/>
       <div className="nav-search">
