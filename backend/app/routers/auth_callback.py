@@ -78,8 +78,12 @@ async def exchange_token(body: TokenRequest):
     )
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(refresh_token: str):
+async def refresh_token(body: RefreshRequest):
     """Refresh an expired access token."""
     if settings.DEV_MODE:
         raise HTTPException(status_code=400, detail="Auth disabled in DEV_MODE")
@@ -90,7 +94,7 @@ async def refresh_token(refresh_token: str):
         "grant_type": "refresh_token",
         "client_id": settings.KEYCLOAK_CLIENT_ID,
         "client_secret": settings.KEYCLOAK_CLIENT_SECRET,
-        "refresh_token": refresh_token,
+        "refresh_token": body.refresh_token,
     }
 
     async with httpx.AsyncClient(verify=False) as client:

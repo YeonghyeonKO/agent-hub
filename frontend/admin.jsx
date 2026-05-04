@@ -190,104 +190,105 @@ const ISSUE_ROWS = [
 ];
 
 function AdminTabPanel({ tab }) {
-  const { t } = useI18n();
-
-  if (tab === 'approved') {
-    const [items, setItems] = React.useState([]);
-    React.useEffect(() => { api.admin.approved().then(setItems).catch(() => {}); }, []);
-    return (
-      <div className="card" style={{padding: 0, overflow: 'hidden'}}>
-        <div className="admin-panel-head">
-          <div className="h3">{t('admin_approved')}</div>
-        </div>
-        <div className="admin-tab-table">
-          <div className="admin-tab-row admin-tab-head">
-            <div>{t('col_name')}</div><div>{t('ranking_col_developer')}</div><div>{t('col_version')}</div><div>{t('col_star')}</div><div>{t('col_download')}</div><div></div><div></div>
-          </div>
-          {items.map(r => (
-            <div key={r.id} className="admin-tab-row">
-              <div className="row gap-8" style={{minWidth: 0}}>
-                <span className={`chip chip-${r.type}`}>{r.type === 'py' ? '.py' : '.json'}</span>
-                <span style={{fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{r.title}</span>
-              </div>
-              <div>{r.author?.name}</div>
-              <div className="mono muted-sm">{r.version}</div>
-              <div>{r.stars_count ?? 0}</div>
-              <div>{r.downloads_count ?? 0}</div>
-              <div className="muted-sm">{fmtDate(r.created_at)}</div>
-              <div></div>
-            </div>
-          ))}
-          {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No approved items</div>}
-        </div>
-      </div>
-    );
-  }
-
-  if (tab === 'rejected') {
-    const [items, setItems] = React.useState([]);
-    React.useEffect(() => { api.admin.rejected().then(setItems).catch(() => {}); }, []);
-    return (
-      <div className="card" style={{padding: 0, overflow: 'hidden'}}>
-        <div className="admin-panel-head">
-          <div className="h3">{t('admin_rejected')}</div>
-        </div>
-        <div className="rejected-list">
-          {items.map(r => (
-            <div key={r.id} className="rejected-row">
-              <div className="rejected-icon"><Icons.X size={14}/></div>
-              <div style={{flex: 1, minWidth: 0}}>
-                <div className="row gap-8" style={{marginBottom: 4}}>
-                  <span className={`chip chip-${r.type}`}>{r.type === 'py' ? '.py' : '.json'}</span>
-                  <span style={{fontWeight: 600}}>{r.title}</span>
-                  <span className="muted-sm">· {r.author?.name}</span>
-                  <span className="muted-sm">· {fmtDate(r.created_at)}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-          {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No rejected items</div>}
-        </div>
-      </div>
-    );
-  }
-
-  if (tab === 'users') {
-    return <UsersTab/>;
-  }
-
-  if (tab === 'settings') {
-    return <SettingsTab/>;
-  }
-
+  if (tab === 'approved') return <ApprovedTab/>;
+  if (tab === 'rejected') return <RejectedTab/>;
+  if (tab === 'users') return <UsersTab/>;
+  if (tab === 'settings') return <SettingsTab/>;
   return null;
 }
 
+function ApprovedTab() {
+  const { t } = useI18n();
+  const [items, setItems] = React.useState([]);
+  React.useEffect(() => { api.admin.approved().then(setItems).catch(() => {}); }, []);
+  return (
+    <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+      <div className="admin-panel-head"><div className="h3">{t('admin_approved')}</div></div>
+      <div className="admin-tab-table">
+        <div className="admin-tab-row admin-tab-head">
+          <div>{t('col_name')}</div><div>{t('ranking_col_developer')}</div><div>{t('col_version')}</div><div>{t('col_star')}</div><div>{t('col_download')}</div><div></div><div></div>
+        </div>
+        {items.map(r => (
+          <div key={r.id} className="admin-tab-row">
+            <div className="row gap-8" style={{minWidth: 0}}>
+              <span className={`chip chip-${r.type}`}>{r.type === 'py' ? '.py' : '.json'}</span>
+              <span style={{fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{r.title}</span>
+            </div>
+            <div>{r.author?.name}</div>
+            <div className="mono muted-sm">{r.version}</div>
+            <div>{r.stars_count ?? 0}</div>
+            <div>{r.downloads_count ?? 0}</div>
+            <div className="muted-sm">{fmtDate(r.created_at)}</div>
+            <div></div>
+          </div>
+        ))}
+        {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No approved items</div>}
+      </div>
+    </div>
+  );
+}
+
+function RejectedTab() {
+  const { t } = useI18n();
+  const [items, setItems] = React.useState([]);
+  React.useEffect(() => { api.admin.rejected().then(setItems).catch(() => {}); }, []);
+  return (
+    <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+      <div className="admin-panel-head"><div className="h3">{t('admin_rejected')}</div></div>
+      <div className="rejected-list">
+        {items.map(r => (
+          <div key={r.id} className="rejected-row">
+            <div className="rejected-icon"><Icons.X size={14}/></div>
+            <div style={{flex: 1, minWidth: 0}}>
+              <div className="row gap-8" style={{marginBottom: 4}}>
+                <span className={`chip chip-${r.type}`}>{r.type === 'py' ? '.py' : '.json'}</span>
+                <span style={{fontWeight: 600}}>{r.title}</span>
+                <span className="muted-sm">· {r.author?.name}</span>
+                <span className="muted-sm">· {fmtDate(r.created_at)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+        {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No rejected items</div>}
+      </div>
+    </div>
+  );
+}
+
 function UsersTab() {
+  const { t } = useI18n();
   const [users, setUsers] = React.useState([]);
+  const [search, setSearch] = React.useState('');
   const loadUsers = () => { api.admin.users().then(setUsers).catch(() => {}); };
   React.useEffect(loadUsers, []);
-
-  const roleLabels = { user: '일반', admin: '관리자', reviewer: '심사위원' };
-  const roleChip = { user: 'chip-neutral', admin: 'chip-accent', reviewer: 'chip-ok' };
 
   const changeRole = (empId, newRole) => {
     api.admin.updateRole(empId, newRole).then(loadUsers).catch(e => console.error(e));
   };
 
+  const filtered = users.filter(u => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (u.name || '').toLowerCase().includes(q) || (u.employee_id || '').includes(q) || (u.email || '').toLowerCase().includes(q);
+  });
+
   return (
     <div className="card" style={{padding: 0, overflow: 'hidden'}}>
       <div className="admin-panel-head">
         <div>
-          <div className="h3">사용자 관리</div>
-          <div className="muted-sm">{users.length}명 등록</div>
+          <div className="h3">{t('admin_users')}</div>
+          <div className="muted-sm">{users.length} users</div>
+        </div>
+        <div className="nav-search" style={{width: 240, height: 32}}>
+          <Icons.Search size={13}/>
+          <input placeholder="Search name, ID, email..." value={search} onChange={e => setSearch(e.target.value)}/>
         </div>
       </div>
       <div style={{display: 'flex', flexDirection: 'column'}}>
         <div style={{display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr 140px', gap: 14, padding: '12px 20px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg-elev)', borderBottom: '1px solid var(--line)'}}>
-          <div>사번</div><div>이름</div><div>소속</div><div>이메일</div><div>역할</div>
+          <div>ID</div><div>Name</div><div>Team</div><div>Email</div><div>Role</div>
         </div>
-        {users.map(u => (
+        {filtered.map(u => (
           <div key={u.employee_id} style={{display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr 140px', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--line)', alignItems: 'center', fontSize: 13}}>
             <div className="mono" style={{fontWeight: 600}}>{u.employee_id}</div>
             <div className="row gap-8">

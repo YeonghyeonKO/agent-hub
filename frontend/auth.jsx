@@ -111,9 +111,42 @@ const auth = {
   },
 };
 
-// Patch fetch to include Bearer token on /api/ requests
+// Save original fetch before patching
 const _origFetch = window.fetch;
-window.fetch = function(url, opts = {}) {
+
+// Token refresh helper (uses _origFetch to avoid recursion)
+auth.refreshIfNeeded = async function() {
+  const token = this.getToken();
+  if (!token) return;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const expiresIn = payload.exp * 1000 - Date.now();
+    if (expiresIn < 60000) {
+      const refresh = sessionStorage.getItem('agenthub_refresh');
+      if (refresh) {
+        const res = await _origFetch('/api/v1/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refresh }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          sessionStorage.setItem('agenthub_token', data.access_token);
+          if (data.refresh_token) sessionStorage.setItem('agenthub_refresh', data.refresh_token);
+        }
+      }
+    }
+  } catch {}
+};
+
+// Auto-refresh timer (every 30s)
+setInterval(() => { if (!AUTH_CONFIG.devMode) auth.refreshIfNeeded(); }, 30000);
+
+// Patch fetch to include Bearer token on /api/ requests
+window.fetch = async function(url, opts = {}) {
+  if (!AUTH_CONFIG.devMode && typeof url === 'string' && url.includes('/api/') && !url.includes('/api/v1/auth/')) {
+    await auth.refreshIfNeeded();
+  }
   const token = auth.getToken();
   if (token && typeof url === 'string' && url.includes('/api/')) {
     opts.headers = opts.headers || {};
