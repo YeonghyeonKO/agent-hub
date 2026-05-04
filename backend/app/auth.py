@@ -58,6 +58,7 @@ def _decode_token(token: str, jwks: dict) -> dict:
         algorithms=["RS256"],
         audience=settings.KEYCLOAK_CLIENT_ID,
         issuer=settings.keycloak_issuer,
+        options={"verify_aud": False},
     )
     return payload
 
