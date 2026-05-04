@@ -8,15 +8,11 @@ metadata:
   annotations:
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
-  ingressClassName: {{ .Values.ingress.className }}
-  {{- if .Values.ingress.tls.enabled }}
   tls:
     - hosts:
-        - {{ .Values.ingress.host }}
-      secretName: {{ .Values.ingress.tls.secretName }}
-  {{- end }}
+        - {{ include "agent-hub.host" . }}
   rules:
-    - host: {{ .Values.ingress.host }}
+    - host: {{ include "agent-hub.host" . }}
       http:
         paths:
           - path: /api
@@ -25,12 +21,12 @@ spec:
               service:
                 name: {{ include "agent-hub.fullname" . }}-backend
                 port:
-                  number: {{ .Values.backend.service.port }}
+                  number: {{ .Values.backend.port }}
           - path: /
             pathType: Prefix
             backend:
               service:
                 name: {{ include "agent-hub.fullname" . }}-frontend
                 port:
-                  number: {{ .Values.frontend.service.port }}
+                  number: {{ .Values.frontend.port }}
 {{- end }}

@@ -8,9 +8,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: {{ .Values.frontend.service.port }}
+    - port: {{ .Values.frontend.port }}
       targetPort: 80
       protocol: TCP
   selector:
-    {{- include "agent-hub.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: frontend
+    {{- include "agent-hub.frontendSelectorLabels" . | nindent 4 }}

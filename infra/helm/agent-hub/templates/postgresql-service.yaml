@@ -1,4 +1,4 @@
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.postgresql.internal }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -14,6 +14,7 @@ spec:
       targetPort: 5432
       protocol: TCP
   selector:
-    {{- include "agent-hub.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/name: agent-hub
+    app.kubernetes.io/instance: {{ include "agent-hub.fullname" . }}
     app.kubernetes.io/component: postgresql
 {{- end }}

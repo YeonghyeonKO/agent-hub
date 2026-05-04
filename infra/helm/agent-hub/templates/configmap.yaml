@@ -5,10 +5,14 @@ metadata:
   labels:
     {{- include "agent-hub.labels" . | nindent 4 }}
 data:
-  KEYCLOAK_URL: {{ .Values.backend.env.KEYCLOAK_URL | quote }}
-  KEYCLOAK_REALM: {{ .Values.backend.env.KEYCLOAK_REALM | quote }}
-  KEYCLOAK_CLIENT_ID: {{ .Values.backend.env.KEYCLOAK_CLIENT_ID | quote }}
-  CORS_ORIGINS: {{ .Values.backend.env.CORS_ORIGINS | quote }}
+  DEV_MODE: {{ .Values.app.devMode | quote }}
+  UPLOAD_DIR: {{ .Values.app.uploadDir | quote }}
+  CORS_ORIGINS: {{ .Values.app.corsOrigins | default (printf "https://%s" (include "agent-hub.host" .)) | quote }}
+  {{- if .Values.keycloak.enabled }}
+  KEYCLOAK_URL: {{ .Values.keycloak.serverUrl | quote }}
+  KEYCLOAK_REALM: {{ .Values.keycloak.realm | quote }}
+  KEYCLOAK_CLIENT_ID: {{ .Values.keycloak.clientId | quote }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -29,7 +33,7 @@ data:
         }
 
         location /api/ {
-            proxy_pass http://{{ include "agent-hub.fullname" . }}-backend:{{ .Values.backend.service.port }};
+            proxy_pass http://{{ include "agent-hub.fullname" . }}-backend:{{ .Values.backend.port }};
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -38,6 +42,6 @@ data:
         }
 
         location /health {
-            proxy_pass http://{{ include "agent-hub.fullname" . }}-backend:{{ .Values.backend.service.port }}/health;
+            proxy_pass http://{{ include "agent-hub.fullname" . }}-backend:{{ .Values.backend.port }}/health;
         }
     }

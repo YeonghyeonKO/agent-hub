@@ -1,49 +1,85 @@
-global:
-  namespace: agent-hub
-
-frontend:
-  replicaCount: 2
-  image:
-    repository: registry.internal/agent-hub/frontend
-    tag: latest
-    pullPolicy: IfNotPresent
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
-  service:
-    port: 80
+# -- Instance name (required). Used for resource naming and ingress hostname.
+instanceName: ""
 
 backend:
-  replicaCount: 2
   image:
     repository: registry.internal/agent-hub/backend
     tag: latest
     pullPolicy: IfNotPresent
+  replicaCount: 2
   resources:
     requests:
       cpu: 250m
       memory: 512Mi
     limits:
-      cpu: 500m
+      cpu: "1"
       memory: 1Gi
-  service:
-    port: 8000
-  env:
-    KEYCLOAK_URL: https://keycloak.internal
-    KEYCLOAK_REALM: hynix
-    KEYCLOAK_CLIENT_ID: agent-hub
-    CORS_ORIGINS: https://agent-hub.internal
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+  livenessProbe:
+    initialDelaySeconds: 15
+    periodSeconds: 30
+    timeoutSeconds: 10
+  port: 8000
+  # -- Extra environment variables for the backend
+  extraEnv: []
 
-postgresql:
+frontend:
+  image:
+    repository: registry.internal/agent-hub/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  port: 80
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+ingress:
   enabled: true
-  auth:
-    username: agenthub
-    password: changeme
-    database: agenthub
+  domain: aipp02.skhynix.com
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+# -- Keycloak SSO configuration
+keycloak:
+  enabled: false
+  serverUrl: ""            # e.g. https://keycloak.skhynix.com
+  realm: ""                # e.g. hynix
+  clientId: ""             # e.g. agent-hub
+  clientSecret: ""         # ignored if existingSecret is set
+  employeeClaim: empno     # JWT claim for employee number (7-digit)
+  existingSecret: ""
+  existingSecretKeys:
+    clientSecret: client-secret
+
+# -- SSL CA certificate for Keycloak (corporate PKI)
+ssl:
+  enabled: false
+  caCert: ""               # inline PEM certificate
+  existingConfigMap: ""    # use existing ConfigMap instead
+  existingSecret: ""       # use existing Secret instead
+  key: ca.crt              # key name in ConfigMap/Secret
+
+# -- External PostgreSQL (recommended for production)
+postgresql:
+  # -- When true, deploy a PostgreSQL StatefulSet. When false, use external DB.
+  internal: false
+  host: ""                 # e.g. postgresql.database.svc.cluster.local
+  port: 5432
+  database: agenthub
+  username: agenthub
+  password: ""             # ignored if existingSecret is set
+  existingSecret: ""
+  existingSecretKey: postgresql-password
+  # -- Internal PostgreSQL settings (only when internal=true)
   storage:
     size: 10Gi
     storageClass: ""
@@ -55,18 +91,26 @@ postgresql:
       cpu: 500m
       memory: 1Gi
 
-ingress:
-  enabled: true
-  className: nginx
-  host: agent-hub.internal
-  tls:
-    enabled: true
-    secretName: agent-hub-tls
-  annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+# -- Application settings
+app:
+  devMode: false           # skip Keycloak auth, use dev admin user
+  uploadDir: /data/uploads
+  corsOrigins: ""          # auto-derived from ingress if empty
+  storage: 5Gi
+  storageClass: ""
 
+# -- Autoscaling for backend
 autoscaling:
   enabled: true
   minReplicas: 2
   maxReplicas: 5
   targetCPUUtilization: 70
+
+# -- Private registry credentials (creates imagePullSecret automatically)
+imageRegistry:
+  enabled: false
+  server: ""               # e.g. harbor.company.com
+  username: ""
+  password: ""
+
+imagePullSecrets: []       # use this OR imageRegistry, not both

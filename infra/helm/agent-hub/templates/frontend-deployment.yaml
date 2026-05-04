@@ -9,14 +9,16 @@ spec:
   replicas: {{ .Values.frontend.replicaCount }}
   selector:
     matchLabels:
-      {{- include "agent-hub.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: frontend
+      {{- include "agent-hub.frontendSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "agent-hub.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: frontend
+        {{- include "agent-hub.frontendSelectorLabels" . | nindent 8 }}
     spec:
+      {{- with (include "agent-hub.imagePullSecrets" . | fromYamlArray) }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: frontend
           image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"

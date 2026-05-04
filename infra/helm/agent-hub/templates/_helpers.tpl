@@ -1,27 +1,77 @@
-{{- define "agent-hub.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
 {{- define "agent-hub.fullname" -}}
-{{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-{{- end }}
+agent-hub-{{ required "instanceName is required" .Values.instanceName }}
 {{- end }}
 
 {{- define "agent-hub.labels" -}}
-helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/part-of: agent-hub
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/name: agent-hub
+app.kubernetes.io/instance: {{ include "agent-hub.fullname" . }}
 {{- end }}
 
-{{- define "agent-hub.selectorLabels" -}}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{- define "agent-hub.backendSelectorLabels" -}}
+app.kubernetes.io/name: agent-hub
+app.kubernetes.io/instance: {{ include "agent-hub.fullname" . }}
+app.kubernetes.io/component: backend
+{{- end }}
+
+{{- define "agent-hub.frontendSelectorLabels" -}}
+app.kubernetes.io/name: agent-hub
+app.kubernetes.io/instance: {{ include "agent-hub.fullname" . }}
+app.kubernetes.io/component: frontend
+{{- end }}
+
+{{- define "agent-hub.secretName" -}}
+{{- if .Values.keycloak.existingSecret -}}
+{{ .Values.keycloak.existingSecret }}
+{{- else -}}
+{{ include "agent-hub.fullname" . }}-secret
+{{- end }}
+{{- end }}
+
+{{- define "agent-hub.host" -}}
+{{ include "agent-hub.fullname" . }}.{{ .Values.ingress.domain }}
+{{- end }}
+
+{{- define "agent-hub.databaseUrl" -}}
+{{- if .Values.postgresql.internal -}}
+postgresql+asyncpg://{{ .Values.postgresql.username }}:$(DATABASE_PASSWORD)@{{ include "agent-hub.fullname" . }}-postgresql:{{ .Values.postgresql.port }}/{{ .Values.postgresql.database }}
+{{- else -}}
+postgresql+asyncpg://{{ .Values.postgresql.username }}:$(DATABASE_PASSWORD)@{{ .Values.postgresql.host }}:{{ .Values.postgresql.port }}/{{ .Values.postgresql.database }}
+{{- end }}
+{{- end }}
+
+{{- define "agent-hub.dbSecretName" -}}
+{{- if .Values.postgresql.existingSecret -}}
+{{ .Values.postgresql.existingSecret }}
+{{- else -}}
+{{ include "agent-hub.fullname" . }}-secret
+{{- end }}
+{{- end }}
+
+{{- define "agent-hub.dbSecretKey" -}}
+{{- if .Values.postgresql.existingSecret -}}
+{{ .Values.postgresql.existingSecretKey }}
+{{- else -}}
+postgresql-password
+{{- end }}
+{{- end }}
+
+{{- define "agent-hub.imagePullSecrets" -}}
+{{- if .Values.imageRegistry.enabled }}
+- name: {{ include "agent-hub.fullname" . }}-registry
+{{- else if .Values.imagePullSecrets }}
+{{- toYaml .Values.imagePullSecrets }}
+{{- end }}
+{{- end }}
+
+{{- define "agent-hub.sslVolume" -}}
+{{- if .Values.ssl.existingConfigMap -}}
+configMap:
+  name: {{ .Values.ssl.existingConfigMap }}
+{{- else if .Values.ssl.existingSecret -}}
+secret:
+  secretName: {{ .Values.ssl.existingSecret }}
+{{- else -}}
+configMap:
+  name: {{ include "agent-hub.fullname" . }}-ca-cert
+{{- end }}
 {{- end }}

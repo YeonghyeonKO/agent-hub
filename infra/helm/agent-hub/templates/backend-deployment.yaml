@@ -9,48 +9,70 @@ spec:
   replicas: {{ .Values.backend.replicaCount }}
   selector:
     matchLabels:
-      {{- include "agent-hub.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: backend
+      {{- include "agent-hub.backendSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "agent-hub.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: backend
+        {{- include "agent-hub.backendSelectorLabels" . | nindent 8 }}
     spec:
+      {{- with (include "agent-hub.imagePullSecrets" . | fromYamlArray) }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           ports:
-            - containerPort: 8000
+            - containerPort: {{ .Values.backend.port }}
               protocol: TCP
           env:
-            - name: DATABASE_URL
-              value: "postgresql+asyncpg://{{ .Values.postgresql.auth.username }}:$(POSTGRES_PASSWORD)@{{ include "agent-hub.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
-            - name: POSTGRES_PASSWORD
+            - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "agent-hub.fullname" . }}-secret
-                  key: postgresql-password
+                  name: {{ include "agent-hub.dbSecretName" . }}
+                  key: {{ include "agent-hub.dbSecretKey" . }}
+            - name: DATABASE_URL
+              value: {{ include "agent-hub.databaseUrl" . | quote }}
+            {{- if .Values.keycloak.enabled }}
             - name: KEYCLOAK_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "agent-hub.fullname" . }}-secret
-                  key: keycloak-client-secret
+                  name: {{ include "agent-hub.secretName" . }}
+                  key: {{ .Values.keycloak.existingSecretKeys.clientSecret }}
+            {{- end }}
+            {{- range .Values.backend.extraEnv }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ include "agent-hub.fullname" . }}-config
+          {{- if .Values.ssl.enabled }}
+          volumeMounts:
+            - name: ssl-ca-cert
+              mountPath: /etc/ssl/certs/corporate-ca.crt
+              subPath: {{ .Values.ssl.key }}
+              readOnly: true
+          {{- end }}
           readinessProbe:
             httpGet:
               path: /health
-              port: 8000
-            initialDelaySeconds: 10
-            periodSeconds: 10
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: {{ .Values.backend.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.backend.readinessProbe.timeoutSeconds }}
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
-            initialDelaySeconds: 15
-            periodSeconds: 30
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: {{ .Values.backend.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.backend.livenessProbe.timeoutSeconds }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
+      {{- if .Values.ssl.enabled }}
+      volumes:
+        - name: ssl-ca-cert
+          {{- include "agent-hub.sslVolume" . | nindent 10 }}
+      {{- end }}

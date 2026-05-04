@@ -1,4 +1,4 @@
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.postgresql.internal }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -11,12 +11,14 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "agent-hub.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: agent-hub
+      app.kubernetes.io/instance: {{ include "agent-hub.fullname" . }}
       app.kubernetes.io/component: postgresql
   template:
     metadata:
       labels:
-        {{- include "agent-hub.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/name: agent-hub
+        app.kubernetes.io/instance: {{ include "agent-hub.fullname" . }}
         app.kubernetes.io/component: postgresql
     spec:
       containers:
@@ -26,14 +28,14 @@ spec:
             - containerPort: 5432
           env:
             - name: POSTGRES_USER
-              value: {{ .Values.postgresql.auth.username | quote }}
+              value: {{ .Values.postgresql.username | quote }}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "agent-hub.fullname" . }}-secret
-                  key: postgresql-password
+                  name: {{ include "agent-hub.dbSecretName" . }}
+                  key: {{ include "agent-hub.dbSecretKey" . }}
             - name: POSTGRES_DB
-              value: {{ .Values.postgresql.auth.database | quote }}
+              value: {{ .Values.postgresql.database | quote }}
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:
@@ -41,12 +43,12 @@ spec:
               mountPath: /var/lib/postgresql/data
           readinessProbe:
             exec:
-              command: ["pg_isready", "-U", "{{ .Values.postgresql.auth.username }}"]
+              command: ["pg_isready", "-U", "{{ .Values.postgresql.username }}"]
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             exec:
-              command: ["pg_isready", "-U", "{{ .Values.postgresql.auth.username }}"]
+              command: ["pg_isready", "-U", "{{ .Values.postgresql.username }}"]
             initialDelaySeconds: 30
             periodSeconds: 30
           resources:
