@@ -2,6 +2,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -155,6 +156,38 @@ async def submit_review(
         decision=review.decision,
         created_at=review.created_at,
     )
+
+
+@router.get("/users", response_model=list[UserResponse])
+async def list_users(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[User, Depends(require_admin)],
+):
+    result = await db.execute(select(User).order_by(User.created_at.desc()))
+    return [UserResponse.model_validate(u) for u in result.scalars().all()]
+
+
+class RoleUpdate(BaseModel):
+    role: str
+
+
+@router.patch("/users/{employee_id}/role", response_model=UserResponse)
+async def update_user_role(
+    employee_id: str,
+    body: RoleUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[User, Depends(require_admin)],
+):
+    if body.role not in ("user", "admin", "reviewer"):
+        raise HTTPException(status_code=400, detail="Invalid role. Must be: user, admin, reviewer")
+    result = await db.execute(select(User).where(User.employee_id == employee_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.role = body.role
+    await db.commit()
+    await db.refresh(user)
+    return UserResponse.model_validate(user)
 
 
 @router.get("/settings", response_model=SeasonSettings | None)

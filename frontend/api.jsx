@@ -101,6 +101,8 @@ const api = {
     review: (id, body) => api.post(`/admin/review/${id}`, body),
     settings: () => api.get('/admin/settings'),
     updateSettings: (body) => api.put('/admin/settings', body),
+    users: () => api.get('/admin/users'),
+    updateRole: (empId, role) => api.patch(`/admin/users/${empId}/role`, { role }),
   },
 };
 

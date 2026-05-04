@@ -174,13 +174,13 @@ const COMPONENTS = [
 ];
 
 const CATEGORIES = [
-  { id: 'all', label: '전체', count: 62 },
-  { id: 'rag', label: 'RAG / 검색', count: 18 },
-  { id: 'doc', label: '문서 처리', count: 14 },
-  { id: 'data', label: '데이터 / ERP', count: 9 },
-  { id: 'workflow', label: '워크플로우', count: 11 },
-  { id: 'agent', label: '에이전트', count: 6 },
-  { id: 'utility', label: '유틸', count: 4 },
+  { id: 'all', label: '전체' },
+  { id: 'rag', label: 'RAG / 검색' },
+  { id: 'doc', label: '문서 처리' },
+  { id: 'data', label: '데이터 / ERP' },
+  { id: 'workflow', label: '워크플로우' },
+  { id: 'agent', label: '에이전트' },
+  { id: 'utility', label: '유틸' },
 ];
 
 // Submissions for admin dashboard (some pending)

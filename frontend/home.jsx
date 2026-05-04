@@ -77,9 +77,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
           <div className="season-eyebrow">{t('season_eyebrow')}</div>
           <div className="season-title">{t('season_title')}</div>
           <div className="season-meta">
-            <span><Icons.Clock size={11}/> {t('season_deadline')}</span>
-            <span><Icons.Users size={11}/> {t('season_participants')}</span>
-            <span><Icons.Trophy size={11}/> {t('season_first')}</span>
+            <span><Icons.Users size={11}/> {components.length} Components / Flows</span>
           </div>
         </div>
         <div className="season-cta row gap-8">
@@ -133,7 +131,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
             className={`filter-pill ${activeCat === cat.id ? 'active' : ''}`}
             onClick={() => setActiveCat(cat.id)}
           >
-            {catI18n[cat.id] || cat.label} <span className="filter-pill-count">{cat.count}</span>
+            {catI18n[cat.id] || cat.label}
           </button>
         ))}
         <div className="spacer"/>

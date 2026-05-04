@@ -118,6 +118,7 @@ function AdminDashboard({ onBack }) {
           ['approved', '승인됨', 47, '심사 완료 · 홈에 게시중인 Component·Flow'],
           ['rejected', '반려됨', 3, '반려 사유와 재제출 이력을 추적'],
           ['issues', '신고 / 이슈', 2, '사용자 신고·버그·보안 이슈를 조치'],
+          ['users', '사용자 관리', null, '사용자 목록 및 역할 관리'],
           ['settings', '설정', null, '시즌 기간, 심사 기준, 랭킹 정책 세팅'],
         ].map(([id, label, count, desc]) => (
           <button key={id} className={`tab ${activeTab===id?'active':''}`} onClick={() => setActiveTab(id)} title={desc}>
@@ -132,6 +133,7 @@ function AdminDashboard({ onBack }) {
           approved: '심사를 통과해 홈에 게시 중인 Component·Flow 목록. 게시 중단 및 버전 관리가 가능합니다.',
           rejected: '반려 사유, 재제출 여부, 재심사 이력을 추적합니다.',
           issues: '사용자가 신고한 문제, 자동 보안 스캔 경고, 버그 리포트를 모아 조치합니다.',
+          users: '등록된 사용자 목록을 확인하고, 역할(일반/관리자/심사위원)을 변경합니다.',
           settings: '이번 시즌의 제출 기간, 심사 항목 가중치, 랭킹 점수 공식, 최소 호환 버전을 설정합니다.',
         }[activeTab]}
       </div>
@@ -368,11 +370,67 @@ function AdminTabPanel({ tab }) {
     );
   }
 
+  if (tab === 'users') {
+    return <UsersTab/>;
+  }
+
   if (tab === 'settings') {
     return <SettingsTab/>;
   }
 
   return null;
+}
+
+function UsersTab() {
+  const [users, setUsers] = React.useState([]);
+  const loadUsers = () => { api.admin.users().then(setUsers).catch(() => {}); };
+  React.useEffect(loadUsers, []);
+
+  const roleLabels = { user: '일반', admin: '관리자', reviewer: '심사위원' };
+  const roleChip = { user: 'chip-neutral', admin: 'chip-accent', reviewer: 'chip-ok' };
+
+  const changeRole = (empId, newRole) => {
+    api.admin.updateRole(empId, newRole).then(loadUsers).catch(e => console.error(e));
+  };
+
+  return (
+    <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+      <div className="admin-panel-head">
+        <div>
+          <div className="h3">사용자 관리</div>
+          <div className="muted-sm">{users.length}명 등록</div>
+        </div>
+      </div>
+      <div style={{display: 'flex', flexDirection: 'column'}}>
+        <div style={{display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr 140px', gap: 14, padding: '12px 20px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg-elev)', borderBottom: '1px solid var(--line)'}}>
+          <div>사번</div><div>이름</div><div>소속</div><div>이메일</div><div>역할</div>
+        </div>
+        {users.map(u => (
+          <div key={u.employee_id} style={{display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr 140px', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--line)', alignItems: 'center', fontSize: 13}}>
+            <div className="mono" style={{fontWeight: 600}}>{u.employee_id}</div>
+            <div className="row gap-8">
+              <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{(u.name || '?')[0]}</div>
+              <span>{u.name}</span>
+            </div>
+            <div className="muted-sm">{u.team || u.org || '-'}</div>
+            <div className="muted-sm" style={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{u.email || '-'}</div>
+            <div>
+              <select className="select" style={{fontSize: 12, padding: '4px 8px', height: 30}} value={u.role} onChange={e => changeRole(u.employee_id, e.target.value)}>
+                <option value="user">일반</option>
+                <option value="admin">관리자</option>
+                <option value="reviewer">심사위원</option>
+              </select>
+            </div>
+          </div>
+        ))}
+        {users.length === 0 && (
+          <div className="empty-state" style={{padding: 40, textAlign: 'center', color: 'var(--text-3)'}}>
+            등록된 사용자가 없습니다. Keycloak SSO로 로그인하면 자동 등록됩니다.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ─── Settings tab ────────────────────────────────────────────────
