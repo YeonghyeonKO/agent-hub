@@ -195,11 +195,20 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
   const { t } = useI18n();
   const [scope, setScope] = React.useState('all');
   const [period, setPeriod] = React.useState('h1');
+  const [rankData, setRankData] = React.useState([]);
 
-  const ranked = [...COMPONENTS]
-    .filter(c => scope === 'all' ? true : c.type === scope)
-    .sort((a, b) => (b.stars * starWeight + b.downloads * downloadWeight) - (a.stars * starWeight + a.downloads * downloadWeight));
+  React.useEffect(() => {
+    api.rankings.list({ scope }).then(d => {
+      setRankData((d.items || []).map(r => ({
+        ...r, id: r.component_id,
+        author: r.author || { name: '' },
+        icon: r.icon || 'Box',
+        iconBg: 'var(--bg-muted)', iconFg: 'var(--text-2)',
+      })));
+    }).catch(() => {});
+  }, [scope]);
 
+  const ranked = rankData;
   const top3 = ranked.slice(0, 3);
   const rest = ranked.slice(3);
 
@@ -271,7 +280,7 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
                   <Icon size={22}/>
                 </div>
                 <div style={{fontWeight: 700, fontSize: 16, textAlign: 'center', marginBottom: 4}}>{c.title}</div>
-                <div style={{fontSize: 12.5, textAlign: 'center', color: 'var(--text-2)', marginBottom: 2}}>{c.author?.name} <span className="mono" style={{color: 'var(--text-3)'}}>({c.author?.id})</span></div>
+                <div style={{fontSize: 12.5, textAlign: 'center', color: 'var(--text-2)', marginBottom: 2}}>{c.author?.name}</div>
                 <div className="mono" style={{textAlign: 'center', fontSize: 22, fontWeight: 800, color: 'var(--accent)', margin: '12px 0 8px'}}>{score}<span style={{fontSize: 11, fontWeight: 500, color: 'var(--text-3)'}}> pts</span></div>
                 <div className="podium-stats" style={{background: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '8px 12px', margin: '0 -2px'}}>
                   <div style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Star size={12}/><span className="mono" style={{fontWeight: 700}}>{c.stars}</span></div>
@@ -315,10 +324,9 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
                   </div>
                 </div>
                 <div className="row gap-8" style={{width: 180}}>
-                  <div className="avatar-xs">{c.author?.initial}</div>
+                  <div className="avatar-xs"><Icons.Users size={9}/></div>
                   <div style={{minWidth: 0}}>
                     <div style={{fontSize: 13, lineHeight: 1.2}}>{c.author?.name}</div>
-                    <div className="mono muted-sm" style={{fontSize: 10.5}}>({c.author?.id})</div>
                   </div>
                 </div>
                 <div className="mono" style={{textAlign: 'right', fontWeight: 600, width: 96}}>{c.stars}</div>

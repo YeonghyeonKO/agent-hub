@@ -267,9 +267,7 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
         <a className={`nav-link ${route.name === 'notice' ? 'active' : ''}`} onClick={onGoNotice}>{t('nav_notice')}</a>
         <a className={`nav-link ${route.name === 'voc' ? 'active' : ''}`} onClick={onGoVoc}>{t('nav_voc')}</a>
         <a className={`nav-link ${route.name === 'guide' ? 'active' : ''}`} onClick={onGoGuide}>{t('nav_guide')}</a>
-        {role === 'admin' && (
-          <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>{t('nav_admin')}</a>
-        )}
+        <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>{t('nav_admin')}</a>
       </div>
       <div className="nav-spacer"/>
       <div className="nav-search">
@@ -282,8 +280,9 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
       <button className="btn btn-ghost" onClick={onToggleLang} title="한국어/English" style={{fontSize: 15, padding: '4px 8px'}}>
         {lang === 'en' ? '🇺🇸' : '🇰🇷'}
       </button>
-      <div className="user-chip" style={{padding: 3, cursor: 'pointer'}} onClick={() => { if (confirm('로그아웃 하시겠습니까?')) auth.logout(); }} title={userName || 'User'}>
-        <div className="avatar">{(userName || '?')[0]}</div>
+      <div className="user-chip" style={{cursor: 'pointer'}} onClick={() => { if (confirm('로그아웃 하시겠습니까?')) auth.logout(); }} title={userName || 'User'}>
+        <div className="avatar"><Icons.Users size={12}/></div>
+        {userName && <div className="user-chip-label">{userName}</div>}
       </div>
     </div>
   );

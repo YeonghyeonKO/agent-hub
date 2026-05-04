@@ -53,9 +53,8 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
           <h1 className="detail-title">{c.title}</h1>
           <div className="detail-desc">{c.desc}</div>
           <div className="author-row">
-            <div className="avatar sm" style={{background: '#fef3c7', color: '#92400e'}}>{c.author.initial}</div>
+            <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}><Icons.Users size={10}/></div>
             <span style={{color: 'var(--text-2)', fontWeight: 500}}>{c.author.name}</span>
-            <span className="mono">({c.author.id})</span>
             <span className="breadcrumb-sep">·</span>
             <span>1주 전 등록</span>
           </div>

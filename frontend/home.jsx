@@ -205,9 +205,8 @@ function ComponentCard({ c: raw, onClick }) {
         <div className="cc-meta-item"><Icons.Download size={12}/> {c.downloads}</div>
         <div className="spacer"/>
         <div className="cc-author">
-          <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{c.author.initial}</div>
+          <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}><Icons.Users size={10}/></div>
           <span>{c.author.name}</span>
-          <span className="mono cc-author-id">({c.author.id})</span>
         </div>
       </div>
     </div>

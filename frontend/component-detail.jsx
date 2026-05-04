@@ -37,6 +37,20 @@ class SmartChunker(Component):
 function ComponentDetail({ component, onBack }) {
   const c = component;
   const [tab, setTab] = React.useState('readme');
+  const [fileContent, setFileContent] = React.useState(null);
+  const [fileName, setFileName] = React.useState('');
+
+  // Fetch real file content if component has UUID
+  React.useEffect(() => {
+    if (c.id && String(c.id).includes('-')) {
+      api.components.file(c.id)
+        .then(d => { setFileContent(d.content); setFileName(d.filename); })
+        .catch(() => { setFileContent(SAMPLE_PY_CODE); setFileName('smart_chunker.py'); });
+    } else {
+      setFileContent(SAMPLE_PY_CODE);
+      setFileName('smart_chunker.py');
+    }
+  }, [c.id]);
 
   return (
     <div className="page-narrow fade-in">
@@ -65,21 +79,24 @@ function ComponentDetail({ component, onBack }) {
           <h1 className="detail-title">{c.title}</h1>
           <div className="detail-desc">{c.desc}</div>
           <div className="author-row">
-            <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{c.author.initial}</div>
+            <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}><Icons.Users size={10}/></div>
             <span style={{color: 'var(--text-2)', fontWeight: 500}}>{c.author.name}</span>
-            <span className="mono">({c.author.id})</span>
             <span className="breadcrumb-sep">·</span>
             <span>{c.updatedAgo} 등록 · 어제 업데이트</span>
           </div>
         </div>
         <div className="detail-actions">
           <button className="btn btn-secondary" onClick={() => { const id = c.id; if (id && String(id).includes('-')) api.components.star(id).catch(() => {}); }}><Icons.Star size={13}/> {c.stars_count ?? c.stars}</button>
-          <button className="btn btn-secondary" onClick={() => { navigator.clipboard?.writeText(SAMPLE_PY_CODE); }}><Icons.Copy size={13}/> 코드 복사</button>
+          <button className="btn btn-secondary" onClick={() => { navigator.clipboard?.writeText(fileContent || ''); }}><Icons.Copy size={13}/> 코드 복사</button>
           <button className="btn btn-primary" onClick={() => {
-            const blob = new Blob([SAMPLE_PY_CODE], {type: 'text/plain'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'smart_chunker.py'; a.click();
-            URL.revokeObjectURL(url);
+            if (c.id && String(c.id).includes('-')) {
+              window.open(`/api/v1/components/${c.id}/download-file`, '_blank');
+            } else {
+              const blob = new Blob([fileContent || ''], {type: 'text/plain'});
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a'); a.href = url; a.download = fileName || 'file'; a.click();
+              URL.revokeObjectURL(url);
+            }
           }}><Icons.Download size={13}/> 다운로드</button>
         </div>
       </div>
@@ -118,7 +135,7 @@ function ComponentDetail({ component, onBack }) {
       <div className="detail-grid">
         <div>
           {tab === 'readme' && <ReadmeContent c={c}/>}
-          {tab === 'code' && <CodePreview/>}
+          {tab === 'code' && <CodePreview code={fileContent || SAMPLE_PY_CODE} filename={fileName || 'code.py'}/>}
           {tab === 'versions' && <VersionsList/>}
           {tab === 'comments' && <CommentsList/>}
         </div>
@@ -218,21 +235,23 @@ function ReadmeContent({ c }) {
   );
 }
 
-function CodePreview() {
+function CodePreview({ code, filename }) {
   const [copied, setCopied] = React.useState(false);
+  const src = code || '';
   const handleCopy = () => {
-    navigator.clipboard?.writeText(SAMPLE_PY_CODE);
+    navigator.clipboard?.writeText(src);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
-  const lines = SAMPLE_PY_CODE.split('\n');
+  const lines = src.split('\n');
+  const sizeKB = (new Blob([src]).size / 1024).toFixed(1);
   return (
     <div className="codeblock">
       <div className="codeblock-header">
         <div className="row gap-8">
           <Icons.Code size={13}/>
-          <span style={{fontWeight: 600}}>smart_chunker.py</span>
-          <span style={{color: '#6b7d6b'}}>· 4.2 KB · {lines.length} lines</span>
+          <span style={{fontWeight: 600}}>{filename || 'code'}</span>
+          <span style={{color: '#6b7d6b'}}>· {sizeKB} KB · {lines.length} lines</span>
         </div>
         <button className="btn btn-sm btn-ghost" style={{color: '#b6b3ab'}} onClick={handleCopy}>
           {copied ? <><Icons.Check size={11}/> 복사됨</> : <><Icons.Copy size={11}/> 복사</>}
@@ -243,7 +262,7 @@ function CodePreview() {
           {lines.map((_, i) => <div key={i}>{i+1}</div>)}
         </div>
         <div className="codeblock-content">
-          {pythonHighlight(SAMPLE_PY_CODE)}
+          {pythonHighlight(src)}
         </div>
       </div>
     </div>
