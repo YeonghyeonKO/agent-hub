@@ -29,13 +29,7 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
     ...c, desc: c.description || '', state: c.status === 'pending' ? 'review' : 'draft',
     updatedAgo: fmtDate(c.created_at), validation: { ok: 4, total: 5 },
   }));
-  const activity = [
-    { kind: 'star', who: '김정호', target: 'SmartChunker', when: '2시간 전' },
-    { kind: 'download', who: '박지원', target: 'KoreanReranker', when: '4시간 전' },
-    { kind: 'comment', who: '최서연', target: 'PDFTableParser', when: '어제', body: '표 안의 병합 셀 처리가 깔끔하네요. 우리 팀에서도 도입할게요.' },
-    { kind: 'review', who: '심사팀', target: 'SmartChunker v1.3.0', when: '1일 전', body: '코드 품질 88점 · 문서 92점' },
-    { kind: 'rank', who: '랭킹', target: 'SmartChunker → 1위', when: '3일 전' },
-  ];
+  const activity = []; // Activity will come from API in future
 
   // Aggregates
   const totals = mine.reduce((a, c) => ({
@@ -66,9 +60,9 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
 
       <div className="grid-4" style={{marginBottom: 28}}>
         <StatTile label={t('mine_registered')} value={mine.length} icon={<Icons.Box size={12}/>} />
-        <StatTile label={t('mine_total_stars')} value={totals.stars} icon={<Icons.Star size={12}/>} delta="+12"/>
-        <StatTile label={t('mine_total_dl')} value={totals.downloads} icon={<Icons.Download size={12}/>} delta="+38"/>
-        <StatTile label={t('mine_ranking')} value="#1" icon={<Icons.Trophy size={12}/>}/>
+        <StatTile label={t('mine_total_stars')} value={totals.stars} icon={<Icons.Star size={12}/>}/>
+        <StatTile label={t('mine_total_dl')} value={totals.downloads} icon={<Icons.Download size={12}/>}/>
+        <StatTile label={t('tab_drafts')} value={drafts.length} icon={<Icons.Clock size={12}/>}/>
       </div>
 
       <div className="tabs">
@@ -87,11 +81,11 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
         <div className="my-table">
           <div className="my-table-head">
             <div style={{width: 36}}></div>
-            <div>이름</div>
-            <div style={{width: 96}}>버전</div>
-            <div style={{width: 92, textAlign: 'right'}}>Star</div>
-            <div style={{width: 110, textAlign: 'right'}}>다운로드</div>
-            <div style={{width: 100}}>업데이트</div>
+            <div>{t('col_name')}</div>
+            <div style={{width: 96}}>{t('col_version')}</div>
+            <div style={{width: 92, textAlign: 'right'}}>{t('col_star')}</div>
+            <div style={{width: 110, textAlign: 'right'}}>{t('col_download')}</div>
+            <div style={{width: 100}}>{t('col_update')}</div>
             <div style={{width: 32}}></div>
           </div>
           {mine.map(c => {
@@ -103,8 +97,7 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
                   <div className="row gap-8" style={{marginBottom: 2}}>
                     <span style={{fontWeight: 600, fontSize: 14}}>{c.title}</span>
                     <span className={`chip chip-${c.type}`}>{c.type === 'py' ? '.py' : '.json'}</span>
-                    {c.standard && <span className="chip chip-ok"><Icons.Check size={10}/> 표준</span>}
-                    {c.rank === 1 && <span className="chip chip-warn trophy"><Icons.Trophy size={10}/> 1위</span>}
+                    {c.standard && <span className="chip chip-ok"><Icons.Check size={10}/> {t('chip_standard')}</span>}
                   </div>
                   <div className="muted-sm" style={{fontSize: 12.5}}>{c.desc}</div>
                 </div>
@@ -158,30 +151,10 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
       )}
 
       {tab === 'activity' && (
-        <div className="activity-feed">
-          {activity.map((a, i) => (
-            <div key={i} className="activity-row">
-              <div className={`activity-icon activity-${a.kind}`}>
-                {a.kind === 'star' && <Icons.Star size={13}/>}
-                {a.kind === 'download' && <Icons.Download size={13}/>}
-                {a.kind === 'comment' && <Icons.Comment size={13}/>}
-                {a.kind === 'review' && <Icons.Check size={13}/>}
-                {a.kind === 'rank' && <Icons.Trophy size={13}/>}
-              </div>
-              <div style={{flex: 1, minWidth: 0}}>
-                <div style={{fontSize: 13.5}}>
-                  <span style={{fontWeight: 600}}>{a.who}</span>
-                  {a.kind === 'star' && <span> 님이 <strong>{a.target}</strong>에 Star를 눌렀어요</span>}
-                  {a.kind === 'download' && <span> 님이 <strong>{a.target}</strong>를 다운로드했어요</span>}
-                  {a.kind === 'comment' && <span> 님이 <strong>{a.target}</strong>에 댓글</span>}
-                  {a.kind === 'review' && <span>이 <strong>{a.target}</strong> 1차 심사를 완료했어요</span>}
-                  {a.kind === 'rank' && <span>: <strong>{a.target}</strong></span>}
-                </div>
-                {a.body && <div className="activity-body">"{a.body}"</div>}
-              </div>
-              <div className="muted-sm" style={{whiteSpace: 'nowrap'}}>{a.when}</div>
-            </div>
-          ))}
+        <div className="empty-state card card-pad" style={{textAlign: 'center', padding: 40}}>
+          <Icons.Clock size={24} style={{color: 'var(--text-4)', marginBottom: 8}}/>
+          <div style={{fontWeight: 600, color: 'var(--text-2)', marginBottom: 4}}>No activity yet</div>
+          <div className="muted-sm">Activity feed will appear here as users interact with your components.</div>
         </div>
       )}
     </div>

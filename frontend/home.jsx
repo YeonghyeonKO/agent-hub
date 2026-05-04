@@ -50,7 +50,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   React.useEffect(() => {
     api.notices.list()
       .then(d => { if (d) setNotices(d); })
-      .catch(() => setNotices(MOCK_NOTICES));
+      .catch(() => {});
   }, []);
 
   const filtered = components.filter(c => {

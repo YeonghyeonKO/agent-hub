@@ -281,7 +281,7 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
         {lang === 'en' ? '🇺🇸' : '🇰🇷'}
       </button>
       <div className="user-chip" style={{cursor: 'pointer'}} onClick={() => { if (confirm('로그아웃 하시겠습니까?')) auth.logout(); }} title={userName || 'User'}>
-        <div className="avatar"><Icons.Users size={12}/></div>
+        <div className="avatar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
         {userName && <div className="user-chip-label">{userName}</div>}
       </div>
     </div>

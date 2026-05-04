@@ -1,4 +1,5 @@
 """Dev-only seed endpoint to populate the database with mock data."""
+import os
 import uuid
 from datetime import date, datetime, timezone
 
@@ -8,6 +9,81 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
+
+# ── Sample files written to disk during seed ──────────────────────────
+SAMPLE_PY = '''from langflow.custom import Component
+from langflow.io import MessageTextInput, IntInput, Output
+from kss import Kss
+
+
+class SmartChunker(Component):
+    display_name = "Smart Chunker"
+    description = "Korean text chunker with semantic boundary detection"
+    icon = "scissors"
+
+    inputs = [
+        MessageTextInput(name="text", display_name="Source Text"),
+        IntInput(name="target_size", value=500, display_name="Target Chunk Size"),
+    ]
+
+    outputs = [
+        Output(name="chunks", display_name="Chunks", method="split"),
+    ]
+
+    def split(self) -> list:
+        kss = Kss("split_sentences")
+        sentences = kss(self.text)
+        chunks, buf = [], ""
+        for s in sentences:
+            if len(buf) + len(s) > self.target_size and buf:
+                chunks.append(buf.strip())
+                buf = s
+            else:
+                buf += " " + s
+        if buf:
+            chunks.append(buf.strip())
+        return chunks
+'''
+
+SAMPLE_JSON = '''{
+  "name": "Wiki RAG Flow",
+  "version": "1.0.0",
+  "langflow": ">=1.9.0,<1.10.0",
+  "nodes": [
+    {"id": "input", "type": "ChatInput", "position": {"x": 0, "y": 0}},
+    {"id": "intent", "type": "IntentClassifier", "position": {"x": 200, "y": 0}},
+    {"id": "search", "type": "ConfluenceSearch", "config": {"space": "ALL", "limit": 20}},
+    {"id": "bm25", "type": "BM25Search"},
+    {"id": "embed", "type": "OpenAIEmbedder"},
+    {"id": "vdb", "type": "PgVector"},
+    {"id": "rerank", "type": "KoreanReranker"},
+    {"id": "llm", "type": "InternalLLM", "config": {"model": "gpt-4o"}},
+    {"id": "cite", "type": "CitationFormatter"},
+    {"id": "output", "type": "ChatOutput"}
+  ],
+  "edges": [
+    {"from": "input", "to": "intent"},
+    {"from": "intent", "to": "search"},
+    {"from": "search", "to": "bm25"},
+    {"from": "bm25", "to": "embed"},
+    {"from": "embed", "to": "vdb"},
+    {"from": "vdb", "to": "rerank"},
+    {"from": "rerank", "to": "llm"},
+    {"from": "llm", "to": "cite"},
+    {"from": "cite", "to": "output"}
+  ]
+}
+'''
+
+SAMPLE_FILES = {
+    0: ("smart_chunker.py", SAMPLE_PY),
+    1: ("wiki_rag_flow.json", SAMPLE_JSON),
+    2: ("korean_reranker.py", "from langflow.custom import Component\n\nclass KoreanReranker(Component):\n    display_name = 'Korean Reranker'\n    description = 'Cross-encoder based Korean reranker'\n\n    def rerank(self, query, docs):\n        # Score and sort documents by relevance\n        scored = [(d, self.model.predict(query, d)) for d in docs]\n        return sorted(scored, key=lambda x: x[1], reverse=True)\n"),
+    3: ("sap_connector.py", "from langflow.custom import Component\n\nclass SAPConnector(Component):\n    display_name = 'SAP Connector'\n    description = 'Query SAP ERP data'\n\n    def query(self, table, filters):\n        # Connect to SAP and return data\n        return self.client.read_table(table, filters=filters)\n"),
+    4: ("jira_ticket_creator.py", "from langflow.custom import Component\nimport requests\n\nclass JiraTicketCreator(Component):\n    display_name = 'Jira Ticket Creator'\n    description = 'Create Jira issues from flow results'\n\n    def create(self, summary, description, project='AGENT'):\n        return requests.post(f'{self.jira_url}/rest/api/2/issue',\n            json={'fields': {'project': {'key': project}, 'summary': summary, 'description': description, 'issuetype': {'name': 'Task'}}})\n"),
+    5: ("pdf_layout_parser.py", "from langflow.custom import Component\n\nclass PDFLayoutParser(Component):\n    display_name = 'PDF Layout Parser'\n    description = 'Parse PDF preserving table and multi-column layout'\n\n    def parse(self, pdf_path):\n        from pdfminer.high_level import extract_pages\n        pages = list(extract_pages(pdf_path))\n        return [self.extract_text(p) for p in pages]\n"),
+    6: ("meeting_summarizer.json", '{"name":"Meeting Summarizer","version":"0.7.0","nodes":[{"id":"zoom","type":"ZoomTranscript"},{"id":"diarize","type":"SpeakerDiarization"},{"id":"summarize","type":"LLMSummarizer"},{"id":"actions","type":"ActionItemExtractor"},{"id":"output","type":"SlackNotifier"}],"edges":[{"from":"zoom","to":"diarize"},{"from":"diarize","to":"summarize"},{"from":"summarize","to":"actions"},{"from":"actions","to":"output"}]}'),
+}
 from app.models.models import Component, Download, Notice, Season, Star, User, VocPost
 
 router = APIRouter(prefix="/api/v1/seed", tags=["seed"])
@@ -71,10 +147,19 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
             db.add(User(**u))
     await db.flush()
 
+    # Write sample files to disk
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    file_paths = {}
+    for idx, (filename, content) in SAMPLE_FILES.items():
+        fpath = os.path.join(settings.UPLOAD_DIR, filename)
+        with open(fpath, "w") as f:
+            f.write(content)
+        file_paths[idx] = fpath
+
     # Components
     comp_ids = []
-    for c in COMPONENTS:
-        comp = Component(id=uuid.uuid4(), **c)
+    for i, c in enumerate(COMPONENTS):
+        comp = Component(id=uuid.uuid4(), file_path=file_paths.get(i), **c)
         db.add(comp)
         comp_ids.append(comp.id)
     await db.flush()

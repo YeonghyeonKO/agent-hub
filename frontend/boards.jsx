@@ -29,7 +29,7 @@ const MOCK_VOC = [
 // ─── Notice Board ───────────────────────────────────────────────────
 function NoticePage() {
   const { t } = useI18n();
-  const [notices, setNotices] = React.useState(MOCK_NOTICES);
+  const [notices, setNotices] = React.useState([]);
   const [selected, setSelected] = React.useState(null);
   const [showForm, setShowForm] = React.useState(false);
 
@@ -185,7 +185,7 @@ function VocPage() {
   const [sort, setSort] = React.useState('popular');
   const [selected, setSelected] = React.useState(null);
   const [showForm, setShowForm] = React.useState(false);
-  const [posts, setPosts] = React.useState(MOCK_VOC);
+  const [posts, setPosts] = React.useState([]);
   const loadVoc = () => { api.voc.list({ sort: sort === 'popular' ? 'popular' : 'newest' }).then(d => { if (d && d.length > 0) setPosts(d); }).catch(() => {}); };
   React.useEffect(loadVoc, []);
 

@@ -111,103 +111,58 @@ function AdminDashboard({ onBack }) {
         ))}
       </div>
 
-      <div className="admin-grid" style={{display: activeTab === 'pending' ? 'grid' : 'none'}}>
-        {/* Submission list */}
-        <div className="card" style={{padding: 0, overflow: 'hidden'}}>
-          <div style={{padding: '12px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <span className="h3">제출</span>
-            <button className="btn btn-sm btn-ghost"><Icons.Sort size={11}/> 정렬</button>
+      {activeTab === 'pending' && (
+        <div className="admin-grid">
+          <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+            {submissions.map(s => (
+              <div key={s.id} className={`sub-row ${activeSubId === s.id ? 'active' : ''}`} onClick={() => setActiveSubId(s.id)}>
+                <div className="sub-row-top">
+                  <div className="row gap-8">
+                    <span className={`chip chip-${s.type}`}>{s.type === 'py' ? '.py' : '.json'}</span>
+                    <span className="sub-row-title">{s.title}</span>
+                  </div>
+                </div>
+                <div className="sub-row-meta">{s.author} · {s.submittedAgo}</div>
+              </div>
+            ))}
+            {submissions.length === 0 && <div className="empty-state" style={{padding: 30}}>No pending submissions</div>}
           </div>
-          {SUBMISSIONS.map(s => (
-            <div key={s.id} className={`sub-row ${activeSubId === s.id ? 'active' : ''}`} onClick={() => setActiveSubId(s.id)}>
-              <div className="sub-row-top">
+
+          {activeSub && (
+            <div className="review-card">
+              <div className="review-card-header">
+                <div>
+                  <div className="row gap-8" style={{marginBottom: 4}}>
+                    <span className={`chip chip-${activeSub.type}`}>{activeSub.type === 'py' ? '.py' : '.json'}</span>
+                    <span className="mono muted-sm">{activeSub.version}</span>
+                  </div>
+                  <div style={{fontSize: 19, fontWeight: 700}}>{activeSub.title}</div>
+                  <div className="muted-sm" style={{marginTop: 4}}>{activeSub.author} · {activeSub.submittedAgo}</div>
+                </div>
+              </div>
+              <div className="review-card-body">
+                <div style={{marginBottom: 18}}>
+                  <ScoreSlider label="Functionality" value={scores.functionality} onChange={v => setScores(s => ({...s, functionality: v}))}/>
+                  <ScoreSlider label="Originality" value={scores.originality} onChange={v => setScores(s => ({...s, originality: v}))}/>
+                  <ScoreSlider label="Utility" value={scores.internalUtility} onChange={v => setScores(s => ({...s, internalUtility: v}))}/>
+                  <ScoreSlider label="Documentation" value={scores.documentation} onChange={v => setScores(s => ({...s, documentation: v}))}/>
+                </div>
+                <div className="field" style={{marginBottom: 0}}>
+                  <label className="field-label">Comment</label>
+                  <textarea className="textarea" rows="3" value={comment} onChange={e => setComment(e.target.value)}/>
+                </div>
+              </div>
+              <div className="review-card-footer">
+                <div/>
                 <div className="row gap-8">
-                  <span className={`chip chip-${s.type}`}>{s.type === 'py' ? '.py' : '.json'}</span>
-                  <span className="sub-row-title">{s.title}</span>
+                  <button className="btn btn-danger btn-sm" onClick={handleReject}><Icons.X size={11}/> Reject</button>
+                  <button className="btn btn-sm" style={{background: 'var(--ok)', color: 'white'}} onClick={handleApprove}><Icons.Check size={11}/> Approve</button>
                 </div>
-                {s.flagged && <span className="chip chip-warn"><Icons.Warn size={10}/> 점검</span>}
-              </div>
-              <div className="sub-row-meta">
-                <PeopleHover id={s.authorId} name={s.author} initial={s.authorInitial}><span className="people-trigger">{s.author} <span className="mono">({s.authorId})</span></span></PeopleHover> · {s.submittedAgo}
-              </div>
-              <div className="sub-row-version">
-                Langflow {s.legacy ? `${s.minLF} 만 (구버전)` : `${s.minLF} ~ ${s.maxLF}`}
               </div>
             </div>
-          ))}
-          <div style={{padding: 14, textAlign: 'center', borderTop: '1px solid var(--line)'}}>
-            <button className="btn btn-sm btn-ghost">+ 8개 더 보기</button>
-          </div>
+          )}
         </div>
-
-        {/* Active submission review pane */}
-        <div className="review-card">
-          <div className="review-card-header">
-            <div className="row" style={{gap: 14}}>
-              <div className={`detail-icon ${activeSub.type}`} style={{width: 48, height: 48, borderRadius: 10}}>
-                {activeSub.type === 'py' ? <Icons.Scissors size={20}/> : <Icons.Database size={20}/>}
-              </div>
-              <div>
-                <div className="detail-eyebrow">
-                  <span className={`chip chip-${activeSub.type}`}>{activeSub.type === 'py' ? '.py' : '.json'}</span>
-                  <span>{activeSub.type === 'py' ? 'Component' : 'Flow'}</span>
-                  <span className="breadcrumb-sep">·</span>
-                  <span>{activeSub.version}</span>
-                </div>
-                <div style={{fontSize: 19, fontWeight: 700, letterSpacing: '-0.02em'}}>{activeSub.title}</div>
-                <div className="row gap-8" style={{marginTop: 6}}>
-                  <PeopleHover id={activeSub.authorId} name={activeSub.author} initial={activeSub.authorInitial}>
-                    <span className="people-trigger row gap-8">
-                      <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{activeSub.authorInitial}</div>
-                      <span style={{fontSize: 12.5, fontWeight: 500}}>{activeSub.author}</span>
-                      <span className="mono muted-sm">({activeSub.authorId})</span>
-                    </span>
-                  </PeopleHover>
-                </div>
-              </div>
-            </div>
-            <button className="btn btn-secondary btn-sm"><Icons.Eye size={12}/> 미리보기</button>
-          </div>
-
-          <div className="review-card-body">
-            <div className="val-card">
-              <div className="val-card-title">자동 검증 결과</div>
-              <div className="checklist">
-                <div className="check-item"><div className="check-icon ok"><Icons.Check size={9}/></div>파일 형식 유효 (.py)</div>
-                <div className="check-item"><div className="check-icon ok"><Icons.Check size={9}/></div>호환 버전 명시됨</div>
-                <div className="check-item"><div className="check-icon ok"><Icons.Check size={9}/></div>사내 표준(1.9.0) 호환</div>
-                <div className="check-item"><div className="check-icon ok"><Icons.Check size={9}/></div>임포트 검증 통과</div>
-                <div className="check-item"><div className="check-icon warn"><Icons.Warn size={9}/></div>외부 패키지 2개 필요</div>
-                <div className="check-item"><div className="check-icon ok"><Icons.Check size={9}/></div>비밀키 노출 없음</div>
-              </div>
-            </div>
-
-            <div style={{marginBottom: 18}}>
-              <div className="h3" style={{marginBottom: 4}}>심사 점수</div>
-              <div className="muted-sm" style={{fontSize: 11.5, marginBottom: 8}}>각 항목 1-10점 · 평균 {((scores.functionality+scores.originality+scores.internalUtility+scores.documentation)/4).toFixed(1)}점</div>
-              <ScoreSlider label="기능성 / 완성도" value={scores.functionality} onChange={v => setScores(s => ({...s, functionality: v}))}/>
-              <ScoreSlider label="독창성" value={scores.originality} onChange={v => setScores(s => ({...s, originality: v}))}/>
-              <ScoreSlider label="사내 활용도" value={scores.internalUtility} onChange={v => setScores(s => ({...s, internalUtility: v}))}/>
-              <ScoreSlider label="문서화 품질" value={scores.documentation} onChange={v => setScores(s => ({...s, documentation: v}))}/>
-            </div>
-
-            <div className="field" style={{marginBottom: 0}}>
-              <label className="field-label">심사평 <span className="muted-sm" style={{fontWeight: 400}}>(개발자에게 공개)</span></label>
-              <textarea className="textarea" rows="3" value={comment} onChange={e => setComment(e.target.value)}/>
-            </div>
-          </div>
-
-          <div className="review-card-footer">
-            <div className="muted-sm" style={{fontSize: 12}}>
-              <Icons.Users size={11}/> 심사위원 3명 중 <strong style={{color: 'var(--text)'}}>1명 완료</strong>
-            </div>
-            <div className="row gap-8">
-              <button className="btn btn-danger btn-sm" onClick={handleReject}><Icons.X size={11}/> 반려</button>
-              <button className="btn btn-sm" style={{background: 'var(--ok)', color: 'white'}} onClick={handleApprove}><Icons.Check size={11}/> 승인 + 게시</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {activeTab !== 'pending' && <AdminTabPanel tab={activeTab}/>}
     </div>

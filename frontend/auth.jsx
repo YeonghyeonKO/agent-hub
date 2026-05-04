@@ -79,9 +79,15 @@ const auth = {
   logout() {
     sessionStorage.removeItem('agenthub_token');
     sessionStorage.removeItem('agenthub_refresh');
+    sessionStorage.clear();
+    // Clear any auth cookies
+    document.cookie.split(';').forEach(c => {
+      document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+    });
     const { keycloakUrl, realm, redirectUri } = AUTH_CONFIG;
     if (keycloakUrl && !AUTH_CONFIG.devMode) {
-      window.location.href = `${keycloakUrl}/realms/${realm}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(redirectUri)}`;
+      const logoutUrl = `${keycloakUrl}/realms/${realm}/protocol/openid-connect/logout`;
+      window.location.href = `${logoutUrl}?post_logout_redirect_uri=${encodeURIComponent(redirectUri)}&client_id=${AUTH_CONFIG.clientId}`;
     } else {
       window.location.reload();
     }
