@@ -16,10 +16,11 @@ function ImageUploadButton({ onInsert }) {
       try {
         const fd = new FormData();
         fd.append('file', file);
-        const res = await fetch('/api/v1/images', { method: 'POST', body: fd });
+        const res = await fetch(API_BASE + '/images', { method: 'POST', body: fd });
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
-        onInsert(`![${file.name}](${data.url})`);
+        const imgUrl = data.url.startsWith('/') && window.location.port === '3000' ? 'http://localhost:8000' + data.url : data.url;
+        onInsert(`![${file.name}](${imgUrl})`);
       } catch (err) {
         console.error('Image upload failed:', err);
       } finally {
@@ -58,10 +59,11 @@ function useImagePaste(textareaRef, onInsert) {
           const fd = new FormData();
           fd.append('file', file);
           try {
-            const res = await fetch('/api/v1/images', { method: 'POST', body: fd });
+            const res = await fetch(API_BASE + '/images', { method: 'POST', body: fd });
             if (res.ok) {
               const data = await res.json();
-              onInsert(`![image](${data.url})`);
+              const imgUrl = data.url.startsWith('/') && window.location.port === '3000' ? 'http://localhost:8000' + data.url : data.url;
+              onInsert(`![image](${imgUrl})`);
             }
           } catch {}
           break;

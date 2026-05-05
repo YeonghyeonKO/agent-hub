@@ -93,8 +93,8 @@ agent-hub/
 | **홈** | `#/home` | 카테고리 필터 + 카드 그리드, 인기순/최신순 |
 | **Component 상세** | `#/component/{uuid}` | README · 코드 미리보기 · 버전 · 댓글 (slide-over) |
 | **Flow 상세** | `#/flow/{uuid}` | 인터랙티브 노드 그래프 + JSON 뷰 (slide-over) |
-| **업로드** | modal | 3-step wizard (파일 검증 → 기준 정보 → 호환성) |
-| **2026 랭킹** | `#/ranking` | Podium + 전체 순위 테이블 |
+| **업로드** | modal | 3-step wizard (파일 검증 → 기준 정보 → 호환성), 개요/사용법 에디터, 이미지 붙여넣기 |
+| **2026 랭킹** | `#/ranking` | Component / Flow 부문 2-column 분리 |
 | **내 Component / Flow** | `#/mine` | 게시됨 · 초안/심사 중 · 활동 피드 |
 | **공지사항** | `#/notice` | 공지 CRUD (관리자), markdown, 핀 고정 |
 | **VoC 게시판** | `#/voc` | 제안·버그·질문, upvote, 댓글, markdown |
@@ -223,20 +223,30 @@ DEV_MODE=true  # 로컬 개발 시
 ### Upload & Validation
 - 3-step wizard: 파일 → 기준 정보 → 호환성
 - 실제 파일 검증: 형식 확인, 크기 제한 (5MB), 비밀키 스캔, import 검증
+- **개요/사용법 에디터**: Component/Flow 전용 마크다운 템플릿 자동 로드, 작성/미리보기 탭 전환
+- **이미지 첨부**: 클립보드 Ctrl+V 붙여넣기 또는 Image 버튼 → 자동 업로드 + `![](url)` 삽입
+- 입력 규정: 한줄설명 20자 이상, 개요/사용법 100자 이상
 - 아이콘 선택 (8종), 태그 추가/삭제
-- 업로드 후 `pending` → 관리자 승인 후 홈에 게시
+- 파일 타입 전환 시 템플릿 자동 변경
+- 업로드 후 `pending` → 관리자/심사위원 승인 후 홈에 게시
+
+### Component / Flow Detail
+- **개요/사용법** 탭: 업로드 시 작성한 마크다운 렌더링 (API readme 필드)
+- **코드 미리보기**: 실제 업로드 파일 내용 표시
+- **Star 토글**: 클릭 시 노란색 활성/비활성 전환, DB 저장
+- **Flow 그래프**: 실제 JSON에서 노드/연결 수 표시, 예외 시 안내 UI
 
 ### Ranking
 ```
 Score = Star × 2 + 다운로드 × 1
 ```
+- **Component 부문 / Flow 부문** 2-column 분리 표시
 - 자기 자신의 Star / 다운로드는 집계에서 제외
 - 가중치는 관리자 설정에서 변경 가능
-- 기간별 필터 (상반기 / 이번 달 / 이번 주)
 
 ### i18n (다국어)
 - 🇰🇷 한국어 (기본) / 🇺🇸 English 토글
-- 모든 UI 텍스트 100+ 키 번역 완료
+- 모든 UI 텍스트 160+ 키 번역 완료 (관리자 설정 포함)
 
 ### URL Routing
 - Hash 기반 라우팅 (`#/home`, `#/ranking`, `#/component/{uuid}`)
@@ -244,8 +254,14 @@ Score = Star × 2 + 다운로드 × 1
 - Component/Flow URL 공유 가능
 
 ### Notice & VoC
-- 공지사항: 관리자 CRUD, markdown, 핀 고정, 홈 배너 표시
+- 공지사항: 관리자 CRUD, markdown, 핀 고정, 홈 배너 → 해당 공지 상세 이동
 - VoC: 제안/버그/질문 게시판, markdown, upvote (노란 별), 댓글
+- **이미지 클립보드 붙여넣기** 지원 (공지, VoC 모두)
+- 작성자 표시: 이름만 표시 (ID 노출 제거)
+
+### Admin & Reviewer
+- **심사위원(reviewer) 역할**: 관리자 페이지 접근 가능, 심사대기/승인/반려 탭만 표시
+- 관리자 설정 전체 i18n 완료 (시즌, 심사항목, 랭킹 공식, 심사위원, 호환성)
 
 ---
 

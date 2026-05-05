@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     KEYCLOAK_CLIENT_ID: str = "agent-hub"
     KEYCLOAK_CLIENT_SECRET: str = ""
     KEYCLOAK_EMPLOYEE_CLAIM: str = "preferred_username"  # JWT claim for employee number
-    CORS_ORIGINS: str = "http://localhost:8080,https://agent-hub.internal"
+    CORS_ORIGINS: str = "http://localhost:8080,http://localhost:3000,https://agent-hub.internal"
     UPLOAD_DIR: str = "/data/uploads"
     DEV_MODE: bool = True  # Skip Keycloak auth, use dev user
 

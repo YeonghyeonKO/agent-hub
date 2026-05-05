@@ -97,7 +97,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
       {notices.filter(n => n.is_pinned).length > 0 && (
         <div style={{marginBottom: 22}}>
           {notices.filter(n => n.is_pinned).map(n => (
-            <div key={n.id} onClick={onGoNotice} style={{
+            <div key={n.id} onClick={() => onGoNotice(n.id)} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 16px', marginBottom: 6,
               background: 'var(--bg-elev)', border: '1px solid var(--line)',

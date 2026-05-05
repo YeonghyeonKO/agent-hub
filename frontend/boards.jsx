@@ -27,10 +27,10 @@ const MOCK_VOC = [
 ];
 
 // ─── Notice Board ───────────────────────────────────────────────────
-function NoticePage() {
+function NoticePage({ initialNoticeId }) {
   const { t } = useI18n();
   const [notices, setNotices] = React.useState([]);
-  const [selected, setSelected] = React.useState(null);
+  const [selected, setSelected] = React.useState(initialNoticeId || null);
   const [showForm, setShowForm] = React.useState(false);
 
   // Fetch from API
@@ -41,6 +41,8 @@ function NoticePage() {
   const [formContent, setFormContent] = React.useState('');
   const [formPinned, setFormPinned] = React.useState(false);
   const [showPreview, setShowPreview] = React.useState(false);
+  const noticeTextareaRef = React.useRef(null);
+  useImagePaste(noticeTextareaRef, (md) => setFormContent(c => c + '\n' + md));
 
   const handleSubmit = () => {
     if (!formTitle.trim() || !formContent.trim()) return;
@@ -97,7 +99,7 @@ function NoticePage() {
             </div>
             {!showPreview ? (
               <>
-                <textarea className="textarea" rows="8" value={formContent} onChange={e => setFormContent(e.target.value)}/>
+                <textarea ref={noticeTextareaRef} className="textarea" rows="8" value={formContent} onChange={e => setFormContent(e.target.value)}/>
                 <div className="field-hint">{t('voc_md_hint')}</div>
               </>
             ) : (
@@ -138,7 +140,7 @@ function NoticePage() {
                   <span style={{fontWeight: 700, fontSize: 15}}>{n.title}</span>
                 </div>
                 <div className="muted-sm" style={{display: 'flex', gap: 12}}>
-                  <span>{n.author.name} ({n.author.id})</span>
+                  <span>{n.author.name}</span>
                   <span>{fmtDate(n.created_at)}</span>
                 </div>
               </div>
@@ -167,11 +169,9 @@ function NoticePage() {
             </div>
             <h2 className="h2" style={{marginBottom: 12}}>{notice.title}</h2>
             <div className="row gap-8 muted-sm" style={{marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--line)'}}>
-              <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{notice.author.initial}</div>
               <span style={{fontWeight: 500, color: 'var(--text-2)'}}>{notice.author.name}</span>
-              <span className="mono">({notice.author.id})</span>
               <span>·</span>
-              <span>{notice.created_at}</span>
+              <span>{fmtDate(notice.created_at)}</span>
             </div>
             <Markdown>{notice.content}</Markdown>
           </div>
@@ -196,6 +196,8 @@ function VocPage() {
   const [formTitle, setFormTitle] = React.useState('');
   const [formContent, setFormContent] = React.useState('');
   const [showPreview, setShowPreview] = React.useState(false);
+  const vocTextareaRef = React.useRef(null);
+  useImagePaste(vocTextareaRef, (md) => setFormContent(c => c + '\n' + md));
 
   const catLabels = { suggestion: t('cat_suggestion'), bug: t('cat_bug'), question: t('cat_question'), other: t('cat_other') };
   const statusLabels = { open: t('status_open'), 'in-progress': t('status_inprogress'), resolved: t('status_resolved'), closed: t('status_closed') };
@@ -245,9 +247,7 @@ function VocPage() {
           </div>
           <h2 className="h2" style={{marginBottom: 12}}>{d.title}</h2>
           <div className="row gap-8 muted-sm" style={{marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--line)'}}>
-            <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{(d.author?.name || '?')[0]}</div>
             <span style={{fontWeight: 500, color: 'var(--text-2)'}}>{d.author?.name}</span>
-            <span className="mono">({d.author?.employee_id || d.author?.id})</span>
             <span>·</span>
             <span>{fmtDate(d.created_at)}</span>
             <span className="spacer"/>
@@ -322,7 +322,7 @@ function VocPage() {
             </div>
             {!showPreview ? (
               <>
-                <textarea className="textarea" rows="6" placeholder={t('voc_content_placeholder')} value={formContent} onChange={e => setFormContent(e.target.value)}/>
+                <textarea ref={vocTextareaRef} className="textarea" rows="6" placeholder={t('voc_content_placeholder')} value={formContent} onChange={e => setFormContent(e.target.value)}/>
                 <div className="field-hint">{t('voc_md_hint')}</div>
               </>
             ) : (
@@ -372,7 +372,7 @@ function VocPage() {
                   <span style={{fontWeight: 700, fontSize: 14.5}}>{v.title}</span>
                 </div>
                 <div className="muted-sm" style={{display: 'flex', gap: 12}}>
-                  <span>{v.author.name} ({v.author.id})</span>
+                  <span>{v.author.name}</span>
                   <span>{fmtDate(v.created_at)}</span>
                   <span><Icons.Comment size={11}/> {v.comments}</span>
                 </div>

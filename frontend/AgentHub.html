@@ -22,10 +22,10 @@
 <script type="text/babel" src="home.jsx"></script>
 <script type="text/babel" src="component-detail.jsx"></script>
 <script type="text/babel" src="flow-detail.jsx"></script>
+<script type="text/babel" src="image-upload.jsx"></script>
 <script type="text/babel" src="upload-modal.jsx"></script>
 <script type="text/babel" src="admin.jsx"></script>
 <script type="text/babel" src="extra-pages.jsx"></script>
-<script type="text/babel" src="image-upload.jsx"></script>
 <script type="text/babel" src="boards.jsx"></script>
 
 <script type="text/babel">
@@ -168,8 +168,16 @@ function App() {
   const goHome = () => setRoute({ name: 'home' });
   const openComponent = (c) => {
     const type = c.type === 'json' ? 'flow' : 'component';
-    setDetailModal({ component: c, type });
-    if (c.id) window.history.pushState(null, '', `#/${type}/${c.id}`);
+    if (c.id && String(c.id).includes('-') && c.version === undefined) {
+      api.components.get(c.id).then(full => {
+        const card = apiToCard(full);
+        setDetailModal({ component: card, type });
+        window.history.pushState(null, '', `#/${type}/${c.id}`);
+      }).catch(() => { setDetailModal({ component: c, type }); });
+    } else {
+      setDetailModal({ component: c, type });
+      if (c.id) window.history.pushState(null, '', `#/${type}/${c.id}`);
+    }
   };
   const closeDetail = () => {
     setDetailModal(null);
@@ -179,7 +187,7 @@ function App() {
   const goMine = () => setRoute({ name: 'mine' });
   const goRanking = () => setRoute({ name: 'ranking' });
   const goGuide = () => setRoute({ name: 'guide' });
-  const goNotice = () => setRoute({ name: 'notice' });
+  const goNotice = (noticeId) => setRoute({ name: 'notice', noticeId: (noticeId && typeof noticeId === 'string') ? noticeId : undefined });
   const goVoc = () => setRoute({ name: 'voc' });
 
   return (
@@ -209,7 +217,7 @@ function App() {
         />
       )}
       {route.name === 'admin' && (
-        <AdminDashboard onBack={goHome}/>
+        <AdminDashboard onBack={goHome} userRole={userRole}/>
       )}
       {route.name === 'mine' && (
         <MyAssetsPage onOpenComponent={openComponent} onOpenUpload={() => setShowUpload(true)}/>
@@ -221,7 +229,7 @@ function App() {
         <GuidePage/>
       )}
       {route.name === 'notice' && (
-        <NoticePage/>
+        <NoticePage initialNoticeId={route.noticeId}/>
       )}
       {route.name === 'voc' && (
         <VocPage/>
@@ -268,7 +276,7 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
         <a className={`nav-link ${route.name === 'notice' ? 'active' : ''}`} onClick={onGoNotice}>{t('nav_notice')}</a>
         <a className={`nav-link ${route.name === 'voc' ? 'active' : ''}`} onClick={onGoVoc}>{t('nav_voc')}</a>
         <a className={`nav-link ${route.name === 'guide' ? 'active' : ''}`} onClick={onGoGuide}>{t('nav_guide')}</a>
-        {role === 'admin' && <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>{t('nav_admin')}</a>}
+        {(role === 'admin' || role === 'reviewer') && <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={onGoAdmin}>{t('nav_admin')}</a>}
       </div>
       <div className="nav-spacer"/>
       <div className="nav-search">

@@ -44,6 +44,7 @@ class ComponentResponse(BaseModel):
     icon: str | None
     is_standard: bool
     status: str
+    readme: str | None = None
     author: UserResponse
     stars_count: int = 0
     downloads_count: int = 0

@@ -2,7 +2,7 @@
 // API helper — frontend ↔ backend bridge
 // ─────────────────────────────────────────────────────────────────────
 
-const API_BASE = '/api/v1';
+const API_BASE = (window.location.port === '3000') ? 'http://localhost:8000/api/v1' : '/api/v1';
 
 const api = {
   async get(path) {
