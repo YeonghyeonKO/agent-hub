@@ -1,0 +1,24 @@
+{
+  "buildCommand": "",
+  "outputDirectory": "frontend",
+  "functions": {
+    "api/index.py": {
+      "runtime": "@vercel/python@4.5.1",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/v1/:path*", "destination": "/api/index.py" },
+    { "source": "/(.*)", "destination": "/AgentHub.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,PATCH,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "*" }
+      ]
+    }
+  ]
+}
