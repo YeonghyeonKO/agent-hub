@@ -2,7 +2,7 @@
 
 function PeopleHover({ id, name, initial, children, side = 'bottom' }) {
   const [open, setOpen] = React.useState(false);
-  const person = (window.PEOPLE && window.PEOPLE[id]) || { id, name, initial: initial || (name ? name[0] : '?'), role: '구성원', org: '-', avatarBg: 'var(--bg-muted)', avatarFg: 'var(--text-2)' };
+  const person = (window.PEOPLE && window.PEOPLE[id]) || { id, name, initial: initial || (name ? name[0] : '?'), role: 'Member', org: '-', avatarBg: 'var(--bg-muted)', avatarFg: 'var(--text-2)' };
   return (
     <span
       className="people-hover"
@@ -23,8 +23,8 @@ function PeopleHover({ id, name, initial, children, side = 'bottom' }) {
             </div>
           </div>
           <div className="people-card-meta">
-            <div><span className="muted-sm">직무</span><span>{person.role}</span></div>
-            <div><span className="muted-sm">소속</span><span>{person.org}</span></div>
+            <div><span className="muted-sm">{useI18n().t('label_role')}</span><span>{person.role}</span></div>
+            <div><span className="muted-sm">{useI18n().t('label_org')}</span><span>{person.org}</span></div>
           </div>
         </div>
       )}
@@ -32,7 +32,7 @@ function PeopleHover({ id, name, initial, children, side = 'bottom' }) {
   );
 }
 
-function AdminDashboard({ onBack }) {
+function AdminDashboard({ onBack, userRole }) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = React.useState('pending');
   const [pendingList, setPendingList] = React.useState([]);
@@ -81,9 +81,9 @@ function AdminDashboard({ onBack }) {
   return (
     <div className="page fade-in">
       <div className="breadcrumb">
-        <a onClick={onBack} style={{cursor: 'pointer'}}>홈</a>
+        <a onClick={onBack} style={{cursor: 'pointer'}}>{t('admin_home')}</a>
         <span className="breadcrumb-sep">/</span>
-        <span className="current">관리자 대시보드</span>
+        <span className="current">{t('admin_dashboard')}</span>
       </div>
 
       <div style={{display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24}}>
@@ -102,8 +102,7 @@ function AdminDashboard({ onBack }) {
           ['pending', t('admin_pending'), pendingList.length],
           ['approved', t('admin_approved'), null],
           ['rejected', t('admin_rejected'), null],
-          ['users', t('admin_users'), null],
-          ['settings', t('admin_settings'), null],
+          ...(userRole === 'admin' ? [['users', t('admin_users'), null], ['settings', t('admin_settings'), null]] : []),
         ].map(([id, label, count]) => (
           <button key={id} className={`tab ${activeTab===id?'active':''}`} onClick={() => setActiveTab(id)}>
             {label} {count != null && count > 0 && <span className="tab-count">{count}</span>}
@@ -299,16 +298,16 @@ function UsersTab() {
             <div className="muted-sm" style={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{u.email || '-'}</div>
             <div>
               <select className="select" style={{fontSize: 12, padding: '4px 8px', height: 30}} value={u.role} onChange={e => changeRole(u.employee_id, e.target.value)}>
-                <option value="user">일반</option>
-                <option value="admin">관리자</option>
-                <option value="reviewer">심사위원</option>
+                <option value="user">{t('role_user')}</option>
+                <option value="admin">{t('role_admin')}</option>
+                <option value="reviewer">{t('role_reviewer')}</option>
               </select>
             </div>
           </div>
         ))}
         {users.length === 0 && (
           <div className="empty-state" style={{padding: 40, textAlign: 'center', color: 'var(--text-3)'}}>
-            등록된 사용자가 없습니다. Keycloak SSO로 로그인하면 자동 등록됩니다.
+            {t('admin_no_users')}
           </div>
         )}
       </div>
@@ -325,6 +324,7 @@ const DEFAULT_CRITERIA = [
 ];
 
 function SettingsTab() {
+  const { t } = useI18n();
   const [season, setSeason] = React.useState({
     name: '2026 상반기',
     submitStart: '2026-01-15',
@@ -355,7 +355,7 @@ function SettingsTab() {
     const existing = (window.PEOPLE && window.PEOPLE[id]) || null;
     const r = existing
       ? { ...existing, primary: false }
-      : { id, name, initial: name[0], role: '구성원', org: '-', avatarBg: 'var(--bg-muted)', avatarFg: 'var(--text-2)', primary: false };
+      : { id, name, initial: name[0], role: 'Member', org: '-', avatarBg: 'var(--bg-muted)', avatarFg: 'var(--text-2)', primary: false };
     setReviewers(rs => [...rs, r]);
     setDraftReviewer({ id: '', name: '' });
   };
@@ -365,21 +365,21 @@ function SettingsTab() {
   return (
     <div className="settings-grid">
       <div className="card settings-card">
-        <div className="h3" style={{marginBottom: 4}}>시즌 일정</div>
-        <div className="muted-sm" style={{marginBottom: 14}}>현재 시즌의 제출·심사 기간</div>
-        <EditableRow label="시즌명" value={season.name} onChange={v => setField('name', v)}/>
-        <EditableRow label="제출 시작" type="date" value={season.submitStart} onChange={v => setField('submitStart', v)}/>
-        <EditableRow label="제출 마감" type="date" value={season.submitEnd} onChange={v => setField('submitEnd', v)}/>
-        <EditableRow label="심사 마감" type="date" value={season.reviewEnd} onChange={v => setField('reviewEnd', v)}/>
-        <EditableRow label="시상식" type="date" value={season.awardDay} onChange={v => setField('awardDay', v)}/>
+        <div className="h3" style={{marginBottom: 4}}>{t('settings_season')}</div>
+        <div className="muted-sm" style={{marginBottom: 14}}>{t('settings_season_desc')}</div>
+        <EditableRow label={t('settings_season_name')} value={season.name} onChange={v => setField('name', v)}/>
+        <EditableRow label={t('settings_submit_start')} type="date" value={season.submitStart} onChange={v => setField('submitStart', v)}/>
+        <EditableRow label={t('settings_submit_end')} type="date" value={season.submitEnd} onChange={v => setField('submitEnd', v)}/>
+        <EditableRow label={t('settings_review_end')} type="date" value={season.reviewEnd} onChange={v => setField('reviewEnd', v)}/>
+        <EditableRow label={t('settings_award_day')} type="date" value={season.awardDay} onChange={v => setField('awardDay', v)}/>
       </div>
 
       <div className="card settings-card">
         <div className="row" style={{justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4}}>
-          <div className="h3">심사 항목 / 가중치</div>
-          <span className={`muted-sm mono ${total === 100 ? '' : 'sf-warn'}`}>합계 {total}%</span>
+          <div className="h3">{t('settings_criteria')}</div>
+          <span className={`muted-sm mono ${total === 100 ? '' : 'sf-warn'}`}>{t('settings_total')} {total}%</span>
         </div>
-        <div className="muted-sm" style={{marginBottom: 14}}>항목 추가·삭제 및 가중치 조정 (합계 100% 권장)</div>
+        <div className="muted-sm" style={{marginBottom: 14}}>{t('settings_criteria_desc')}</div>
         {criteria.map(c => (
           <EditableBar
             key={c.id}
@@ -394,21 +394,21 @@ function SettingsTab() {
         <div className="row gap-8" style={{marginTop: 10}}>
           <input
             className="input"
-            placeholder="새 심사 항목명"
+            placeholder={t('settings_new_criterion')}
             value={draftLabel}
             onChange={e => setDraftLabel(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addCriterion(); }}
             style={{flex: 1, fontSize: 12.5}}
           />
           <button className="btn btn-secondary btn-sm" onClick={addCriterion}>
-            <Icons.Plus size={12}/> 항목 추가
+            <Icons.Plus size={12}/> {t('settings_add_criterion')}
           </button>
         </div>
       </div>
 
       <div className="card settings-card">
-        <div className="h3" style={{marginBottom: 4}}>랭킹 점수 공식</div>
-        <div className="muted-sm" style={{marginBottom: 14}}>매일 오전 9시 갱신</div>
+        <div className="h3" style={{marginBottom: 4}}>{t('settings_formula')}</div>
+        <div className="muted-sm" style={{marginBottom: 14}}>{t('settings_formula_desc')}</div>
         <div className="settings-formula">
           <span className="sf-token">Score</span>
           <span className="sf-op">=</span>
@@ -416,20 +416,20 @@ function SettingsTab() {
           <span className="sf-op">×</span>
           <span className="sf-num">2</span>
           <span className="sf-op">+</span>
-          <span className="sf-token sf-dl">{(useI18n().t('col_download'))}</span>
+          <span className="sf-token sf-dl">{t('col_download')}</span>
           <span className="sf-op">×</span>
           <span className="sf-num">1</span>
         </div>
-        <SettingRow label="자기 Star 제외" value="ON"/>
-        <SettingRow label="자기 다운로드 제외" value="ON"/>
+        <SettingRow label={t('settings_self_star')} value="ON"/>
+        <SettingRow label={t('settings_self_download')} value="ON"/>
       </div>
 
       <div className="card settings-card settings-card-wide">
         <div className="row" style={{justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4}}>
-          <div className="h3">심사위원</div>
-          <span className="muted-sm mono">{reviewers.length}명</span>
+          <div className="h3">{t('settings_reviewers')}</div>
+          <span className="muted-sm mono">{reviewers.length}{t('settings_reviewers_count')}</span>
         </div>
-        <div className="muted-sm" style={{marginBottom: 14}}>심사 대기건을 검토하는 구성원. 대표 심사위원은 충돌 시 결정권을 가집니다.</div>
+        <div className="muted-sm" style={{marginBottom: 14}}>{t('settings_reviewers_desc')}</div>
         <div className="reviewer-list">
           {reviewers.map(r => (
             <div key={r.id} className="reviewer-row">
@@ -439,7 +439,7 @@ function SettingsTab() {
                   <div style={{minWidth: 0}}>
                     <div className="reviewer-row-name">
                       {r.name}
-                      {r.primary && <span className="chip chip-info" style={{fontSize: 10, marginLeft: 6}}>대표</span>}
+                      {r.primary && <span className="chip chip-info" style={{fontSize: 10, marginLeft: 6}}>{t('settings_primary')}</span>}
                     </div>
                     <div className="muted-sm" style={{fontSize: 11}}>
                       <span className="mono">({r.id})</span> · {r.role}
@@ -449,11 +449,11 @@ function SettingsTab() {
               </PeopleHover>
               <div className="row gap-8">
                 {!r.primary && (
-                  <button className="btn btn-sm btn-ghost" onClick={() => setPrimary(r.id)} title="대표 심사위원으로 지정">
+                  <button className="btn btn-sm btn-ghost" onClick={() => setPrimary(r.id)} title={t('settings_set_primary')}>
                     <Icons.Star size={11}/>
                   </button>
                 )}
-                <button className="btn btn-sm btn-ghost" onClick={() => removeReviewer(r.id)} title="제거" disabled={reviewers.length <= 1}>
+                <button className="btn btn-sm btn-ghost" onClick={() => removeReviewer(r.id)} title={t('settings_remove')} disabled={reviewers.length <= 1}>
                   <Icons.X size={11}/>
                 </button>
               </div>
@@ -463,32 +463,32 @@ function SettingsTab() {
         <div className="row gap-8" style={{marginTop: 12}}>
           <input
             className="input"
-            placeholder="사번"
+            placeholder={t('settings_emp_id')}
             value={draftReviewer.id}
             onChange={e => setDraftReviewer(d => ({...d, id: e.target.value}))}
             style={{width: 120, fontSize: 12.5, fontFamily: 'JetBrains Mono, monospace'}}
           />
           <input
             className="input"
-            placeholder="이름"
+            placeholder={t('settings_name')}
             value={draftReviewer.name}
             onChange={e => setDraftReviewer(d => ({...d, name: e.target.value}))}
             style={{flex: 1, fontSize: 12.5}}
             onKeyDown={e => { if (e.key === 'Enter') addReviewer(); }}
           />
           <button className="btn btn-secondary btn-sm" onClick={addReviewer}>
-            <Icons.Plus size={12}/> 추가
+            <Icons.Plus size={12}/> {t('settings_add')}
           </button>
         </div>
       </div>
 
       <div className="card settings-card">
-        <div className="h3" style={{marginBottom: 4}}>호환성 / 표준</div>
-        <div className="muted-sm" style={{marginBottom: 14}}>업로드 시 자동 검증</div>
-        <SettingRow label="최소 Langflow 버전" value="1.8.0"/>
-        <SettingRow label="권장 버전" value="1.9.0"/>
-        <SettingRow label="필수 README 언어" value="한글 + 영문"/>
-        <SettingRow label="비밀키 자동 스캔" value="ON"/>
+        <div className="h3" style={{marginBottom: 4}}>{t('settings_compat')}</div>
+        <div className="muted-sm" style={{marginBottom: 14}}>{t('settings_compat_desc')}</div>
+        <SettingRow label={t('settings_min_ver')} value="1.8.0"/>
+        <SettingRow label={t('settings_rec_ver')} value="1.9.0"/>
+        <SettingRow label={t('settings_readme_lang')} value="KR + EN"/>
+        <SettingRow label={t('settings_secret_scan')} value="ON"/>
       </div>
     </div>
   );
@@ -520,7 +520,7 @@ function EditableBar({ label, value, onLabelChange, onChange, onRemove, removabl
         <div className="row gap-8" style={{alignItems: 'center'}}>
           <span className="setting-row-value mono">{value}%</span>
           {removable && (
-            <button className="setting-bar-remove" onClick={onRemove} aria-label="삭제">
+            <button className="setting-bar-remove" onClick={onRemove} aria-label="Remove">
               <Icons.X size={11}/>
             </button>
           )}

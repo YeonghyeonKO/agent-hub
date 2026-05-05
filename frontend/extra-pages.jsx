@@ -40,7 +40,6 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
     <div className="page fade-in">
       <div className="row" style={{justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 22}}>
         <div>
-          <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6}}>{me.id} · {me.name}</div>
           <div className="h1">{t('mine_title')}</div>
           <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>{t('mine_desc')}</div>
         </div>
@@ -65,7 +64,7 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
         <StatTile label={t('tab_drafts')} value={drafts.length} icon={<Icons.Clock size={12}/>}/>
       </div>
 
-      <div className="tabs">
+      <div className="tabs" style={{display: 'flex', alignItems: 'center'}}>
         {[
           ['published', t('tab_published'), mine.length],
           ['drafts', t('tab_drafts'), drafts.length],
@@ -75,6 +74,9 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
             {label} <span className="tab-count">{count}</span>
           </button>
         ))}
+        <button className="btn btn-ghost btn-sm" title="새로고침" onClick={() => { api.users.myComponents().then(items => setMyComponents(items || [])).catch(() => {}); }} style={{fontSize: 12, padding: '4px 6px', marginLeft: 4}}>
+          <Icons.Reset size={12}/>
+        </button>
       </div>
 
       {tab === 'published' && (
@@ -164,59 +166,63 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
 // ─────────────────────────────────────────────────────────────────────
 // 2026 랭킹 — leaderboard
 // ─────────────────────────────────────────────────────────────────────
+function RankColumn({ title, chipClass, ranked, onOpenComponent, starWeight, downloadWeight }) {
+  const { t } = useI18n();
+  const score = (c) => c.stars * starWeight + c.downloads * downloadWeight;
+  return (
+    <div style={{flex: 1, minWidth: 0}}>
+      <div className="h3" style={{marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8}}>
+        <span className={`chip ${chipClass}`} style={{padding: '0 6px'}}>{chipClass === 'chip-py' ? '.py' : '.json'}</span>
+        {title}
+      </div>
+      <div style={{border: '1px solid var(--line)', borderRadius: 'var(--radius)', overflow: 'hidden'}}>
+        {ranked.length === 0 && <div className="muted-sm" style={{padding: 28, textAlign: 'center'}}>{t('ranking_empty')}</div>}
+        {ranked.map((c, i) => {
+          const Icon = Icons[c.icon] || Icons.Box;
+          const s = score(c);
+          return (
+            <div key={c.id} onClick={() => onOpenComponent(c)} style={{display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer', borderBottom: i < ranked.length - 1 ? '1px solid var(--line)' : 'none', transition: 'background 0.12s'}} onMouseOver={e => e.currentTarget.style.background = 'var(--bg-muted)'} onMouseOut={e => e.currentTarget.style.background = ''}>
+              <div style={{width: 28, fontWeight: 700, color: i < 3 ? 'var(--accent-fg)' : 'var(--text-3)', fontSize: 13, textAlign: 'center'}}>{i + 1}</div>
+              <div className="card-icon-sm" style={{background: c.iconBg, color: c.iconFg, flexShrink: 0}}><Icon size={14}/></div>
+              <div style={{flex: 1, minWidth: 0}}>
+                <div style={{fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{c.title}</div>
+                <div style={{fontSize: 11, color: 'var(--text-3)'}}>{c.author?.name}</div>
+              </div>
+              <div style={{display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, flexShrink: 0}}>
+                <span className="mono" style={{display: 'flex', alignItems: 'center', gap: 3}}><Icons.Star size={11}/> {c.stars}</span>
+                <span className="mono" style={{display: 'flex', alignItems: 'center', gap: 3}}><Icons.Download size={11}/> {c.downloads}</span>
+                <span className="mono" style={{fontWeight: 700, color: 'var(--accent-fg)', minWidth: 36, textAlign: 'right'}}>{s}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
   const { t } = useI18n();
-  const [scope, setScope] = React.useState('all');
-  const [period, setPeriod] = React.useState('h1');
-  const [rankData, setRankData] = React.useState([]);
+  const [pyData, setPyData] = React.useState([]);
+  const [jsonData, setJsonData] = React.useState([]);
+
+  const mapRank = (r) => ({ ...r, id: r.component_id, author: r.author || { name: '' }, icon: r.icon || 'Box', iconBg: 'var(--bg-muted)', iconFg: 'var(--text-2)' });
 
   React.useEffect(() => {
-    api.rankings.list({ scope }).then(d => {
-      setRankData((d.items || []).map(r => ({
-        ...r, id: r.component_id,
-        author: r.author || { name: '' },
-        icon: r.icon || 'Box',
-        iconBg: 'var(--bg-muted)', iconFg: 'var(--text-2)',
-      })));
-    }).catch(() => {});
-  }, [scope]);
-
-  const ranked = rankData;
-  const top3 = ranked.slice(0, 3);
-  const rest = ranked.slice(3);
-
-  // Top 3 podium order: 2, 1, 3 (visual center emphasis)
-  const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
-
-  const medalGradients = ['linear-gradient(135deg, #e2e8f0, #f8fafc)', 'linear-gradient(135deg, #fef3c7, #fffbeb)', 'linear-gradient(135deg, #ffedd5, #fff7ed)'];
-  const medalBorders = ['#cbd5e1', '#fbbf24', '#fb923c'];
-  const placeLabel = ['2nd', '1st', '3rd'];
-  const placeScale = [0.92, 1, 0.92];
+    api.rankings.list({ scope: 'py' }).then(d => setPyData((d.items || []).map(mapRank))).catch(() => {});
+    api.rankings.list({ scope: 'json' }).then(d => setJsonData((d.items || []).map(mapRank))).catch(() => {});
+  }, []);
 
   return (
     <div className="page fade-in">
-      <div className="row" style={{justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 18}}>
-        <div>
-          <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6, color: 'var(--accent-fg)'}}>{t('ranking_eyebrow')}</div>
-          <div className="h1">{t('ranking_title')}</div>
-          <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>{t('ranking_subtitle')}</div>
-        </div>
-        <div className="row gap-8">
-          <div className="segmented">
-            {[['h1', t('ranking_h1')], ['month', t('ranking_month')], ['week', t('ranking_week')]].map(([v, l]) => (
-              <button key={v} className={`segmented-item ${period===v?'active':''}`} onClick={() => setPeriod(v)}>{l}</button>
-            ))}
-          </div>
-          <div className="segmented">
-            {[['all', t('filter_all')], ['py', '.py'], ['json', '.json']].map(([v, l]) => (
-              <button key={v} className={`segmented-item ${scope===v?'active':''}`} onClick={() => setScope(v)}>{l}</button>
-            ))}
-          </div>
-        </div>
+      <div style={{marginBottom: 22}}>
+        <div className="muted-sm" style={{textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 6, color: 'var(--accent-fg)'}}>{t('ranking_eyebrow')}</div>
+        <div className="h1">{t('ranking_title')}</div>
+        <div className="muted" style={{fontSize: 13.5, marginTop: 4}}>{t('ranking_subtitle')}</div>
       </div>
 
-      {/* Score formula card */}
-      <div className="score-formula">
+      {/* Score formula */}
+      <div className="score-formula" style={{marginBottom: 28}}>
         <div className="score-formula-label">
           <Icons.Sparkle size={11}/>
           <span>{t('ranking_formula')}</span>
@@ -235,81 +241,10 @@ function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
         <div className="score-formula-hint">{t('ranking_formula_hint')}</div>
       </div>
 
-      {/* Podium */}
-      <div className="podium-wrap">
-        {podiumOrder.map((c, i) => {
-          if (!c) return null;
-          const Icon = Icons[c.icon] || Icons.Box;
-          const realRank = i === 0 ? 2 : i === 1 ? 1 : 3;
-          const score = c.stars * starWeight + c.downloads * downloadWeight;
-          return (
-            <div key={c.id} className="podium-col" onClick={() => onOpenComponent(c)} style={{transform: `scale(${placeScale[i]})`, transformOrigin: 'bottom center'}}>
-              <div className="podium-card" style={{background: medalGradients[i], borderColor: medalBorders[i], borderWidth: realRank === 1 ? 2 : 1}}>
-                <div className={`podium-medal medal-${realRank}`}>
-                  <Icons.Trophy size={14}/>
-                  <span>{placeLabel[i]}</span>
-                </div>
-                <div className="card-icon-md" style={{background: 'white', color: c.iconFg, margin: '14px auto 12px', border: `1.5px solid ${medalBorders[i]}`}}>
-                  <Icon size={22}/>
-                </div>
-                <div style={{fontWeight: 700, fontSize: 16, textAlign: 'center', marginBottom: 4}}>{c.title}</div>
-                <div style={{fontSize: 12.5, textAlign: 'center', color: 'var(--text-2)', marginBottom: 2}}>{c.author?.name}</div>
-                <div className="mono" style={{textAlign: 'center', fontSize: 22, fontWeight: 800, color: 'var(--accent)', margin: '12px 0 8px'}}>{score}<span style={{fontSize: 11, fontWeight: 500, color: 'var(--text-3)'}}> pts</span></div>
-                <div className="podium-stats" style={{background: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '8px 12px', margin: '0 -2px'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Star size={12}/><span className="mono" style={{fontWeight: 700}}>{c.stars}</span></div>
-                  <div className="podium-stats-sep"/>
-                  <div style={{display: 'flex', alignItems: 'center', gap: 4}}><Icons.Download size={12}/><span className="mono" style={{fontWeight: 700}}>{c.downloads}</span></div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Full table */}
-      <div style={{marginTop: 36}}>
-        <div className="h2" style={{marginBottom: 14}}>{t('ranking_full')}</div>
-        <div className="rank-table">
-          <div className="rank-table-head">
-            <div style={{width: 56}}>{t('ranking_col_rank')}</div>
-            <div>{t('ranking_col_component')}</div>
-            <div style={{width: 140}}>{t('ranking_col_developer')}</div>
-            <div style={{width: 96, textAlign: 'right'}}>{t('ranking_col_star')}</div>
-            <div style={{width: 110, textAlign: 'right'}}>{t('ranking_col_download')}</div>
-            <div style={{width: 90, textAlign: 'right'}}>{t('ranking_col_score')}</div>
-            <div style={{width: 80, textAlign: 'right'}}>{t('ranking_col_trend')}</div>
-          </div>
-          {ranked.map((c, i) => {
-            const Icon = Icons[c.icon] || Icons.Box;
-            const score = +(c.stars * starWeight + c.downloads * downloadWeight).toFixed(1);
-            const trends = ['+2', '—', '+1', '-1', '+3', '—', '-2', '+1'];
-            const trend = trends[i] || '—';
-            return (
-              <div key={c.id} className="rank-table-row" onClick={() => onOpenComponent(c)}>
-                <div className="rank-num" style={{width: 56}}>
-                  {i < 3 ? <Icons.Trophy size={14} className={`medal-icon medal-${i+1}`}/> : <span className="mono">{i + 1}</span>}
-                </div>
-                <div className="row gap-8">
-                  <div className="card-icon-sm" style={{background: c.iconBg, color: c.iconFg}}><Icon size={14}/></div>
-                  <div>
-                    <div style={{fontWeight: 600, fontSize: 13.5}}>{c.title}</div>
-                    <div className="muted-sm" style={{fontSize: 12}}>{c.category}</div>
-                  </div>
-                </div>
-                <div className="row gap-8" style={{width: 180}}>
-                  <div className="avatar-xs"><Icons.Users size={9}/></div>
-                  <div style={{minWidth: 0}}>
-                    <div style={{fontSize: 13, lineHeight: 1.2}}>{c.author?.name}</div>
-                  </div>
-                </div>
-                <div className="mono" style={{textAlign: 'right', fontWeight: 600, width: 96}}>{c.stars}</div>
-                <div className="mono" style={{textAlign: 'right', fontWeight: 600, width: 110}}>{c.downloads}</div>
-                <div className="mono" style={{textAlign: 'right', fontWeight: 700, width: 90, color: 'var(--accent-fg)'}}>{score}</div>
-                <div className="mono" style={{textAlign: 'right', width: 80, color: trend.startsWith('+') ? 'var(--ok-fg)' : trend.startsWith('-') ? 'var(--err-fg)' : 'var(--text-3)'}}>{trend}</div>
-              </div>
-            );
-          })}
-        </div>
+      {/* Two-column ranking */}
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24}}>
+        <RankColumn title={t('ranking_comp')} chipClass="chip-py" ranked={pyData} onOpenComponent={onOpenComponent} starWeight={starWeight} downloadWeight={downloadWeight}/>
+        <RankColumn title={t('ranking_flow')} chipClass="chip-json" ranked={jsonData} onOpenComponent={onOpenComponent} starWeight={starWeight} downloadWeight={downloadWeight}/>
       </div>
     </div>
   );

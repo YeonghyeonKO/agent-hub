@@ -16,6 +16,25 @@ function UploadModal({ onClose }) {
   const [maxVer, setMaxVer] = React.useState('1.9.1');
   const [tested, setTested] = React.useState(['1.9.1', '1.9.0']);
   const [deps, setDeps] = React.useState('');
+  const COMPONENT_TEMPLATE = "## 개요\n\n이 Component가 무엇을 하는지 간단히 설명하세요.\n\n## 사용법\n\n1. components/custom/ 디렉토리에 파일 배치\n2. 의존성 설치: pip install ...\n3. Langflow 재시작\n\n## 입력 / 출력\n\n| 이름 | 타입 | 설명 |\n|------|------|------|\n| input_name | str | 입력 설명 |\n| output_name | str | 출력 설명 |\n\n## 참고\n\n- 추가 의존성, 주의사항 등\n";
+  const FLOW_TEMPLATE = "## 개요\n\n이 Flow가 어떤 워크플로우를 수행하는지 설명하세요.\n\n## 구성 노드\n\n1. 입력 노드: ...\n2. 처리 노드: ...\n3. 출력 노드: ...\n\n## 사용법\n\n1. JSON 파일을 Langflow에 Import\n2. 필요한 API Key / 환경변수 설정\n3. Flow 실행\n\n## 참고\n\n- 필요한 외부 서비스, 주의사항 등\n";
+  const getTemplate = (type) => type === 'json' ? FLOW_TEMPLATE : COMPONENT_TEMPLATE;
+  const [readme, setReadme] = React.useState(getTemplate(fileType));
+  const [readmeMode, setReadmeMode] = React.useState('write');
+  const readmeRef = React.useRef(null);
+
+  const insertAtCursor = React.useCallback((text) => {
+    const el = readmeRef.current;
+    if (!el) { setReadme(r => r + text); return; }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const val = el.value;
+    const newVal = val.substring(0, start) + text + val.substring(end);
+    setReadme(newVal);
+    setTimeout(() => { el.selectionStart = el.selectionEnd = start + text.length; el.focus(); }, 0);
+  }, []);
+
+  useImagePaste(readmeRef, insertAtCursor);
   const [submitting, setSubmitting] = React.useState(false);
   const [submitDone, setSubmitDone] = React.useState(false);
 
@@ -67,9 +86,13 @@ function UploadModal({ onClose }) {
     if (!file) return;
     setRealFile(file);
     const ext = file.name.split('.').pop()?.toLowerCase();
-    if (ext === 'json') setFileType('json');
-    else setFileType('py');
-    if (!title) setTitle(file.name.replace(/\.(py|json)$/i, ''));
+    const newType = ext === 'json' ? 'json' : 'py';
+    if (newType !== fileType) {
+      setFileType(newType);
+      const currentTemplate = getTemplate(fileType);
+      if (!readme.trim() || readme === currentTemplate) setReadme(getTemplate(newType));
+    }
+    setTitle(file.name.replace(/\.(py|json)$/i, ''));
     validateFile(file);
   };
 
@@ -88,6 +111,7 @@ function UploadModal({ onClose }) {
       fd.append('max_langflow_ver', maxVer === t('upload_no_limit') ? '' : maxVer);
       fd.append('tested_versions', tested.join(','));
       fd.append('icon', icon);
+      if (readme.trim()) fd.append('readme', readme.trim());
       await api.components.create(fd);
       setSubmitDone(true);
       setTimeout(() => onClose(), 1500);
@@ -159,10 +183,10 @@ function UploadModal({ onClose }) {
               <div className="field">
                 <label className="field-label">{t('upload_type')}</label>
                 <div className="segmented">
-                  <button className={`segmented-item ${fileType==='py'?'active':''}`} onClick={() => setFileType('py')}>
+                  <button className={`segmented-item ${fileType==='py'?'active':''}`} onClick={() => { if (fileType !== 'py') { const prev = getTemplate('json'); setFileType('py'); if (!readme.trim() || readme === prev) setReadme(getTemplate('py')); } }}>
                     <span className="chip chip-py" style={{padding: '0 6px'}}>.py</span> Component
                   </button>
-                  <button className={`segmented-item ${fileType==='json'?'active':''}`} onClick={() => setFileType('json')}>
+                  <button className={`segmented-item ${fileType==='json'?'active':''}`} onClick={() => { if (fileType !== 'json') { const prev = getTemplate('py'); setFileType('json'); if (!readme.trim() || readme === prev) setReadme(getTemplate('json')); } }}>
                     <span className="chip chip-json" style={{padding: '0 6px'}}>.json</span> Flow
                   </button>
                 </div>
@@ -219,14 +243,20 @@ function UploadModal({ onClose }) {
 
           {step === 1 && (
             <div className="fade-in">
+              <div style={{display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14, padding: '5px 12px', background: fileType === 'py' ? 'var(--accent-bg)' : 'var(--ok-bg)', border: `1px solid ${fileType === 'py' ? 'var(--accent)' : 'var(--ok)'}`, borderRadius: 6, fontSize: 12, fontWeight: 600, color: fileType === 'py' ? 'var(--accent-fg)' : 'var(--ok-fg)'}}>
+                <span className={`chip chip-${fileType}`} style={{padding: '0 5px', fontSize: 11}}>.{fileType}</span>
+                {fileType === 'py' ? 'Component' : 'Flow'}
+              </div>
               <div className="field">
                 <label className="field-label">{t('upload_field_title')} <span className="req">*</span></label>
                 <input className="input" value={title} onChange={e => setTitle(e.target.value)}/>
               </div>
               <div className="field">
                 <label className="field-label">{t('upload_field_desc')} <span className="req">*</span></label>
-                <input className="input" value={desc} onChange={e => setDesc(e.target.value)}/>
-                <div className="field-hint">{t('upload_desc_hint')} · {desc.length} / 80</div>
+                <input className="input" value={desc} onChange={e => setDesc(e.target.value)} style={{borderColor: desc.length > 0 && desc.length < 20 ? 'var(--warn)' : undefined}}/>
+                <div className="field-hint" style={{color: desc.length > 0 && desc.length < 20 ? 'var(--warn-fg)' : undefined}}>
+                  {desc.length > 0 && desc.length < 20 ? `최소 20자 이상 입력해주세요 (${desc.length}/20)` : `${t('upload_desc_hint')} · ${desc.length}자 (20~80자)`}
+                </div>
               </div>
               <div className="grid-2">
                 <div className="field">
@@ -258,6 +288,33 @@ function UploadModal({ onClose }) {
                       );
                     })}
                   </div>
+                </div>
+              </div>
+              <div className="field">
+                <label className="field-label">{t('upload_field_readme')}</label>
+                <div style={{border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: 0, borderBottom: '1px solid var(--line)', background: 'var(--bg-muted)', padding: '4px 8px'}}>
+                    <button type="button" className={`btn btn-ghost btn-sm`} style={{fontSize: 12, fontWeight: readmeMode === 'write' ? 600 : 400, borderBottom: readmeMode === 'write' ? '2px solid var(--accent)' : '2px solid transparent'}} onClick={() => setReadmeMode('write')}>{t('upload_readme_write')}</button>
+                    <button type="button" className={`btn btn-ghost btn-sm`} style={{fontSize: 12, fontWeight: readmeMode === 'preview' ? 600 : 400, borderBottom: readmeMode === 'preview' ? '2px solid var(--accent)' : '2px solid transparent'}} onClick={() => setReadmeMode('preview')}>{t('upload_readme_preview')}</button>
+                    <div style={{flex: 1}}/>
+                    {readmeMode === 'write' && (
+                      <ImageUploadButton onInsert={insertAtCursor}/>
+                    )}
+                  </div>
+                  {readmeMode === 'write' ? (
+                    <textarea ref={readmeRef} className="input" rows={8} style={{resize: 'vertical', fontFamily: 'JetBrains Mono, monospace', fontSize: 12.5, border: 'none', borderRadius: 0, width: '100%', boxSizing: 'border-box'}} placeholder={'## 개요\n\n컴포넌트/플로우 설명...\n\n## 사용법\n\n1. ...'} value={readme} onChange={e => setReadme(e.target.value)}/>
+                  ) : (
+                    <div style={{padding: 16, minHeight: 120, fontSize: 13.5, lineHeight: 1.7}}>
+                      {readme.trim() ? (
+                        <div className="readme-body" dangerouslySetInnerHTML={{__html: (typeof marked !== 'undefined' && marked.parse) ? marked.parse(readme) : readme.replace(/\n/g, '<br/>')}}/>
+                      ) : (
+                        <div className="muted" style={{textAlign: 'center', padding: 24}}>미리보기할 내용이 없습니다</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="field-hint" style={{color: readme.length > 0 && readme.length < 100 ? 'var(--warn-fg)' : undefined}}>
+                  {readme.length > 0 && readme.length < 100 ? `최소 100자 이상 작성해주세요 (${readme.length}/100)` : `${t('upload_readme_hint')} · ${readme.length}자`}
                 </div>
               </div>
               <div className="field" style={{marginBottom: 0}}>
@@ -321,13 +378,7 @@ function UploadModal({ onClose }) {
               </div>
 
               {user && (
-                <div style={{display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--bg-muted)', border: '1px solid var(--line)', borderRadius: 8}}>
-                  <div className="avatar sm" style={{background: 'var(--accent-bg)', color: 'var(--accent-fg)'}}>{user.name?.[0] || '?'}</div>
-                  <div>
-                    <div style={{fontSize: 12.5, fontWeight: 600}}>{user.name} <span className="mono muted-sm" style={{fontWeight: 400}}>{user.employee_id}</span></div>
-                    <div className="muted-sm" style={{fontSize: 11.5}}>{user.team || user.org || 'SSO'}</div>
-                  </div>
-                </div>
+                <div className="muted-sm" style={{fontSize: 12, marginTop: 4}}>제출자 : {user.name}</div>
               )}
             </div>
           )}
@@ -340,7 +391,7 @@ function UploadModal({ onClose }) {
               <button className="btn btn-secondary btn-sm" onClick={() => setStep(s => s - 1)}>{t('upload_prev')}</button>
             )}
             {step < 2 ? (
-              <button className="btn btn-accent btn-sm" disabled={step === 0 && !hasFile} style={{opacity: (step === 0 && !hasFile) ? 0.5 : 1}} onClick={() => setStep(s => s + 1)}>
+              <button className="btn btn-accent btn-sm" disabled={(step === 0 && !hasFile) || (step === 1 && (desc.length < 20 || readme.length < 100))} style={{opacity: ((step === 0 && !hasFile) || (step === 1 && (desc.length < 20 || readme.length < 100))) ? 0.5 : 1}} onClick={() => setStep(s => s + 1)}>
                 {t('upload_next')} <Icons.ArrowRight size={11}/>
               </button>
             ) : (
