@@ -1,12 +1,12 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user
 from app.database import get_db
-from app.models.models import Component, User
+from app.models.models import Component, Download, Star, User
 from app.schemas.schemas import ComponentListItem, UserResponse
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
@@ -31,6 +31,8 @@ async def get_my_components(
 
     items = []
     for c in components:
+        star_count = (await db.execute(select(func.count()).where(Star.component_id == c.id))).scalar() or 0
+        dl_count = (await db.execute(select(func.count()).where(Download.component_id == c.id))).scalar() or 0
         items.append(
             ComponentListItem(
                 id=c.id,
@@ -45,8 +47,8 @@ async def get_my_components(
                 is_standard=c.is_standard,
                 status=c.status,
                 author=UserResponse.model_validate(user),
-                stars_count=0,
-                downloads_count=0,
+                stars_count=star_count,
+                downloads_count=dl_count,
                 created_at=c.created_at,
             )
         )

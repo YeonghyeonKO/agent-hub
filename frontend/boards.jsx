@@ -376,7 +376,7 @@ function VocPage() {
                 <div className="muted-sm" style={{display: 'flex', gap: 12}}>
                   <span>{v.author.name}</span>
                   <span>{fmtDate(v.created_at)}</span>
-                  <span><Icons.Comment size={11}/> {v.comments}</span>
+                  <span><Icons.Comment size={11}/> {v.comment_count ?? v.comments ?? 0}</span>
                 </div>
               </div>
             </div>

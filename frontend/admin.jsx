@@ -199,7 +199,12 @@ function AdminTabPanel({ tab }) {
 function ApprovedTab() {
   const { t } = useI18n();
   const [items, setItems] = React.useState([]);
-  React.useEffect(() => { api.admin.approved().then(setItems).catch(() => {}); }, []);
+  const load = () => { api.admin.approved().then(setItems).catch(() => {}); };
+  React.useEffect(load, []);
+  const handleDelete = (id) => {
+    if (!confirm(t('admin_delete_confirm'))) return;
+    api.admin.deleteComponent(id).then(load).catch(e => alert('Delete failed: ' + e.message));
+  };
   return (
     <div className="card" style={{padding: 0, overflow: 'hidden'}}>
       <div className="admin-panel-head"><div className="h3">{t('admin_approved')}</div></div>
@@ -218,7 +223,7 @@ function ApprovedTab() {
             <div>{r.stars_count ?? 0}</div>
             <div>{r.downloads_count ?? 0}</div>
             <div className="muted-sm">{fmtDate(r.created_at)}</div>
-            <div></div>
+            <div><button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/> {t('settings_remove')}</button></div>
           </div>
         ))}
         {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No approved items</div>}
@@ -230,7 +235,12 @@ function ApprovedTab() {
 function RejectedTab() {
   const { t } = useI18n();
   const [items, setItems] = React.useState([]);
-  React.useEffect(() => { api.admin.rejected().then(setItems).catch(() => {}); }, []);
+  const load = () => { api.admin.rejected().then(setItems).catch(() => {}); };
+  React.useEffect(load, []);
+  const handleDelete = (id) => {
+    if (!confirm(t('admin_delete_confirm'))) return;
+    api.admin.deleteComponent(id).then(load).catch(e => alert('Delete failed: ' + e.message));
+  };
   return (
     <div className="card" style={{padding: 0, overflow: 'hidden'}}>
       <div className="admin-panel-head"><div className="h3">{t('admin_rejected')}</div></div>
@@ -246,6 +256,7 @@ function RejectedTab() {
                 <span className="muted-sm">· {fmtDate(r.created_at)}</span>
               </div>
             </div>
+            <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/> {t('settings_remove')}</button>
           </div>
         ))}
         {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No rejected items</div>}

@@ -3,13 +3,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.auth import require_admin
 from app.database import get_db
-from app.models.models import Component, Issue, Review, Season, User
+from app.models.models import Component, Download, Issue, Review, Season, Star, User
 from app.schemas.schemas import (
     ComponentListItem,
     IssueResponse,
@@ -35,17 +35,19 @@ async def get_pending(
         .order_by(Component.created_at.desc())
     )
     components = result.scalars().all()
-    return [
-        ComponentListItem(
+    items = []
+    for c in components:
+        sc = (await db.execute(select(func.count()).where(Star.component_id == c.id))).scalar() or 0
+        dc = (await db.execute(select(func.count()).where(Download.component_id == c.id))).scalar() or 0
+        items.append(ComponentListItem(
             id=c.id, title=c.title, type=c.type, description=c.description,
             category=c.category, version=c.version,
             min_langflow_ver=c.min_langflow_ver, max_langflow_ver=c.max_langflow_ver,
             icon=c.icon, is_standard=c.is_standard, status=c.status,
             author=UserResponse.model_validate(c.author),
-            stars_count=0, downloads_count=0, created_at=c.created_at,
-        )
-        for c in components
-    ]
+            stars_count=sc, downloads_count=dc, created_at=c.created_at,
+        ))
+    return items
 
 
 @router.get("/approved", response_model=list[ComponentListItem])
@@ -60,17 +62,19 @@ async def get_approved(
         .order_by(Component.updated_at.desc())
     )
     components = result.scalars().all()
-    return [
-        ComponentListItem(
+    items = []
+    for c in components:
+        sc = (await db.execute(select(func.count()).where(Star.component_id == c.id))).scalar() or 0
+        dc = (await db.execute(select(func.count()).where(Download.component_id == c.id))).scalar() or 0
+        items.append(ComponentListItem(
             id=c.id, title=c.title, type=c.type, description=c.description,
             category=c.category, version=c.version,
             min_langflow_ver=c.min_langflow_ver, max_langflow_ver=c.max_langflow_ver,
             icon=c.icon, is_standard=c.is_standard, status=c.status,
             author=UserResponse.model_validate(c.author),
-            stars_count=0, downloads_count=0, created_at=c.created_at,
-        )
-        for c in components
-    ]
+            stars_count=sc, downloads_count=dc, created_at=c.created_at,
+        ))
+    return items
 
 
 @router.get("/rejected", response_model=list[ComponentListItem])
@@ -85,17 +89,35 @@ async def get_rejected(
         .order_by(Component.updated_at.desc())
     )
     components = result.scalars().all()
-    return [
-        ComponentListItem(
+    items = []
+    for c in components:
+        sc = (await db.execute(select(func.count()).where(Star.component_id == c.id))).scalar() or 0
+        dc = (await db.execute(select(func.count()).where(Download.component_id == c.id))).scalar() or 0
+        items.append(ComponentListItem(
             id=c.id, title=c.title, type=c.type, description=c.description,
             category=c.category, version=c.version,
             min_langflow_ver=c.min_langflow_ver, max_langflow_ver=c.max_langflow_ver,
             icon=c.icon, is_standard=c.is_standard, status=c.status,
             author=UserResponse.model_validate(c.author),
-            stars_count=0, downloads_count=0, created_at=c.created_at,
-        )
-        for c in components
-    ]
+            stars_count=sc, downloads_count=dc, created_at=c.created_at,
+        ))
+    return items
+
+
+@router.delete("/components/{component_id}")
+async def soft_delete_component(
+    component_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[User, Depends(require_admin)],
+):
+    from datetime import datetime, timezone
+    result = await db.execute(select(Component).where(Component.id == component_id))
+    component = result.scalar_one_or_none()
+    if not component:
+        raise HTTPException(status_code=404, detail="Component not found")
+    component.deleted_at = datetime.now(timezone.utc)
+    await db.commit()
+    return {"deleted": True, "id": str(component_id)}
 
 
 @router.get("/issues", response_model=list[IssueResponse])

@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.auth import get_current_user
 from app.config import settings
 from app.database import get_db
-from app.models.models import Component, Download, Star, User
+from app.models.models import Component, ComponentVersion, Download, Star, User
 from app.schemas.schemas import (
     ComponentListItem,
     ComponentListResponse,
@@ -32,7 +32,7 @@ async def list_components(
     limit: int = 20,
     offset: int = 0,
 ):
-    query = select(Component).where(Component.status == "approved")
+    query = select(Component).where(Component.status == "approved", Component.deleted_at.is_(None))
 
     if category:
         query = query.where(Component.category == category)
@@ -194,6 +194,106 @@ async def create_component(
         created_at=component.created_at,
         updated_at=component.updated_at,
     )
+
+
+@router.patch("/{component_id}")
+async def update_component(
+    component_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+    file: UploadFile = File(None),
+    description: str = Form(None),
+    readme: str = Form(None),
+    changelog: str = Form(""),
+    version_bump: str = Form("patch"),  # patch / minor / major
+):
+    result = await db.execute(
+        select(Component).where(Component.id == component_id).options(selectinload(Component.author))
+    )
+    component = result.scalar_one_or_none()
+    if not component:
+        raise HTTPException(status_code=404, detail="Component not found")
+    if component.author_id != user.employee_id and user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only the author or admin can update")
+
+    # Calculate next version
+    old_ver = component.version or "v1.0.0"
+    ver_str = old_ver.lstrip("v")
+    parts = ver_str.split(".")
+    major, minor, patch_v = int(parts[0]) if len(parts) > 0 else 1, int(parts[1]) if len(parts) > 1 else 0, int(parts[2]) if len(parts) > 2 else 0
+    if version_bump == "major":
+        major, minor, patch_v = major + 1, 0, 0
+    elif version_bump == "minor":
+        minor, patch_v = minor + 1, 0
+    else:
+        patch_v += 1
+    new_version = f"v{major}.{minor}.{patch_v}"
+
+    # Save old version to component_versions
+    version_record = ComponentVersion(
+        component_id=component.id,
+        version=component.version,
+        changelog=changelog or f"Updated to {new_version}",
+        file_path=component.file_path,
+    )
+    db.add(version_record)
+
+    # Update file if provided
+    if file:
+        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+        file_id = str(uuid.uuid4())
+        ext = os.path.splitext(file.filename or "")[1]
+        file_path = os.path.join(settings.UPLOAD_DIR, f"{file_id}{ext}")
+        content = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
+        component.file_path = file_path
+
+    # Update fields
+    component.version = new_version
+    if description is not None:
+        component.description = description
+    if readme is not None:
+        component.readme = readme
+
+    await db.commit()
+    await db.refresh(component, ["author"])
+
+    star_count = (await db.execute(select(func.count()).where(Star.component_id == component.id))).scalar() or 0
+    dl_count = (await db.execute(select(func.count()).where(Download.component_id == component.id))).scalar() or 0
+
+    return ComponentResponse(
+        id=component.id, title=component.title, type=component.type,
+        description=component.description, category=component.category,
+        version=component.version, min_langflow_ver=component.min_langflow_ver,
+        max_langflow_ver=component.max_langflow_ver, tested_versions=component.tested_versions,
+        icon=component.icon, is_standard=component.is_standard, status=component.status,
+        readme=component.readme, author=UserResponse.model_validate(component.author),
+        stars_count=star_count, downloads_count=dl_count,
+        created_at=component.created_at, updated_at=component.updated_at,
+    )
+
+
+@router.get("/{component_id}/versions")
+async def get_versions(
+    component_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(
+        select(ComponentVersion)
+        .where(ComponentVersion.component_id == component_id)
+        .order_by(ComponentVersion.created_at.desc())
+    )
+    versions = result.scalars().all()
+    return [
+        {
+            "id": str(v.id),
+            "version": v.version,
+            "changelog": v.changelog,
+            "created_at": v.created_at.isoformat() if v.created_at else None,
+        }
+        for v in versions
+    ]
 
 
 @router.post("/{component_id}/star")

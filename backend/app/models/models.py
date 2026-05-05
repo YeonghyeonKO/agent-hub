@@ -47,6 +47,7 @@ class Component(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     versions: Mapped[list["ComponentVersion"]] = relationship(back_populates="component", cascade="all, delete-orphan")
     reviews: Mapped[list["Review"]] = relationship(back_populates="component", cascade="all, delete-orphan")

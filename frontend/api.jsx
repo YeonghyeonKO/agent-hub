@@ -27,6 +27,12 @@ const api = {
     return res.json();
   },
 
+  async patchForm(path, formData) {
+    const res = await fetch(API_BASE + path, { method: 'PATCH', body: formData });
+    if (!res.ok) throw new Error(`PATCH ${path}: ${res.status}`);
+    return res.json();
+  },
+
   async put(path, body) {
     const res = await fetch(API_BASE + path, {
       method: 'PUT',
@@ -64,6 +70,8 @@ const api = {
     star: (id) => api.post(`/components/${id}/star`),
     download: (id) => api.post(`/components/${id}/download`),
     file: (id) => api.get(`/components/${id}/file`),
+    update: (id, formData) => api.patchForm(`/components/${id}`, formData),
+    versions: (id) => api.get(`/components/${id}/versions`),
   },
   rankings: {
     list: (params = {}) => {
@@ -103,6 +111,7 @@ const api = {
     updateSettings: (body) => api.put('/admin/settings', body),
     users: () => api.get('/admin/users'),
     updateRole: (empId, role) => api.patch(`/admin/users/${empId}/role`, { role }),
+    deleteComponent: (id) => api.del(`/admin/components/${id}`),
   },
 };
 

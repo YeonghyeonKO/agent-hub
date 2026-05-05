@@ -41,6 +41,9 @@ function ComponentDetail({ component, onBack }) {
   const [fileName, setFileName] = React.useState('');
   const [starCount, setStarCount] = React.useState(c.stars_count ?? c.stars ?? 0);
   const [starred, setStarred] = React.useState(false);
+  const [showUpdate, setShowUpdate] = React.useState(false);
+  const [copyToast, setCopyToast] = React.useState(false);
+  const [versionHistory, setVersionHistory] = React.useState([]);
 
   // Fetch full component data (including readme) if not already present
   React.useEffect(() => {
@@ -95,7 +98,14 @@ function ComponentDetail({ component, onBack }) {
         </div>
         <div className="detail-actions">
           <button className="btn btn-secondary" style={{color: starred ? '#f59e0b' : undefined, borderColor: starred ? '#f59e0b' : undefined}} onClick={() => { const id = c.id; if (id && String(id).includes('-')) api.components.star(id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } else { setStarCount(s => Math.max(0, s - 1)); setStarred(false); } }).catch(() => {}); }}><Icons.Star size={13}/> {starCount}</button>
-          <button className="btn btn-secondary" onClick={() => { navigator.clipboard?.writeText(fileContent || ''); }}><Icons.Copy size={13}/> 코드 복사</button>
+          <button className="btn btn-secondary" onClick={() => {
+            navigator.clipboard?.writeText(fileContent || '');
+            // Auto-star on copy
+            if (c.id && String(c.id).includes('-') && !starred) {
+              api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
+            }
+            setCopyToast(true); setTimeout(() => setCopyToast(false), 3000);
+          }}><Icons.Copy size={13}/> 코드 복사</button>
           <button className="btn btn-primary" onClick={() => {
             if (c.id && String(c.id).includes('-')) {
               window.open(`/api/v1/components/${c.id}/download-file`, '_blank');
@@ -106,8 +116,15 @@ function ComponentDetail({ component, onBack }) {
               URL.revokeObjectURL(url);
             }
           }}><Icons.Download size={13}/> 다운로드</button>
+          <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> 업데이트</button>
         </div>
       </div>
+
+      {copyToast && (
+        <div style={{position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--text)', color: 'var(--bg)', padding: '10px 20px', borderRadius: 8, fontSize: 13, zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.15)'}}>
+          코드가 복사되었습니다! 작성자에게 Star가 자동으로 전달되었습니다
+        </div>
+      )}
 
       <div className="version-row">
         <span className="version-row-label">Langflow 호환</span>
@@ -130,9 +147,10 @@ function ComponentDetail({ component, onBack }) {
         {[
           ['readme', '개요 / 사용법'],
           ['code', '코드 미리보기'],
-        ].map(([id, label, count]) => (
-          <button key={id} className={`tab ${tab===id?'active':''}`} onClick={() => setTab(id)}>
-            {label} {count != null && <span className="tab-count">{count}</span>}
+          ['versions', '버전 이력'],
+        ].map(([id, label]) => (
+          <button key={id} className={`tab ${tab===id?'active':''}`} onClick={() => { setTab(id); if (id === 'versions' && versionHistory.length === 0 && c.id) api.components.versions(c.id).then(setVersionHistory).catch(() => {}); }}>
+            {label}
           </button>
         ))}
       </div>
@@ -140,7 +158,26 @@ function ComponentDetail({ component, onBack }) {
       <div>
         {tab === 'readme' && <ReadmeContent c={c}/>}
         {tab === 'code' && <CodePreview code={fileContent || SAMPLE_PY_CODE} filename={fileName || 'code.py'}/>}
+        {tab === 'versions' && (
+          <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+            <div style={{padding: '14px 18px', background: 'var(--bg-muted)', borderBottom: '1px solid var(--line)', fontWeight: 600, fontSize: 13}}>
+              현재: {c.version}
+            </div>
+            {versionHistory.length === 0 && <div className="muted-sm" style={{padding: 24, textAlign: 'center'}}>이전 버전이 없습니다</div>}
+            {versionHistory.map((v, i) => (
+              <div key={v.id} style={{padding: '12px 18px', borderBottom: i < versionHistory.length - 1 ? '1px solid var(--line)' : 'none'}}>
+                <div className="row gap-8" style={{marginBottom: 4}}>
+                  <span className="mono" style={{fontWeight: 700}}>{v.version}</span>
+                  <span className="muted-sm">· {fmtDate(v.created_at)}</span>
+                </div>
+                <div style={{fontSize: 13, color: 'var(--text-2)'}}>{v.changelog}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {showUpdate && <UpdateModal component={c} onClose={() => setShowUpdate(false)} onUpdated={(updated) => { setC(apiToCard(updated)); setShowUpdate(false); }}/>}
     </div>
   );
 }
@@ -207,5 +244,81 @@ function CodePreview({ code, filename }) {
   );
 }
 
+
+function UpdateModal({ component, onClose, onUpdated }) {
+  const c = component;
+  const [bump, setBump] = React.useState('patch');
+  const [changelog, setChangelog] = React.useState('');
+  const [readme, setReadme] = React.useState(c.readme || '');
+  const [desc, setDesc] = React.useState(c.desc || c.description || '');
+  const [newFile, setNewFile] = React.useState(null);
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const curVer = (c.version || 'v1.0.0').replace('v', '');
+  const parts = curVer.split('.').map(Number);
+  const nextVer = bump === 'major' ? `v${parts[0]+1}.0.0` : bump === 'minor' ? `v${parts[0]}.${parts[1]+1}.0` : `v${parts[0]}.${parts[1]}.${parts[2]+1}`;
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append('version_bump', bump);
+      fd.append('changelog', changelog.trim() || 'Updated');
+      if (desc.trim()) fd.append('description', desc.trim());
+      if (readme.trim()) fd.append('readme', readme.trim());
+      if (newFile) fd.append('file', newFile);
+      const result = await api.components.update(c.id, fd);
+      onUpdated(result);
+    } catch (e) {
+      alert('Update failed: ' + e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: 480}}>
+        <div className="modal-header">
+          <div className="h2">업데이트 · {c.title}</div>
+          <button className="btn btn-icon btn-ghost" onClick={onClose}><Icons.X/></button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label className="field-label">버전 업 유형 <span className="req">*</span></label>
+            <div className="segmented">
+              {[['patch', 'Patch'], ['minor', 'Minor'], ['major', 'Major']].map(([v, l]) => (
+                <button key={v} className={`segmented-item ${bump===v?'active':''}`} onClick={() => setBump(v)}>{l}</button>
+              ))}
+            </div>
+            <div className="field-hint" style={{marginTop: 8}}>
+              {c.version} → <strong>{nextVer}</strong>
+            </div>
+          </div>
+          <div className="field">
+            <label className="field-label">변경 사항</label>
+            <input className="input" placeholder="이번 업데이트에서 변경된 내용" value={changelog} onChange={e => setChangelog(e.target.value)}/>
+          </div>
+          <div className="field">
+            <label className="field-label">파일 교체 (선택)</label>
+            <div className="dropzone" style={{padding: 16, cursor: 'pointer', textAlign: 'center'}} onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.py,.json'; inp.onchange = e => setNewFile(e.target.files[0]); inp.click(); }}>
+              {newFile ? <span className="mono" style={{fontSize: 13}}>{newFile.name}</span> : <span className="muted-sm">클릭하여 새 파일 선택 (변경 없으면 생략)</span>}
+            </div>
+          </div>
+          <div className="field">
+            <label className="field-label">한줄설명</label>
+            <input className="input" value={desc} onChange={e => setDesc(e.target.value)}/>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>취소</button>
+          <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={submitting} style={{opacity: submitting ? 0.5 : 1}}>
+            <Icons.Check size={11}/> {submitting ? '업데이트 중...' : `${nextVer} 업데이트`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 window.ComponentDetail = ComponentDetail;
