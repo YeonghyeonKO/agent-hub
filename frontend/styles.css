@@ -2356,6 +2356,31 @@ input[type=range].native-slider {
   to { transform: translateX(0); }
 }
 
+/* Copy toast */
+.copy-toast {
+  position: fixed;
+  top: 72px;
+  right: 24px;
+  background: linear-gradient(135deg, #fef3c7, #fffbeb);
+  color: #92400e;
+  border: 1px solid #fbbf24;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(251, 191, 36, 0.25);
+  animation: toastSlideIn 0.3s ease-out, toastFadeOut 0.4s 2.6s ease-in forwards;
+}
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
 /* README markdown body */
 .readme-body { color: var(--text-2); line-height: 1.8; font-size: 14px; }
 .readme-body h1, .readme-body h2, .readme-body h3 { color: var(--text); margin: 1.2em 0 0.5em; }

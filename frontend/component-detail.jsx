@@ -121,8 +121,8 @@ function ComponentDetail({ component, onBack }) {
       </div>
 
       {copyToast && (
-        <div style={{position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--text)', color: 'var(--bg)', padding: '10px 20px', borderRadius: 8, fontSize: 13, zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.15)'}}>
-          코드가 복사되었습니다! 작성자에게 Star가 자동으로 전달되었습니다
+        <div className="copy-toast">
+          코드를 복사했어요! 개발자에게 star도 같이 전달할게요 ⭐️
         </div>
       )}
 
