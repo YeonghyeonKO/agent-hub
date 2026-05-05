@@ -2398,3 +2398,104 @@ input[type=range].native-slider {
 .readme-body th { background: var(--bg-muted); font-weight: 600; }
 .readme-body img { max-width: 100%; border-radius: 8px; margin: 0.5em 0; }
 .readme-body blockquote { border-left: 3px solid var(--accent); padding-left: 12px; margin: 0.8em 0; color: var(--text-3); }
+
+/* ─── Mobile Responsive ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Topbar */
+  .topbar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+  .brand { font-size: 15px; }
+  .nav-links { order: 3; width: 100%; overflow-x: auto; gap: 4px; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+  .nav-link { font-size: 12px; white-space: nowrap; padding: 4px 8px; }
+  .nav-search { display: none; }
+  .nav-spacer { display: none; }
+  .user-chip-label { display: none; }
+
+  /* Page layout */
+  .page, .page-narrow { padding: 16px; }
+  .page { max-width: 100%; }
+  .page-narrow { max-width: 100%; }
+
+  /* Grid */
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Season banner */
+  .season-banner { padding: 20px; flex-direction: column; gap: 12px; }
+  .season-title { font-size: 20px; }
+
+  /* Cards */
+  .cc { padding: 14px; }
+  .cc-title { font-size: 14px; }
+
+  /* Detail overlay */
+  .detail-overlay { width: 100%; max-width: 100%; }
+  .detail-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .detail-actions { flex-wrap: wrap; gap: 6px; }
+  .detail-actions .btn { font-size: 12px; padding: 6px 10px; }
+  .detail-title { font-size: 18px; }
+
+  /* Version row */
+  .version-row { flex-wrap: wrap; gap: 6px; }
+
+  /* Tabs */
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab { white-space: nowrap; font-size: 12.5px; }
+
+  /* Modal */
+  .modal { width: 95vw; max-width: 95vw; max-height: 90vh; }
+  .modal-body { padding: 14px; }
+
+  /* Ranking */
+  .score-formula { flex-wrap: wrap; }
+  .score-formula-eq { flex-wrap: wrap; gap: 4px; }
+
+  /* Admin */
+  .settings-grid { grid-template-columns: 1fr; }
+  .admin-tab-table { overflow-x: auto; }
+  .admin-tab-row { min-width: 600px; }
+
+  /* Stat */
+  .stat { padding: 10px; }
+  .stat-value { font-size: 18px; }
+
+  /* Stepper */
+  .stepper { gap: 6px; }
+  .step span { display: none; }
+
+  /* Footer */
+  .page-footer-inner { flex-direction: column; gap: 8px; text-align: center; }
+
+  /* Breadcrumb */
+  .breadcrumb { font-size: 12px; flex-wrap: wrap; }
+
+  /* Filter pills */
+  .filter-bar { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .filter-pill { white-space: nowrap; }
+
+  /* Row helpers */
+  .row { flex-wrap: wrap; }
+  .row.gap-8 { gap: 6px; }
+
+  /* Copy toast */
+  .copy-toast { right: 12px; left: 12px; text-align: center; }
+
+  /* Flow graph */
+  .flow-graph-canvas { overflow-x: auto; min-width: 600px; }
+
+  /* Segmented */
+  .segmented { flex-wrap: wrap; }
+
+  /* Podium (ranking 2-col → 1-col) */
+  div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+
+  /* Codeblock */
+  .codeblock-body { font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  .grid-4 { grid-template-columns: 1fr; }
+  .detail-icon { display: none; }
+  .h1 { font-size: 20px; }
+  .h2 { font-size: 16px; }
+}

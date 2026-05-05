@@ -54,7 +54,7 @@ async def compute_rankings(
         )
         .outerjoin(star_counts, star_counts.c.component_id == Component.id)
         .outerjoin(dl_counts, dl_counts.c.component_id == Component.id)
-        .where(Component.status == "approved")
+        .where(Component.status == "approved", Component.deleted_at.is_(None))
     )
 
     if scope == "py":
