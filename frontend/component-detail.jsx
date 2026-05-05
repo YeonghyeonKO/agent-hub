@@ -45,10 +45,11 @@ function ComponentDetail({ component, onBack }) {
   const [copyToast, setCopyToast] = React.useState(false);
   const [versionHistory, setVersionHistory] = React.useState([]);
 
-  // Fetch full component data (including readme) if not already present
+  // Fetch full component data (including readme) and check star status
   React.useEffect(() => {
-    if (c.id && String(c.id).includes('-') && c.readme === undefined) {
-      api.components.get(c.id).then(full => setC(apiToCard(full))).catch(() => {});
+    if (c.id && String(c.id).includes('-')) {
+      if (c.readme === undefined) api.components.get(c.id).then(full => setC(apiToCard(full))).catch(() => {});
+      api.get(`/components/${c.id}/starred`).then(r => setStarred(r.starred)).catch(() => {});
     }
   }, [c.id]);
 
@@ -100,7 +101,6 @@ function ComponentDetail({ component, onBack }) {
           <button className="btn btn-secondary" style={{color: starred ? '#f59e0b' : undefined, borderColor: starred ? '#f59e0b' : undefined}} onClick={() => { const id = c.id; if (id && String(id).includes('-')) api.components.star(id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } else { setStarCount(s => Math.max(0, s - 1)); setStarred(false); } }).catch(() => {}); }}><Icons.Star size={13}/> {starCount}</button>
           <button className="btn btn-secondary" onClick={() => {
             navigator.clipboard?.writeText(fileContent || '');
-            // Auto-star on copy
             if (c.id && String(c.id).includes('-') && !starred) {
               api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
             }

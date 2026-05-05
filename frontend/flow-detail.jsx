@@ -31,10 +31,11 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
   const [copyToast, setCopyToast] = React.useState(false);
   const [versionHistory, setVersionHistory] = React.useState([]);
 
-  // Fetch full component data (including readme)
+  // Fetch full component data (including readme) and check star status
   React.useEffect(() => {
-    if (c.id && String(c.id).includes('-') && c.readme === undefined) {
-      api.components.get(c.id).then(full => setC(apiToCard(full))).catch(() => {});
+    if (c.id && String(c.id).includes('-')) {
+      if (c.readme === undefined) api.components.get(c.id).then(full => setC(apiToCard(full))).catch(() => {});
+      api.get(`/components/${c.id}/starred`).then(r => setStarred(r.starred)).catch(() => {});
     }
   }, [c.id]);
 
@@ -84,8 +85,10 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
             navigator.clipboard?.writeText(JSON.stringify(flowData || {name: c.title}, null, 2));
             if (c.id && String(c.id).includes('-') && !starred) {
               api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
+              setCopyToast(true); setTimeout(() => setCopyToast(false), 3000);
+            } else {
+              setCopyToast(true); setTimeout(() => setCopyToast(false), 3000);
             }
-            setCopyToast(true); setTimeout(() => setCopyToast(false), 3000);
           }}><Icons.Code size={13}/> JSON 복사</button>
           <button className="btn btn-primary" onClick={() => {
             if (c.id && String(c.id).includes('-')) {

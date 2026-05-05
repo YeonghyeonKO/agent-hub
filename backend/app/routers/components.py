@@ -296,6 +296,18 @@ async def get_versions(
     ]
 
 
+@router.get("/{component_id}/starred")
+async def check_starred(
+    component_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+):
+    result = await db.execute(
+        select(Star).where(Star.component_id == component_id, Star.user_id == user.employee_id)
+    )
+    return {"starred": result.scalar_one_or_none() is not None}
+
+
 @router.post("/{component_id}/star")
 async def toggle_star(
     component_id: uuid.UUID,
