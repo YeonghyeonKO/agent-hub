@@ -189,16 +189,22 @@ function RankColumn({ title, chipClass, ranked, onOpenComponent, starWeight, dow
   );
 }
 
-function RankingPage({ onOpenComponent, starWeight = 2, downloadWeight = 1 }) {
+function RankingPage({ onOpenComponent, starWeight = 1, downloadWeight = 2 }) {
   const { t } = useI18n();
   const [pyData, setPyData] = React.useState([]);
   const [jsonData, setJsonData] = React.useState([]);
 
   const mapRank = (r) => ({ ...r, id: r.component_id, author: r.author || { name: '' }, icon: r.icon || 'Box', iconBg: 'var(--bg-muted)', iconFg: 'var(--text-2)' });
 
-  React.useEffect(() => {
+  const loadRankings = () => {
     api.rankings.list({ scope: 'py' }).then(d => setPyData((d.items || []).map(mapRank))).catch(() => {});
     api.rankings.list({ scope: 'json' }).then(d => setJsonData((d.items || []).map(mapRank))).catch(() => {});
+  };
+
+  React.useEffect(loadRankings, []);
+  React.useEffect(() => {
+    window.addEventListener('agenthub:reload', loadRankings);
+    return () => window.removeEventListener('agenthub:reload', loadRankings);
   }, []);
 
   return (

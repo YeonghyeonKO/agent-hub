@@ -15,8 +15,8 @@ async def compute_rankings(
     result = await db.execute(select(Season).where(Season.is_active == True))
     season = result.scalar_one_or_none()
 
-    star_weight = 2
-    download_weight = 1
+    star_weight = 1
+    download_weight = 2
     if season and season.score_formula:
         star_weight = season.score_formula.get("star_weight", 2)
         download_weight = season.score_formula.get("download_weight", 1)
