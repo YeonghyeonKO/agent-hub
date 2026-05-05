@@ -49,9 +49,10 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   // Load on mount, sort change, and when page gets focus (e.g. after admin approval)
   React.useEffect(loadComponents, [sortBy]);
   React.useEffect(() => {
-    const onFocus = () => loadComponents();
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
+    const onReload = () => loadComponents();
+    window.addEventListener('focus', onReload);
+    window.addEventListener('agenthub:reload', onReload);
+    return () => { window.removeEventListener('focus', onReload); window.removeEventListener('agenthub:reload', onReload); };
   }, [sortBy]);
   React.useEffect(() => {
     api.notices.list()

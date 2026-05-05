@@ -27,9 +27,8 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
   const mine = myComponents.filter(c => c.status === 'approved').map(apiToCard);
   const drafts = myComponents.filter(c => c.status === 'pending' || c.status === 'draft').map(c => ({
     ...c, desc: c.description || '', state: c.status === 'pending' ? 'review' : 'draft',
-    updatedAgo: fmtDate(c.created_at), validation: { ok: 4, total: 5 },
+    updatedAgo: fmtDate(c.created_at),
   }));
-  const activity = []; // Activity will come from API in future
 
   // Aggregates
   const totals = mine.reduce((a, c) => ({
@@ -68,7 +67,6 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
         {[
           ['published', t('tab_published'), mine.length],
           ['drafts', t('tab_drafts'), drafts.length],
-          ['activity', t('tab_activity'), activity.length],
         ].map(([id, label, count]) => (
           <button key={id} className={`tab ${tab===id?'active':''}`} onClick={() => setTab(id)}>
             {label} <span className="tab-count">{count}</span>
@@ -131,16 +129,6 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
                 <span className="muted-sm">· {d.updatedAgo}</span>
               </div>
               <div className="muted" style={{fontSize: 13, marginBottom: 14}}>{d.desc}</div>
-
-              <div className="draft-progress">
-                <div className="row" style={{justifyContent: 'space-between', marginBottom: 6}}>
-                  <span className="muted-sm">자동 검증</span>
-                  <span className="mono muted-sm">{d.validation.ok} / {d.validation.total} 통과</span>
-                </div>
-                <div className="progress-track">
-                  <div className="progress-fill" style={{width: `${(d.validation.ok / d.validation.total) * 100}%`}}/>
-                </div>
-              </div>
 
               <div className="row gap-8" style={{marginTop: 16}}>
                 <button className="btn btn-secondary btn-sm" onClick={() => onOpenComponent && onOpenComponent(apiToCard(d))}>{t('draft_preview')}</button>

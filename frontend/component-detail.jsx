@@ -83,7 +83,6 @@ function ComponentDetail({ component, onBack }) {
             <span>{c.typeLabel}</span>
             <span className="breadcrumb-sep">·</span>
             <span>{c.version}</span>
-            {c.rank === 1 && <><span className="breadcrumb-sep">·</span><span style={{color: '#92400e', fontWeight: 600}}><Icons.Trophy size={11}/> 2026 1위</span></>}
           </div>
           <h1 className="detail-title">{c.title}</h1>
           <div className="detail-desc">{c.desc}</div>

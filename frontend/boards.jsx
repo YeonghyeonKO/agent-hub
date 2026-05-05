@@ -65,7 +65,9 @@ function NoticePage({ initialNoticeId }) {
     return 0;
   });
 
-  const notice = selected ? notices.find(n => n.id === selected) : null;
+  const notice = (selected && notices.length > 0) ? notices.find(n => n.id === selected) : null;
+  // If selected but notice not found (not loaded yet or invalid), reset to list
+  const showDetail = selected && notice;
 
   return (
     <div className="page fade-in">
@@ -123,7 +125,7 @@ function NoticePage({ initialNoticeId }) {
         </div>
       )}
 
-      {!selected ? (
+      {!showDetail ? (
         <div className="card" style={{padding: 0, overflow: 'hidden'}}>
           {sorted.map((n, i) => (
             <div key={n.id} style={{

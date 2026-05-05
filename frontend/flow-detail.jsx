@@ -65,8 +65,6 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
             <span>JSON Flow</span>
             <span className="breadcrumb-sep">·</span>
             <span>{c.version}</span>
-            <span className="breadcrumb-sep">·</span>
-            <span style={{color: '#475569', fontWeight: 600}}><Icons.Trophy size={11}/> 2026 2위</span>
           </div>
           <h1 className="detail-title">{c.title}</h1>
           <div className="detail-desc">{c.desc}</div>
