@@ -273,6 +273,21 @@ const MOCK_NOTICES = [
   { id: 'n4', title: 'Langflow 1.9.1 호환성 테스트 완료', content: 'Langflow 1.9.1에 대한 사내 호환성 테스트가 완료되었습니다. 기존 1.9.0 기준 Component는 모두 정상 동작합니다.', author: { name: '한미경', id: '2071003', initial: '한' }, is_pinned: false, created_at: '2026-04-20' },
 ];
 
+function LoadingIndicator() {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0', gap: 12}}>
+      <div className="loading-flow">
+        <div className="loading-dot" style={{animationDelay: '0s'}}/>
+        <div className="loading-line"/>
+        <div className="loading-dot" style={{animationDelay: '0.2s'}}/>
+        <div className="loading-line"/>
+        <div className="loading-dot" style={{animationDelay: '0.4s'}}/>
+      </div>
+      <div className="muted-sm" style={{fontSize: 12}}>Loading...</div>
+    </div>
+  );
+}
+
 Object.assign(window, {
   Icons,
   COMPONENTS,
@@ -282,4 +297,5 @@ Object.assign(window, {
   PEOPLE,
   MOCK_NOTICES,
   pythonHighlight,
+  LoadingIndicator,
 });

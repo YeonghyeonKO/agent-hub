@@ -30,7 +30,7 @@ async def get_pending(
 ):
     result = await db.execute(
         select(Component)
-        .where(Component.status == "pending")
+        .where(Component.status == "pending", Component.deleted_at.is_(None))
         .options(selectinload(Component.author))
         .order_by(Component.created_at.desc())
     )
@@ -57,7 +57,7 @@ async def get_approved(
 ):
     result = await db.execute(
         select(Component)
-        .where(Component.status == "approved")
+        .where(Component.status == "approved", Component.deleted_at.is_(None))
         .options(selectinload(Component.author))
         .order_by(Component.updated_at.desc())
     )
@@ -84,7 +84,7 @@ async def get_rejected(
 ):
     result = await db.execute(
         select(Component)
-        .where(Component.status == "rejected")
+        .where(Component.status == "rejected", Component.deleted_at.is_(None))
         .options(selectinload(Component.author))
         .order_by(Component.updated_at.desc())
     )

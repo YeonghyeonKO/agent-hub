@@ -135,11 +135,14 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
       </div>
 
       {/* Grid */}
-      <div className="grid-3">
-        {filtered.map(c => <ComponentCard key={c.id} c={c} onClick={() => onOpenComponent(c)} />)}
-      </div>
+      {loading && <LoadingIndicator/>}
+      {!loading && (
+        <div className="grid-3">
+          {filtered.map(c => <ComponentCard key={c.id} c={c} onClick={() => onOpenComponent(c)} />)}
+        </div>
+      )}
 
-      {filtered.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div className="empty-state card card-pad">
           <div style={{fontSize: 14, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4}}>{t('empty_title')}</div>
           <div style={{fontSize: 12.5}}>{t('empty_desc')}</div>

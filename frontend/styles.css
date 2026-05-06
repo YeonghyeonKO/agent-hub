@@ -2400,13 +2400,28 @@ input[type=range].native-slider {
 .readme-body blockquote { border-left: 3px solid var(--accent); padding-left: 12px; margin: 0.8em 0; color: var(--text-3); }
 
 /* ─── Mobile Responsive ─────────────────────────────────────── */
-/* Hamburger — hidden on desktop */
+/* Loading indicator — flow animation */
+.loading-flow { display: flex; align-items: center; gap: 0; }
+.loading-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent); opacity: 0.3;
+  animation: loadPulse 1.2s ease-in-out infinite;
+}
+.loading-line { width: 24px; height: 2px; background: var(--line); }
+@keyframes loadPulse {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Hamburger & mobile topbar — hidden on desktop */
 .hamburger-btn { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 4px; }
+.mobile-search-btn { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 6px; }
+.topbar-right { display: contents; }
 
 @media (max-width: 768px) {
   /* Hamburger menu */
   .hamburger-btn { display: flex; align-items: center; }
-  .topbar { flex-wrap: nowrap; padding: 8px 12px; gap: 8px; position: sticky; top: 0; z-index: 100; }
+  .topbar { flex-wrap: nowrap; padding: 8px 12px; gap: 6px; position: sticky; top: 0; z-index: 100; }
   .brand { font-size: 15px; }
   .nav-links {
     display: none;
@@ -2419,9 +2434,17 @@ input[type=range].native-slider {
   .nav-link { font-size: 13px; padding: 10px 14px; border-radius: 8px; width: 100%; }
   .nav-link.active { background: var(--accent-bg); }
   .nav-search { display: none; }
-  .nav-spacer { display: none; }
+  .nav-spacer { flex: 1; display: block; }
   .user-chip-label { display: none; }
-  .btn.btn-secondary.btn-sm { font-size: 11px; padding: 4px 8px; }
+  .topbar-submit-label { display: none; }
+  .topbar-lang { display: none; }
+  .topbar-right { display: flex; align-items: center; gap: 4px; }
+  .mobile-search-btn { display: flex; align-items: center; }
+
+  /* Sort buttons — horizontal on mobile */
+  .gallery-head { flex-direction: column; gap: 10px; align-items: flex-start !important; }
+  .gallery-head .segmented { width: 100%; }
+  .gallery-head .segmented-item { flex: 1; text-align: center; }
 
   /* Page layout */
   .page, .page-narrow { padding: 14px; }

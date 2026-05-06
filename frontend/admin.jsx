@@ -111,55 +111,42 @@ function AdminDashboard({ onBack, userRole }) {
       </div>
 
       {activeTab === 'pending' && (
-        <div className="admin-grid">
-          <div className="card" style={{padding: 0, overflow: 'hidden'}}>
-            {submissions.map(s => (
-              <div key={s.id} className={`sub-row ${activeSubId === s.id ? 'active' : ''}`} onClick={() => setActiveSubId(s.id)}>
+        <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+          {submissions.map(s => (
+            <React.Fragment key={s.id}>
+              <div className={`sub-row ${activeSubId === s.id ? 'active' : ''}`} onClick={() => setActiveSubId(activeSubId === s.id ? null : s.id)}>
                 <div className="sub-row-top">
-                  <div className="row gap-8">
+                  <div className="row gap-8" style={{flex: 1}}>
                     <span className={`chip chip-${s.type}`}>{s.type === 'py' ? '.py' : '.json'}</span>
                     <span className="sub-row-title">{s.title}</span>
                   </div>
+                  <Icons.ChevronDown size={12} style={{transform: activeSubId === s.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', color: 'var(--text-3)'}}/>
                 </div>
                 <div className="sub-row-meta">{s.author} · {s.submittedAgo}</div>
               </div>
-            ))}
-            {submissions.length === 0 && <div className="empty-state" style={{padding: 30}}>No pending submissions</div>}
-          </div>
-
-          {activeSub && (
-            <div className="review-card">
-              <div className="review-card-header">
-                <div>
-                  <div className="row gap-8" style={{marginBottom: 4}}>
-                    <span className={`chip chip-${activeSub.type}`}>{activeSub.type === 'py' ? '.py' : '.json'}</span>
-                    <span className="mono muted-sm">{activeSub.version}</span>
+              {activeSubId === s.id && (
+                <div style={{borderBottom: '1px solid var(--line)', background: 'var(--bg-muted)'}}>
+                  <div style={{padding: '16px 20px'}}>
+                    <div style={{marginBottom: 16}}>
+                      <ScoreSlider label="Functionality" value={scores.functionality} onChange={v => setScores(sc => ({...sc, functionality: v}))}/>
+                      <ScoreSlider label="Originality" value={scores.originality} onChange={v => setScores(sc => ({...sc, originality: v}))}/>
+                      <ScoreSlider label="Utility" value={scores.internalUtility} onChange={v => setScores(sc => ({...sc, internalUtility: v}))}/>
+                      <ScoreSlider label="Documentation" value={scores.documentation} onChange={v => setScores(sc => ({...sc, documentation: v}))}/>
+                    </div>
+                    <div className="field" style={{marginBottom: 12}}>
+                      <label className="field-label">Comment</label>
+                      <textarea className="textarea" rows="2" value={comment} onChange={e => setComment(e.target.value)}/>
+                    </div>
+                    <div className="row gap-8" style={{justifyContent: 'flex-end'}}>
+                      <button className="btn btn-danger btn-sm" onClick={handleReject}><Icons.X size={11}/> Reject</button>
+                      <button className="btn btn-sm" style={{background: 'var(--ok)', color: 'white'}} onClick={handleApprove}><Icons.Check size={11}/> Approve</button>
+                    </div>
                   </div>
-                  <div style={{fontSize: 19, fontWeight: 700}}>{activeSub.title}</div>
-                  <div className="muted-sm" style={{marginTop: 4}}>{activeSub.author} · {activeSub.submittedAgo}</div>
                 </div>
-              </div>
-              <div className="review-card-body">
-                <div style={{marginBottom: 18}}>
-                  <ScoreSlider label="Functionality" value={scores.functionality} onChange={v => setScores(s => ({...s, functionality: v}))}/>
-                  <ScoreSlider label="Originality" value={scores.originality} onChange={v => setScores(s => ({...s, originality: v}))}/>
-                  <ScoreSlider label="Utility" value={scores.internalUtility} onChange={v => setScores(s => ({...s, internalUtility: v}))}/>
-                  <ScoreSlider label="Documentation" value={scores.documentation} onChange={v => setScores(s => ({...s, documentation: v}))}/>
-                </div>
-                <div className="field" style={{marginBottom: 0}}>
-                  <label className="field-label">Comment</label>
-                  <textarea className="textarea" rows="3" value={comment} onChange={e => setComment(e.target.value)}/>
-                </div>
-              </div>
-              <div className="review-card-footer">
-                <div/>
-                <div className="row gap-8">
-                  <button className="btn btn-danger btn-sm" onClick={handleReject}><Icons.X size={11}/> Reject</button>
-                  <button className="btn btn-sm" style={{background: 'var(--ok)', color: 'white'}} onClick={handleApprove}><Icons.Check size={11}/> Approve</button>
-                </div>
-              </div>
-            </div>
-          )}
+              )}
+            </React.Fragment>
+          ))}
+          {submissions.length === 0 && <div className="empty-state" style={{padding: 30}}>No pending submissions</div>}
         </div>
       )}
 

@@ -289,15 +289,20 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
         <Icons.Search size={13}/>
         <input placeholder={t('search_placeholder')}/>
       </div>
-      <button className="btn btn-secondary btn-sm" onClick={onOpenUpload}>
-        <Icons.Plus size={12}/> {t('btn_submit')}
+      <button className="btn btn-secondary btn-sm topbar-submit" onClick={onOpenUpload}>
+        <Icons.Plus size={12}/> <span className="topbar-submit-label">{t('btn_submit')}</span>
       </button>
-      <button className="btn btn-ghost" onClick={onToggleLang} title="한국어/English" style={{fontSize: 15, padding: '4px 8px'}}>
+      <button className="btn btn-ghost topbar-lang" onClick={onToggleLang} title="한국어/English" style={{fontSize: 15, padding: '4px 8px'}}>
         {lang === 'en' ? '🇺🇸' : '🇰🇷'}
       </button>
-      <div className="user-chip" style={{cursor: 'pointer'}} onClick={() => { if (confirm('로그아웃 하시겠습니까?')) auth.logout(); }} title={userName || 'User'}>
-        <div className="avatar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-        {userName && <div className="user-chip-label">{userName}</div>}
+      <div className="topbar-right">
+        <button className="mobile-search-btn" onClick={() => { const q = prompt(t('search_placeholder')); if (q) { window.__agenthub_search = q; window.dispatchEvent(new Event('agenthub:search')); } }}>
+          <Icons.Search size={16}/>
+        </button>
+        <div className="user-chip" style={{cursor: 'pointer'}} onClick={() => { if (confirm('로그아웃 하시겠습니까?')) auth.logout(); }} title={userName || 'User'}>
+          <div className="avatar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          {userName && <div className="user-chip-label">{userName}</div>}
+        </div>
       </div>
     </div>
   );
