@@ -121,7 +121,7 @@ const I18N = {
     // Admin
     admin_pending: '심사 대기', admin_approved: '승인됨', admin_rejected: '반려됨',
     admin_users: '사용자 관리', admin_settings: '설정',
-    admin_dashboard: '관리자 대시보드', admin_home: '홈', admin_delete_confirm: '정말 삭제하시겠습니까? (복구 가능)',
+    admin_dashboard: '관리자 대시보드', admin_home: '홈', admin_delete_confirm: '정말 삭제하시겠습니까?',
     admin_no_users: '등록된 사용자가 없습니다. Keycloak SSO로 로그인하면 자동 등록됩니다.',
     role_user: '일반', role_admin: '관리자', role_reviewer: '심사위원', role_member: '구성원',
     label_role: '직무', label_org: '소속',
@@ -265,7 +265,7 @@ const I18N = {
     // Admin
     admin_pending: 'Pending', admin_approved: 'Approved', admin_rejected: 'Rejected',
     admin_users: 'User Management', admin_settings: 'Settings',
-    admin_dashboard: 'Admin Dashboard', admin_home: 'Home', admin_delete_confirm: 'Delete this item? (recoverable)',
+    admin_dashboard: 'Admin Dashboard', admin_home: 'Home', admin_delete_confirm: 'Delete this item?',
     admin_no_users: 'No users registered. Users are auto-registered upon Keycloak SSO login.',
     role_user: 'User', role_admin: 'Admin', role_reviewer: 'Reviewer', role_member: 'Member',
     label_role: 'Role', label_org: 'Org',

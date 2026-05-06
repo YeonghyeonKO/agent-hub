@@ -193,12 +193,16 @@ function RankingPage({ onOpenComponent, starWeight = 1, downloadWeight = 2 }) {
   const { t } = useI18n();
   const [pyData, setPyData] = React.useState([]);
   const [jsonData, setJsonData] = React.useState([]);
+  const [rankLoading, setRankLoading] = React.useState(true);
 
   const mapRank = (r) => ({ ...r, id: r.component_id, author: r.author || { name: '' }, icon: r.icon || 'Box', iconBg: 'var(--bg-muted)', iconFg: 'var(--text-2)' });
 
   const loadRankings = () => {
-    api.rankings.list({ scope: 'py' }).then(d => setPyData((d.items || []).map(mapRank))).catch(() => {});
-    api.rankings.list({ scope: 'json' }).then(d => setJsonData((d.items || []).map(mapRank))).catch(() => {});
+    setRankLoading(true);
+    Promise.all([
+      api.rankings.list({ scope: 'py' }).then(d => setPyData((d.items || []).map(mapRank))),
+      api.rankings.list({ scope: 'json' }).then(d => setJsonData((d.items || []).map(mapRank))),
+    ]).catch(() => {}).finally(() => setRankLoading(false));
   };
 
   React.useEffect(loadRankings, []);
@@ -236,10 +240,12 @@ function RankingPage({ onOpenComponent, starWeight = 1, downloadWeight = 2 }) {
       </div>
 
       {/* Two-column ranking */}
-      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24}}>
-        <RankColumn title={t('ranking_comp')} chipClass="chip-py" ranked={pyData} onOpenComponent={onOpenComponent} starWeight={starWeight} downloadWeight={downloadWeight}/>
-        <RankColumn title={t('ranking_flow')} chipClass="chip-json" ranked={jsonData} onOpenComponent={onOpenComponent} starWeight={starWeight} downloadWeight={downloadWeight}/>
-      </div>
+      {rankLoading ? <LoadingIndicator/> : (
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24}}>
+          <RankColumn title={t('ranking_comp')} chipClass="chip-py" ranked={pyData} onOpenComponent={onOpenComponent} starWeight={starWeight} downloadWeight={downloadWeight}/>
+          <RankColumn title={t('ranking_flow')} chipClass="chip-json" ranked={jsonData} onOpenComponent={onOpenComponent} starWeight={starWeight} downloadWeight={downloadWeight}/>
+        </div>
+      )}
     </div>
   );
 }

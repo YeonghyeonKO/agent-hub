@@ -186,7 +186,8 @@ function AdminTabPanel({ tab }) {
 function ApprovedTab() {
   const { t } = useI18n();
   const [items, setItems] = React.useState([]);
-  const load = () => { api.admin.approved().then(setItems).catch(() => {}); };
+  const [loading, setLoading] = React.useState(true);
+  const load = () => { setLoading(true); api.admin.approved().then(setItems).catch(() => {}).finally(() => setLoading(false)); };
   React.useEffect(load, []);
   const handleDelete = (id) => {
     if (!confirm(t('admin_delete_confirm'))) return;
@@ -197,7 +198,7 @@ function ApprovedTab() {
       <div className="admin-panel-head"><div className="h3">{t('admin_approved')}</div></div>
       <div className="admin-tab-table">
         <div className="admin-tab-row admin-tab-head">
-          <div>{t('col_name')}</div><div>{t('ranking_col_developer')}</div><div>{t('col_version')}</div><div>{t('col_star')}</div><div>{t('col_download')}</div><div></div><div></div>
+          <div>{t('col_name')}</div><div>{t('ranking_col_developer')}</div><div>{t('col_star')}</div><div>{t('col_download')}</div><div></div><div></div>
         </div>
         {items.map(r => (
           <div key={r.id} className="admin-tab-row">
@@ -206,14 +207,14 @@ function ApprovedTab() {
               <span style={{fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{r.title}</span>
             </div>
             <div>{r.author?.name}</div>
-            <div className="mono muted-sm">{r.version}</div>
             <div>{r.stars_count ?? 0}</div>
             <div>{r.downloads_count ?? 0}</div>
             <div className="muted-sm">{fmtDate(r.created_at)}</div>
             <div><button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/> {t('settings_remove')}</button></div>
           </div>
         ))}
-        {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No approved items</div>}
+        {loading && <LoadingIndicator/>}
+        {!loading && items.length === 0 && <div className="empty-state" style={{padding: 30}}>No approved items</div>}
       </div>
     </div>
   );
@@ -222,7 +223,8 @@ function ApprovedTab() {
 function RejectedTab() {
   const { t } = useI18n();
   const [items, setItems] = React.useState([]);
-  const load = () => { api.admin.rejected().then(setItems).catch(() => {}); };
+  const [loading, setLoading] = React.useState(true);
+  const load = () => { setLoading(true); api.admin.rejected().then(setItems).catch(() => {}).finally(() => setLoading(false)); };
   React.useEffect(load, []);
   const handleDelete = (id) => {
     if (!confirm(t('admin_delete_confirm'))) return;
@@ -246,7 +248,8 @@ function RejectedTab() {
             <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/> {t('settings_remove')}</button>
           </div>
         ))}
-        {items.length === 0 && <div className="empty-state" style={{padding: 30}}>No rejected items</div>}
+        {loading && <LoadingIndicator/>}
+        {!loading && items.length === 0 && <div className="empty-state" style={{padding: 30}}>No rejected items</div>}
       </div>
     </div>
   );
@@ -282,17 +285,16 @@ function UsersTab() {
         </div>
       </div>
       <div style={{display: 'flex', flexDirection: 'column'}}>
-        <div style={{display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr 140px', gap: 14, padding: '12px 20px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg-elev)', borderBottom: '1px solid var(--line)'}}>
-          <div>ID</div><div>Name</div><div>Team</div><div>Email</div><div>Role</div>
+        <div style={{display: 'grid', gridTemplateColumns: '60px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg-elev)', borderBottom: '1px solid var(--line)'}}>
+          <div>ID</div><div>Name</div><div>Email</div><div>Role</div>
         </div>
         {filtered.map(u => (
-          <div key={u.employee_id} style={{display: 'grid', gridTemplateColumns: '60px 1fr 1fr 1fr 140px', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--line)', alignItems: 'center', fontSize: 13}}>
+          <div key={u.employee_id} style={{display: 'grid', gridTemplateColumns: '60px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--line)', alignItems: 'center', fontSize: 13}}>
             <div className="mono" style={{fontWeight: 600}}>{u.employee_id}</div>
             <div className="row gap-8">
               <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{(u.name || '?')[0]}</div>
               <span>{u.name}</span>
             </div>
-            <div className="muted-sm">{u.team || u.org || '-'}</div>
             <div className="muted-sm" style={{overflow: 'hidden', textOverflow: 'ellipsis'}}>{u.email || '-'}</div>
             <div>
               <select className="select" style={{fontSize: 12, padding: '4px 8px', height: 30}} value={u.role} onChange={e => changeRole(u.employee_id, e.target.value)}>
