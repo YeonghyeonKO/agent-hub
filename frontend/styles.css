@@ -2400,17 +2400,24 @@ input[type=range].native-slider {
 .readme-body blockquote { border-left: 3px solid var(--accent); padding-left: 12px; margin: 0.8em 0; color: var(--text-3); }
 
 /* ─── Mobile Responsive ─────────────────────────────────────── */
+/* Hamburger — hidden on desktop */
+.hamburger-btn { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 4px; }
+.my-stat-emoji { display: none; }
+
 @media (max-width: 768px) {
-  /* Topbar — compact with hamburger-style nav */
-  .topbar { flex-wrap: wrap; padding: 8px 12px; gap: 6px; position: sticky; top: 0; z-index: 100; }
+  /* Hamburger menu */
+  .hamburger-btn { display: flex; align-items: center; }
+  .topbar { flex-wrap: nowrap; padding: 8px 12px; gap: 8px; position: sticky; top: 0; z-index: 100; }
   .brand { font-size: 15px; }
   .nav-links {
-    order: 3; width: 100%; overflow-x: auto; gap: 2px; padding: 4px 0;
-    -webkit-overflow-scrolling: touch; scrollbar-width: none;
-    border-top: 1px solid var(--line); margin-top: 2px;
+    display: none;
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--bg-elev); border-bottom: 1px solid var(--line);
+    flex-direction: column; padding: 8px 12px; gap: 2px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08); z-index: 200;
   }
-  .nav-links::-webkit-scrollbar { display: none; }
-  .nav-link { font-size: 11.5px; white-space: nowrap; padding: 5px 10px; border-radius: 6px; }
+  .nav-links.mobile-open { display: flex; }
+  .nav-link { font-size: 13px; padding: 10px 14px; border-radius: 8px; width: 100%; }
   .nav-link.active { background: var(--accent-bg); }
   .nav-search { display: none; }
   .nav-spacer { display: none; }
@@ -2457,6 +2464,11 @@ input[type=range].native-slider {
   .modal { width: 95vw; max-width: 95vw; max-height: 90vh; }
   .modal-body { padding: 14px; }
 
+  /* My Component/Flow — stack header + emoji stats */
+  .page > .row[style*="space-between"] { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+  .my-stat-emoji { display: inline !important; }
+  .my-stat-cell { text-align: left !important; }
+
   /* My Component/Flow table → card layout */
   .my-table-row {
     grid-template-columns: 1fr !important;
@@ -2469,19 +2481,36 @@ input[type=range].native-slider {
   .score-formula { flex-wrap: wrap; padding: 12px; }
   .score-formula-eq { flex-wrap: wrap; gap: 4px; }
 
-  /* Admin */
-  .settings-grid { grid-template-columns: 1fr; }
+  /* Admin — full mobile overhaul */
+  .settings-grid { grid-template-columns: 1fr; gap: 12px; }
   .admin-tab-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .admin-tab-row { min-width: 500px; }
+  .admin-tab-row { min-width: 450px; font-size: 12px; padding: 8px 12px; }
+  .admin-tab-head { font-size: 10px; }
   .settings-card { padding: 14px !important; }
   .settings-card-wide { grid-column: span 1 !important; }
-  .admin-panel-head { padding: 12px 14px; }
-  .reviewer-row { flex-wrap: wrap; gap: 8px; }
+  .admin-panel-head { padding: 10px 14px; }
+  .admin-panel-head .h2 { font-size: 15px; }
+  .reviewer-row { flex-wrap: wrap; gap: 6px; }
+  .reviewer-list { gap: 8px; }
+  .rejected-row { flex-wrap: wrap; gap: 8px; padding: 10px !important; }
+  .pending-card { padding: 14px !important; }
+  .pending-card .row { flex-wrap: wrap; gap: 6px; }
+  .setting-bar { flex-wrap: wrap; }
+  .editable-row { flex-direction: column; gap: 4px; }
+  .editable-row label { min-width: auto; }
 
-  /* Guide page — sidebar toggle */
-  .guide-sidebar { display: none; }
+  /* Guide page — fix sidebar overlap */
+  .guide-sidebar {
+    position: relative !important;
+    top: auto !important;
+    max-height: none !important;
+    background: var(--bg-elev) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 8px !important;
+    margin-bottom: 16px !important;
+    z-index: 1 !important;
+  }
   .guide-layout { grid-template-columns: 1fr !important; }
-  .guide-mobile-nav { display: block !important; }
 
   /* Stat */
   .stat { padding: 10px; }
