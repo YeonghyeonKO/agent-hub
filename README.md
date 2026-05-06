@@ -238,11 +238,34 @@ DEV_MODE=true  # 로컬 개발 시
 
 ### Ranking
 ```
-Score = Star × 2 + 다운로드 × 1
+Score = Star × 1 + Download × 2
 ```
 - **Component 부문 / Flow 부문** 2-column 분리 표시
+- 실시간 갱신 (페이지 진입 시 최신 데이터)
 - 자기 자신의 Star / 다운로드는 집계에서 제외
 - 가중치는 관리자 설정에서 변경 가능
+
+### Star & Copy
+- Star 토글: 노란색 활성/비활성, DB 저장
+- Star 상태 유지: detail 진입 시 현재 사용자의 star 여부 확인
+- **코드/JSON 복사 시 자동 Star** — 복사하면 작성자에게 Star 자동 전달 (이미 Star한 경우 유지)
+
+### Soft Delete
+- 관리자가 Component/Flow를 삭제하면 `deleted_at` 기록 (DB 보존)
+- 홈, 랭킹 등에서 삭제된 항목 자동 필터링
+
+### Version Updates
+- 작성자/관리자가 Component/Flow 업데이트 가능 (patch/minor/major 선택)
+- 이전 버전 이력 조회 가능 (버전 이력 탭)
+
+### Mobile Responsive
+- 햄버거 메뉴 (768px 이하)
+- 전 페이지 모바일 대응 (그리드, 카드, 모달, 관리자)
+
+### Vercel Deployment
+- `vercel.json` + `api/index.py` serverless wrapper
+- Neon PostgreSQL 자동 연동
+- https://agent-hub.posong.space
 
 ### i18n (다국어)
 - 🇰🇷 한국어 (기본) / 🇺🇸 English 토글
