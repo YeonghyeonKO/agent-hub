@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1777646842781,
+  "lastScanned": 1777890961287,
   "projectRoot": "/Users/yeonghyeonko/Development/git/agent-hub",
   "techStack": {
     "languages": [],
@@ -31,306 +31,294 @@
     }
   },
   "customNotes": [],
-  "directoryMap": {},
+  "directoryMap": {
+    "backend": {
+      "path": "backend",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1777890961266,
+      "keyFiles": [
+        "Dockerfile",
+        "alembic.ini",
+        "requirements.txt"
+      ]
+    },
+    "frontend": {
+      "path": "frontend",
+      "purpose": null,
+      "fileCount": 17,
+      "lastAccessed": 1777890961267,
+      "keyFiles": [
+        "AgentHub.html",
+        "Dockerfile",
+        "admin.jsx",
+        "api.jsx",
+        "auth.jsx"
+      ]
+    },
+    "infra": {
+      "path": "infra",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777890961267,
+      "keyFiles": []
+    },
+    "backend/app": {
+      "path": "backend/app",
+      "purpose": "Application code",
+      "fileCount": 5,
+      "lastAccessed": 1777890961268,
+      "keyFiles": [
+        "__init__.py",
+        "auth.py",
+        "config.py"
+      ]
+    },
+    "frontend/assets": {
+      "path": "frontend/assets",
+      "purpose": "Static assets",
+      "fileCount": 3,
+      "lastAccessed": 1777890961270,
+      "keyFiles": [
+        "favicon.png",
+        "langflow-logo.png",
+        "sk-ribbon.png"
+      ]
+    }
+  },
   "hotPaths": [
     {
-      "path": "frontend/AgentHub.html",
-      "accessCount": 60,
-      "lastAccessed": 1777882415929,
+      "path": "frontend/admin.jsx",
+      "accessCount": 43,
+      "lastAccessed": 1778026619030,
       "type": "file"
     },
     {
       "path": "frontend/extra-pages.jsx",
-      "accessCount": 46,
-      "lastAccessed": 1777882368213,
+      "accessCount": 40,
+      "lastAccessed": 1778026581262,
+      "type": "file"
+    },
+    {
+      "path": "frontend/upload-modal.jsx",
+      "accessCount": 34,
+      "lastAccessed": 1777940632840,
       "type": "file"
     },
     {
       "path": "frontend/boards.jsx",
-      "accessCount": 45,
-      "lastAccessed": 1777882402257,
-      "type": "file"
-    },
-    {
-      "path": "frontend/home.jsx",
       "accessCount": 34,
-      "lastAccessed": 1777887424691,
+      "lastAccessed": 1778021604295,
       "type": "file"
     },
     {
-      "path": "backend/app/auth.py",
-      "accessCount": 9,
-      "lastAccessed": 1777876183499,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/values.yaml",
-      "accessCount": 8,
-      "lastAccessed": 1777862901797,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/main.py",
-      "accessCount": 7,
-      "lastAccessed": 1777863402454,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/routers/notices.py",
-      "accessCount": 6,
-      "lastAccessed": 1777814945350,
-      "type": "file"
-    },
-    {
-      "path": "frontend",
-      "accessCount": 6,
-      "lastAccessed": 1777878927164,
+      "path": "frontend/AgentHub.html",
+      "accessCount": 27,
+      "lastAccessed": 1778025507693,
       "type": "directory"
+    },
+    {
+      "path": "frontend/flow-detail.jsx",
+      "accessCount": 25,
+      "lastAccessed": 1778022959162,
+      "type": "file"
+    },
+    {
+      "path": "frontend/component-detail.jsx",
+      "accessCount": 23,
+      "lastAccessed": 1778022955476,
+      "type": "file"
     },
     {
       "path": "frontend/styles.css",
-      "accessCount": 5,
-      "lastAccessed": 1777806746080,
+      "accessCount": 23,
+      "lastAccessed": 1778026671266,
       "type": "directory"
     },
     {
-      "path": "backend/app/routers/voc.py",
-      "accessCount": 5,
-      "lastAccessed": 1777815879598,
+      "path": "frontend/i18n.jsx",
+      "accessCount": 12,
+      "lastAccessed": 1778021745578,
+      "type": "directory"
+    },
+    {
+      "path": "backend/app/routers/components.py",
+      "accessCount": 12,
+      "lastAccessed": 1778022943932,
+      "type": "directory"
+    },
+    {
+      "path": "frontend/home.jsx",
+      "accessCount": 12,
+      "lastAccessed": 1778023437946,
       "type": "file"
     },
     {
       "path": "backend/app/routers/admin.py",
+      "accessCount": 9,
+      "lastAccessed": 1778021664086,
+      "type": "file"
+    },
+    {
+      "path": "frontend/api.jsx",
+      "accessCount": 6,
+      "lastAccessed": 1778021690222,
+      "type": "directory"
+    },
+    {
+      "path": "frontend/image-upload.jsx",
       "accessCount": 5,
-      "lastAccessed": 1777878160454,
+      "lastAccessed": 1777940611859,
       "type": "file"
     },
     {
-      "path": "backend/app/models/models.py",
-      "accessCount": 4,
-      "lastAccessed": 1777687775110,
+      "path": "frontend",
+      "accessCount": 5,
+      "lastAccessed": 1777942621692,
+      "type": "directory"
+    },
+    {
+      "path": "backend/app/routers/users.py",
+      "accessCount": 5,
+      "lastAccessed": 1778021518418,
       "type": "file"
     },
     {
-      "path": "backend/app/routers/components.py",
+      "path": "api/index.py",
       "accessCount": 4,
-      "lastAccessed": 1777814094100,
+      "lastAccessed": 1777986355545,
+      "type": "file"
+    },
+    {
+      "path": "backend/app/main.py",
+      "accessCount": 4,
+      "lastAccessed": 1778027002232,
       "type": "file"
     },
     {
       "path": "README.md",
       "accessCount": 4,
-      "lastAccessed": 1777855818666,
+      "lastAccessed": 1778027054870,
       "type": "file"
     },
     {
       "path": "backend/app/config.py",
-      "accessCount": 4,
-      "lastAccessed": 1777870341109,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/configmap.yaml",
-      "accessCount": 4,
-      "lastAccessed": 1777870371511,
-      "type": "file"
-    },
-    {
-      "path": "frontend/data.jsx",
-      "accessCount": 4,
-      "lastAccessed": 1777878242175,
-      "type": "file"
-    },
-    {
-      "path": "backend/alembic/env.py",
       "accessCount": 3,
-      "lastAccessed": 1777683039750,
+      "lastAccessed": 1777939956079,
       "type": "file"
     },
     {
-      "path": "backend/app/models/__init__.py",
+      "path": "backend/app/models/models.py",
       "accessCount": 3,
-      "lastAccessed": 1777687782291,
+      "lastAccessed": 1778021627434,
       "type": "file"
     },
     {
-      "path": "infra/helm/agent-hub/Chart.yaml",
-      "accessCount": 2,
-      "lastAccessed": 1777647570564,
+      "path": "backend/app/services/ranking.py",
+      "accessCount": 3,
+      "lastAccessed": 1778024393731,
       "type": "file"
     },
     {
-      "path": "infra/helm/agent-hub/templates/backend-deployment.yaml",
-      "accessCount": 2,
-      "lastAccessed": 1777647572153,
+      "path": "CHANGELOG.md",
+      "accessCount": 3,
+      "lastAccessed": 1778027037048,
       "type": "file"
     },
     {
-      "path": "infra/helm/agent-hub/templates/ingress.yaml",
+      "path": "backend/app/auth.py",
       "accessCount": 2,
-      "lastAccessed": 1777647572214,
+      "lastAccessed": 1777940830005,
+      "type": "directory"
+    },
+    {
+      "path": "backend/app/database.py",
+      "accessCount": 2,
+      "lastAccessed": 1777986844830,
+      "type": "file"
+    },
+    {
+      "path": "backend/app/schemas/schemas.py",
+      "accessCount": 2,
+      "lastAccessed": 1778020627060,
+      "type": "directory"
+    },
+    {
+      "path": "backend/app/routers",
+      "accessCount": 2,
+      "lastAccessed": 1778020676052,
+      "type": "directory"
+    },
+    {
+      "path": "docker-compose.yml",
+      "accessCount": 1,
+      "lastAccessed": 1777938070290,
       "type": "file"
     },
     {
       "path": "backend/requirements.txt",
       "accessCount": 1,
-      "lastAccessed": 1777647473132,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/__init__.py",
-      "accessCount": 1,
-      "lastAccessed": 1777647474306,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/postgresql-statefulset.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1777647474765,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/postgresql-service.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1777647476990,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/database.py",
-      "accessCount": 1,
-      "lastAccessed": 1777647477427,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/postgresql-pvc.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1777647479358,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/hpa.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1777647485560,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/NOTES.txt",
-      "accessCount": 1,
-      "lastAccessed": 1777647493217,
-      "type": "file"
-    },
-    {
-      "path": "infra/k8s/README.md",
-      "accessCount": 1,
-      "lastAccessed": 1777647510314,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/.helmignore",
-      "accessCount": 1,
-      "lastAccessed": 1777647519563,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/schemas/__init__.py",
-      "accessCount": 1,
-      "lastAccessed": 1777647520856,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/_helpers.tpl",
-      "accessCount": 1,
-      "lastAccessed": 1777647530665,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/secret.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1777647537218,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/frontend-deployment.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1777647541413,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/frontend-service.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1777647543763,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/schemas/schemas.py",
-      "accessCount": 1,
-      "lastAccessed": 1777647545665,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/routers/__init__.py",
-      "accessCount": 1,
-      "lastAccessed": 1777647546855,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/services/__init__.py",
-      "accessCount": 1,
-      "lastAccessed": 1777647547971,
-      "type": "file"
-    },
-    {
-      "path": "infra/helm/agent-hub/templates/backend-service.yaml",
-      "accessCount": 1,
-      "lastAccessed": 1777647551984,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/services/ranking.py",
-      "accessCount": 1,
-      "lastAccessed": 1777647564780,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/routers/users.py",
-      "accessCount": 1,
-      "lastAccessed": 1777647591896,
-      "type": "file"
-    },
-    {
-      "path": "backend/app/routers/rankings.py",
-      "accessCount": 1,
-      "lastAccessed": 1777647618106,
-      "type": "file"
-    },
-    {
-      "path": "backend/Dockerfile",
-      "accessCount": 1,
-      "lastAccessed": 1777647624067,
+      "lastAccessed": 1777938076658,
       "type": "file"
     },
     {
       "path": "backend/alembic.ini",
       "accessCount": 1,
-      "lastAccessed": 1777647626321,
+      "lastAccessed": 1777938094701,
       "type": "file"
     },
     {
-      "path": "backend/alembic/script.py.mako",
+      "path": "backend/app/routers/images.py",
       "accessCount": 1,
-      "lastAccessed": 1777647639571,
+      "lastAccessed": 1777940869527,
+      "type": "file"
+    },
+    {
+      "path": "frontend/data.jsx",
+      "accessCount": 1,
+      "lastAccessed": 1777942488598,
+      "type": "file"
+    },
+    {
+      "path": "vercel.json",
+      "accessCount": 1,
+      "lastAccessed": 1777956664318,
+      "type": "file"
+    },
+    {
+      "path": "api/requirements.txt",
+      "accessCount": 1,
+      "lastAccessed": 1777956689522,
       "type": "file"
     },
     {
       "path": "backend/alembic/versions/001_initial.py",
       "accessCount": 1,
-      "lastAccessed": 1777647657245,
+      "lastAccessed": 1778020632836,
       "type": "file"
     },
     {
       "path": "backend/alembic/versions/002_add_notice_and_voc.py",
       "accessCount": 1,
-      "lastAccessed": 1777687851393,
+      "lastAccessed": 1778020633054,
+      "type": "file"
+    },
+    {
+      "path": "backend/app/routers/voc.py",
+      "accessCount": 1,
+      "lastAccessed": 1778020676727,
+      "type": "directory"
+    },
+    {
+      "path": "backend/alembic/versions/003_soft_delete_and_versioning.py",
+      "accessCount": 1,
+      "lastAccessed": 1778021612063,
+      "type": "file"
+    },
+    {
+      "path": "backend/app/routers/rankings.py",
+      "accessCount": 1,
+      "lastAccessed": 1778023346849,
       "type": "file"
     }
   ],

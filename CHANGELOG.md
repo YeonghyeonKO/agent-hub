@@ -1,5 +1,37 @@
 # Changelog
 
+## v0.7.0 (2026-05-06)
+
+### Features
+- **Star fix** — `users.py`, `admin.py`에서 하드코딩 `stars_count=0` 제거, 실제 DB 쿼리
+- **Star 상태 유지** — `GET /components/{id}/starred` 엔드포인트 추가, detail 진입 시 star 여부 확인
+- **복사 → 자동 Star** — 코드/JSON 복사 시 미star 상태면 자동 star + "개발자에게 star도 같이 전달할게요 ⭐️" 토스트 (우상단, warm 디자인)
+- **Soft delete** — `deleted_at` 컬럼 (migration 003), `DELETE /api/v1/admin/components/{id}`, 관리자 삭제 버튼
+- **Component/Flow 버전 업데이트** — `PATCH /api/v1/components/{id}` (patch/minor/major bump), 버전 이력 탭, 업데이트 모달
+- **Ranking 개편** — Star×1 + Download×2, 실시간 갱신, `agenthub:reload` 이벤트로 즉시 반영
+- **VoC 댓글 수** — 카드 미리보기에서 `comment_count` 매핑 수정
+- **Vercel 배포** — `vercel.json` + `api/index.py` serverless wrapper, Neon PostgreSQL 연동
+- **NullPool** — serverless 환경 DB 연결 안정화 (15s timeout)
+- **모바일 반응형** — 햄버거 메뉴, 768px/480px breakpoints, 전 페이지 모바일 대응
+
+### Mobile UX
+- Topbar: 햄버거 ☰ 드롭다운 메뉴 (선택 시 자동 닫힘)
+- Grid: 3열→1열, 4열→2열
+- 내 컴포넌트: 헤더 세로 스택, 카드 Star/Download 아이콘 표시
+- 가이드: 사이드바 겹침 해소 (relative position)
+- 관리자: admin-grid 1열, review-card fold 패턴, 설정 1열
+
+### Fixes
+- Neon unpooled endpoint 사용 (asyncpg 호환)
+- `sslmode=require` → `ssl=require` 변환
+- Ranking에 `deleted_at` 필터 추가
+- `ComponentResponse`에 `readme` 포함
+
+### Database Migration
+- **003**: `components` 테이블에 `deleted_at` 컬럼 추가 (soft delete)
+
+---
+
 ## v0.5.0 (2026-05-05)
 
 ### Features

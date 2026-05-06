@@ -13,3 +13,5 @@ build/
 *.swp
 *.swo
 /data/uploads/
+.vercel
+.env*.local
