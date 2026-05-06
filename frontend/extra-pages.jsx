@@ -102,10 +102,10 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
                   <div className="muted-sm" style={{fontSize: 12.5}}>{c.desc}</div>
                 </div>
                 <div className="mono" style={{fontSize: 12.5, color: 'var(--text-2)'}}>{c.version}</div>
-                <div className="mono my-stat-cell" style={{textAlign: 'right', fontWeight: 600}}><span className="my-stat-emoji">⭐</span> {c.stars}</div>
-                <div className="mono my-stat-cell" style={{textAlign: 'right', fontWeight: 600}}><span className="my-stat-emoji">📥</span> {c.downloads}</div>
+                <div className="mono my-stat-cell" style={{textAlign: 'right', fontWeight: 600}}><Icons.Star size={12}/> {c.stars}</div>
+                <div className="mono my-stat-cell" style={{textAlign: 'right', fontWeight: 600}}><Icons.Download size={12}/> {c.downloads}</div>
                 <div className="muted-sm">{c.updatedAgo}</div>
-                <div style={{color: 'var(--text-3)'}}><Icons.ChevronRight size={14}/></div>
+                <div></div>
               </div>
             );
           })}

@@ -2402,7 +2402,6 @@ input[type=range].native-slider {
 /* ─── Mobile Responsive ─────────────────────────────────────── */
 /* Hamburger — hidden on desktop */
 .hamburger-btn { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 4px; }
-.my-stat-emoji { display: none; }
 
 @media (max-width: 768px) {
   /* Hamburger menu */
@@ -2466,7 +2465,6 @@ input[type=range].native-slider {
 
   /* My Component/Flow — stack header + emoji stats */
   .page > .row[style*="space-between"] { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
-  .my-stat-emoji { display: inline !important; }
   .my-stat-cell { text-align: left !important; }
 
   /* My Component/Flow table → card layout */
@@ -2482,33 +2480,37 @@ input[type=range].native-slider {
   .score-formula-eq { flex-wrap: wrap; gap: 4px; }
 
   /* Admin — full mobile overhaul */
+  .admin-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .review-card { border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important; border-top: 2px solid var(--accent) !important; }
+  .review-card-header { padding: 14px !important; }
+  .review-card-body { padding: 14px !important; }
+  .review-card-footer { padding: 10px 14px !important; flex-wrap: wrap; gap: 8px; }
+  .sub-row { padding: 10px 12px !important; }
   .settings-grid { grid-template-columns: 1fr; gap: 12px; }
   .admin-tab-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .admin-tab-row { min-width: 450px; font-size: 12px; padding: 8px 12px; }
+  .admin-tab-row { min-width: 400px; font-size: 12px; padding: 8px 10px; gap: 8px !important; }
   .admin-tab-head { font-size: 10px; }
   .settings-card { padding: 14px !important; }
   .settings-card-wide { grid-column: span 1 !important; }
   .admin-panel-head { padding: 10px 14px; }
-  .admin-panel-head .h2 { font-size: 15px; }
   .reviewer-row { flex-wrap: wrap; gap: 6px; }
   .reviewer-list { gap: 8px; }
   .rejected-row { flex-wrap: wrap; gap: 8px; padding: 10px !important; }
-  .pending-card { padding: 14px !important; }
-  .pending-card .row { flex-wrap: wrap; gap: 6px; }
   .setting-bar { flex-wrap: wrap; }
   .editable-row { flex-direction: column; gap: 4px; }
   .editable-row label { min-width: auto; }
+  .score-slider { flex-wrap: wrap; }
+  .score-slider label { min-width: auto; font-size: 12px; }
 
   /* Guide page — fix sidebar overlap */
-  .guide-sidebar {
+  .guide-side {
     position: relative !important;
     top: auto !important;
-    max-height: none !important;
     background: var(--bg-elev) !important;
     border: 1px solid var(--line) !important;
     border-radius: 8px !important;
-    margin-bottom: 16px !important;
-    z-index: 1 !important;
+    padding: 8px !important;
+    margin-bottom: 12px !important;
   }
   .guide-layout { grid-template-columns: 1fr !important; }
 
