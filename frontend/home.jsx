@@ -63,12 +63,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   const filtered = components.filter(c => {
     const desc = c.desc || c.description || '';
     if (query && !c.title.toLowerCase().includes(query.toLowerCase()) && !desc.includes(query)) return false;
-    if (activeCat === 'all') return true;
-    if (activeCat === 'rag') return c.category === 'RAG / 검색';
-    if (activeCat === 'doc') return c.category === '문서 처리';
-    if (activeCat === 'data') return c.category === '데이터 / ERP';
-    if (activeCat === 'workflow') return c.category === '워크플로우';
-    return false;
+    return true;
   }).sort((a, b) => {
     if (sortBy === 'new') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
     return ((b.stars || b.stars_count || 0) + (b.downloads || b.downloads_count || 0)) - ((a.stars || a.stars_count || 0) + (a.downloads || a.downloads_count || 0));
@@ -130,19 +125,10 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
         </div>
       </div>
 
-      {/* Filter pills */}
+      {/* Search */}
       <div className="filter-row">
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat.id}
-            className={`filter-pill ${activeCat === cat.id ? 'active' : ''}`}
-            onClick={() => setActiveCat(cat.id)}
-          >
-            {catI18n[cat.id] || cat.label}
-          </button>
-        ))}
         <div className="spacer"/>
-        <div className="nav-search" style={{width: 240, height: 32}}>
+        <div className="nav-search" style={{width: 280, height: 32}}>
           <Icons.Search size={13}/>
           <input placeholder={t('search_inline')} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') loadComponents(); }}/>
         </div>

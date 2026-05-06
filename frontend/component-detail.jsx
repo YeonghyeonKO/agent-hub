@@ -58,10 +58,10 @@ function ComponentDetail({ component, onBack }) {
     if (c.id && String(c.id).includes('-')) {
       api.components.file(c.id)
         .then(d => { setFileContent(d.content); setFileName(d.filename); })
-        .catch(() => { setFileContent(SAMPLE_PY_CODE); setFileName('smart_chunker.py'); });
+        .catch(() => { setFileContent('// 파일을 불러올 수 없습니다'); setFileName(c.title || 'file'); });
     } else {
-      setFileContent(SAMPLE_PY_CODE);
-      setFileName('smart_chunker.py');
+      setFileContent('// 파일을 불러올 수 없습니다');
+      setFileName(c.title || 'file');
     }
   }, [c.id]);
 
@@ -247,16 +247,28 @@ function CodePreview({ code, filename }) {
 
 function UpdateModal({ component, onClose, onUpdated }) {
   const c = component;
+  const expectedExt = c.type === 'json' ? '.json' : '.py';
   const [bump, setBump] = React.useState('patch');
   const [changelog, setChangelog] = React.useState('');
   const [readme, setReadme] = React.useState(c.readme || '');
+  const [readmeMode, setReadmeMode] = React.useState('write');
   const [desc, setDesc] = React.useState(c.desc || c.description || '');
   const [newFile, setNewFile] = React.useState(null);
+  const [fileError, setFileError] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
 
   const curVer = (c.version || 'v1.0.0').replace('v', '');
   const parts = curVer.split('.').map(Number);
   const nextVer = bump === 'major' ? `v${parts[0]+1}.0.0` : bump === 'minor' ? `v${parts[0]}.${parts[1]+1}.0` : `v${parts[0]}.${parts[1]}.${parts[2]+1}`;
+
+  const handleFile = (file) => {
+    if (!file) return;
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (ext !== expectedExt) { setFileError(`${expectedExt} 파일만 업로드 가능합니다 (현재: ${ext})`); setNewFile(null); return; }
+    if (file.size > 5 * 1024 * 1024) { setFileError('파일 크기 5MB 초과'); setNewFile(null); return; }
+    setFileError('');
+    setNewFile(file);
+  };
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -264,8 +276,8 @@ function UpdateModal({ component, onClose, onUpdated }) {
       const fd = new FormData();
       fd.append('version_bump', bump);
       fd.append('changelog', changelog.trim() || 'Updated');
-      if (desc.trim()) fd.append('description', desc.trim());
-      if (readme.trim()) fd.append('readme', readme.trim());
+      fd.append('description', desc.trim());
+      fd.append('readme', readme.trim());
       if (newFile) fd.append('file', newFile);
       const result = await api.components.update(c.id, fd);
       onUpdated(result);
@@ -278,9 +290,14 @@ function UpdateModal({ component, onClose, onUpdated }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: 480}}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: 540}}>
         <div className="modal-header">
-          <div className="h2">업데이트 · {c.title}</div>
+          <div>
+            <div className="h2">업데이트 · {c.title}</div>
+            <div className="muted-sm" style={{marginTop: 4}}>
+              <span className={`chip chip-${c.type}`}>{expectedExt}</span> {c.type === 'py' ? 'Component' : 'Flow'}
+            </div>
+          </div>
           <button className="btn btn-icon btn-ghost" onClick={onClose}><Icons.X/></button>
         </div>
         <div className="modal-body">
@@ -291,28 +308,43 @@ function UpdateModal({ component, onClose, onUpdated }) {
                 <button key={v} className={`segmented-item ${bump===v?'active':''}`} onClick={() => setBump(v)}>{l}</button>
               ))}
             </div>
-            <div className="field-hint" style={{marginTop: 8}}>
-              {c.version} → <strong>{nextVer}</strong>
-            </div>
+            <div className="field-hint" style={{marginTop: 8}}>{c.version} → <strong>{nextVer}</strong></div>
           </div>
           <div className="field">
             <label className="field-label">변경 사항</label>
             <input className="input" placeholder="이번 업데이트에서 변경된 내용" value={changelog} onChange={e => setChangelog(e.target.value)}/>
           </div>
           <div className="field">
-            <label className="field-label">파일 교체 (선택)</label>
-            <div className="dropzone" style={{padding: 16, cursor: 'pointer', textAlign: 'center'}} onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.py,.json'; inp.onchange = e => setNewFile(e.target.files[0]); inp.click(); }}>
-              {newFile ? <span className="mono" style={{fontSize: 13}}>{newFile.name}</span> : <span className="muted-sm">클릭하여 새 파일 선택 (변경 없으면 생략)</span>}
+            <label className="field-label">파일 교체 (선택) — {expectedExt} 만 가능</label>
+            <div className={`dropzone ${fileError ? 'drag' : ''}`} style={{padding: 16, cursor: 'pointer', textAlign: 'center'}} onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = expectedExt; inp.onchange = e => handleFile(e.target.files[0]); inp.click(); }}>
+              {newFile ? <span className="mono" style={{fontSize: 13, color: 'var(--ok-fg)'}}><Icons.Check size={11}/> {newFile.name}</span> : <span className="muted-sm">클릭하여 새 {expectedExt} 파일 선택</span>}
             </div>
+            {fileError && <div style={{color: 'var(--err-fg)', fontSize: 12, marginTop: 6}}>{fileError}</div>}
           </div>
           <div className="field">
             <label className="field-label">한줄설명</label>
             <input className="input" value={desc} onChange={e => setDesc(e.target.value)}/>
           </div>
+          <div className="field">
+            <label className="field-label">개요 / 사용법</label>
+            <div style={{border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden'}}>
+              <div style={{display: 'flex', gap: 0, borderBottom: '1px solid var(--line)', background: 'var(--bg-muted)', padding: '4px 8px'}}>
+                <button type="button" className="btn btn-ghost btn-sm" style={{fontSize: 12, fontWeight: readmeMode === 'write' ? 600 : 400, borderBottom: readmeMode === 'write' ? '2px solid var(--accent)' : '2px solid transparent'}} onClick={() => setReadmeMode('write')}>작성</button>
+                <button type="button" className="btn btn-ghost btn-sm" style={{fontSize: 12, fontWeight: readmeMode === 'preview' ? 600 : 400, borderBottom: readmeMode === 'preview' ? '2px solid var(--accent)' : '2px solid transparent'}} onClick={() => setReadmeMode('preview')}>미리보기</button>
+              </div>
+              {readmeMode === 'write' ? (
+                <textarea className="input" rows={6} style={{resize: 'vertical', fontFamily: 'JetBrains Mono, monospace', fontSize: 12.5, border: 'none', borderRadius: 0, width: '100%', boxSizing: 'border-box'}} value={readme} onChange={e => setReadme(e.target.value)}/>
+              ) : (
+                <div style={{padding: 14, minHeight: 100, fontSize: 13.5, lineHeight: 1.7}}>
+                  {readme.trim() ? <div className="readme-body" dangerouslySetInnerHTML={{__html: (typeof marked !== 'undefined' && marked.parse) ? marked.parse(readme) : readme.replace(/\n/g, '<br/>')}}/> : <div className="muted" style={{textAlign: 'center'}}>미리보기할 내용이 없습니다</div>}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         <div className="modal-footer">
           <button className="btn btn-ghost btn-sm" onClick={onClose}>취소</button>
-          <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={submitting} style={{opacity: submitting ? 0.5 : 1}}>
+          <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={submitting || !!fileError} style={{opacity: (submitting || fileError) ? 0.5 : 1}}>
             <Icons.Check size={11}/> {submitting ? '업데이트 중...' : `${nextVer} 업데이트`}
           </button>
         </div>
