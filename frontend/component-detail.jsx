@@ -157,7 +157,12 @@ function ComponentDetail({ component, onBack }) {
 
       <div>
         {tab === 'readme' && <ReadmeContent c={c}/>}
-        {tab === 'code' && <CodePreview code={fileContent || SAMPLE_PY_CODE} filename={fileName || 'code.py'}/>}
+        {tab === 'code' && <CodePreview code={fileContent} filename={fileName || 'code.py'} onCopy={() => {
+          if (c.id && String(c.id).includes('-') && !starred) {
+            api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
+          }
+          setCopyToast(true); setTimeout(() => setCopyToast(false), 3000);
+        }}/>}
         {tab === 'versions' && (
           <div className="card" style={{padding: 0, overflow: 'hidden'}}>
             <div style={{padding: '14px 18px', background: 'var(--bg-muted)', borderBottom: '1px solid var(--line)', fontWeight: 600, fontSize: 13}}>
@@ -210,13 +215,14 @@ function ReadmeContent({ c }) {
   );
 }
 
-function CodePreview({ code, filename }) {
+function CodePreview({ code, filename, onCopy }) {
   const [copied, setCopied] = React.useState(false);
   const src = code || '';
   const handleCopy = () => {
     navigator.clipboard?.writeText(src);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+    if (onCopy) onCopy();
   };
   const lines = src.split('\n');
   const sizeKB = (new Blob([src]).size / 1024).toFixed(1);

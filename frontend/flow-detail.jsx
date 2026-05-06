@@ -142,7 +142,12 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
             <FlowGraph hoverNode={hoverNode} setHoverNode={setHoverNode} flowData={flowData}/>
           </div>
         )}
-        {tab === 'json' && <FlowJsonView flowData={flowData}/>}
+        {tab === 'json' && <FlowJsonView flowData={flowData} onCopy={() => {
+          if (c.id && String(c.id).includes('-') && !starred) {
+            api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
+          }
+          setCopyToast(true); setTimeout(() => setCopyToast(false), 3000);
+        }}/>}
         {tab === 'versions' && (
           <div className="card" style={{padding: 0, overflow: 'hidden'}}>
             <div style={{padding: '14px 18px', background: 'var(--bg-muted)', borderBottom: '1px solid var(--line)', fontWeight: 600, fontSize: 13}}>
@@ -282,11 +287,11 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
   );
 }
 
-function FlowJsonView({ flowData }) {
+function FlowJsonView({ flowData, onCopy }) {
   const json = flowData ? JSON.stringify(flowData, null, 2) : '(JSON 데이터를 불러올 수 없습니다)';
   const sizeKB = (new Blob([json]).size / 1024).toFixed(1);
   const [copied, setCopied] = React.useState(false);
-  const handleCopy = () => { navigator.clipboard?.writeText(json); setCopied(true); setTimeout(() => setCopied(false), 1500); };
+  const handleCopy = () => { navigator.clipboard?.writeText(json); setCopied(true); setTimeout(() => setCopied(false), 1500); if (onCopy) onCopy(); };
   return (
     <div className="codeblock">
       <div className="codeblock-header">
