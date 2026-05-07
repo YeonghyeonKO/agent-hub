@@ -284,6 +284,8 @@ Score = Star × 1 + Download × 2
 
 ### Admin & Reviewer
 - **심사위원(reviewer) 역할**: 관리자 페이지 접근 가능, 심사대기/승인/반려 탭만 표시
+- **심사대기 fold/expand**: 항목 클릭 시 인라인으로 심사 카드 펼침
+- **Loading indicator**: 탭 전환 시 flow-dot 펄스 애니메이션
 - 관리자 설정 전체 i18n 완료 (시즌, 심사항목, 랭킹 공식, 심사위원, 호환성)
 
 ---

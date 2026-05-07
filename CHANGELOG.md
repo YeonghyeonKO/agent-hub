@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.8.0 (2026-05-07)
+
+### Features
+- **Admin fold/expand** — 심사대기 항목 클릭 시 인라인 펼침/접힘 (2열 grid 제거)
+- **Auto-star on code preview copy** — 코드/JSON 미리보기 탭 복사 버튼도 자동 Star
+- **Loading indicator** — flow-dot 펄스 애니메이션 (홈, 랭킹, 관리자 탭)
+- **Mobile topbar** — 돋보기 검색 아이콘, 프로필 우측 정렬, 제출 버튼 아이콘 전용
+- **Update modal 개선** — 파일 타입 제한 (.py↔.json 변경 불가), 개요/사용법 에디터 포함
+
+### Improvements
+- 홈: 카테고리 필터 제거 (All/RAG/Doc 등), 검색 + 정렬만 유지
+- 관리자 사용자 관리: Team 열 제거, Name 넓힘, Role 축소
+- 관리자 승인됨: version 열 제거
+- 관리자 삭제 확인: "(복구 가능)" 문구 제거
+- 모바일 정렬 버튼: full-width segmented 가로 배치
+
+### Fixes
+- Admin soft-delete: pending/approved/rejected 쿼리에 `deleted_at IS NULL` 필터 추가
+- 코드 미리보기: SmartChunker 더미 데이터 → 파일 로드 실패 안내 메시지
+- 햄버거 메뉴: 관리자 클릭 시 메뉴 닫힘 수정 (`navClick` 래핑)
+
+---
+
 ## v0.7.0 (2026-05-06)
 
 ### Features
