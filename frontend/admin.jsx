@@ -58,7 +58,7 @@ function AdminDashboard({ onBack, userRole }) {
       }));
       setPendingList(items);
       if (items.length > 0 && !activeSubId) setActiveSubId(items[0].id);
-    }).catch(() => setPendingList(SUBMISSIONS));
+    }).catch(() => setPendingList([]));
   };
   React.useEffect(loadPending, []);
 
@@ -336,6 +336,42 @@ function SettingsTab() {
   const [draftLabel, setDraftLabel] = React.useState('');
   const [reviewers, setReviewers] = React.useState(REVIEWERS);
   const [draftReviewer, setDraftReviewer] = React.useState({ id: '', name: '' });
+  const [saving, setSaving] = React.useState(false);
+  const [loaded, setLoaded] = React.useState(false);
+
+  // Load settings from API
+  React.useEffect(() => {
+    api.admin.settings().then(d => {
+      if (d) {
+        setSeason({
+          name: d.name || '',
+          submitStart: d.submit_start || '',
+          submitEnd: d.submit_end || '',
+          reviewEnd: d.review_end || '',
+          awardDay: d.award_day || '',
+        });
+        if (d.criteria_weights) {
+          setCriteria(Object.entries(d.criteria_weights).map(([k, v], i) => ({ id: 'c' + i, label: k, value: v })));
+        }
+      }
+      setLoaded(true);
+    }).catch(() => setLoaded(true));
+  }, []);
+
+  // Save to API
+  const saveSettings = () => {
+    setSaving(true);
+    const criteriaWeights = {};
+    criteria.forEach(c => { criteriaWeights[c.label] = c.value; });
+    api.admin.updateSettings({
+      name: season.name,
+      submit_start: season.submitStart,
+      submit_end: season.submitEnd,
+      review_end: season.reviewEnd,
+      award_day: season.awardDay,
+      criteria_weights: criteriaWeights,
+    }).then(() => setSaving(false)).catch(() => setSaving(false));
+  };
 
   const setField = (k, v) => setSeason(s => ({ ...s, [k]: v }));
   const setWeight = (id, v) => setCriteria(cs => cs.map(c => c.id === id ? { ...c, value: v } : c));
@@ -489,6 +525,12 @@ function SettingsTab() {
         <SettingRow label={t('settings_rec_ver')} value="1.9.0"/>
         <SettingRow label={t('settings_readme_lang')} value="KR + EN"/>
         <SettingRow label={t('settings_secret_scan')} value="ON"/>
+      </div>
+
+      <div style={{gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8}}>
+        <button className="btn btn-accent" onClick={saveSettings} disabled={saving} style={{opacity: saving ? 0.5 : 1}}>
+          <Icons.Check size={12}/> {saving ? 'Saving...' : 'Save Settings'}
+        </button>
       </div>
     </div>
   );

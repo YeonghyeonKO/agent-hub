@@ -24,8 +24,9 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
     api.users.myComponents().then(items => setMyComponents(items || [])).catch(() => {});
   }, []);
 
-  const mine = myComponents.filter(c => c.status === 'approved').map(apiToCard);
-  const drafts = myComponents.filter(c => c.status === 'pending' || c.status === 'draft').map(c => ({
+  const mine = myComponents.filter(c => c.status === 'approved' && !c.deleted_at).map(apiToCard);
+  const deleted = myComponents.filter(c => c.deleted_at).map(c => ({ ...c, desc: c.description || '', updatedAgo: fmtDate(c.created_at) }));
+  const drafts = myComponents.filter(c => (c.status === 'pending' || c.status === 'draft') && !c.deleted_at).map(c => ({
     ...c, desc: c.description || '', state: c.status === 'pending' ? 'review' : 'draft',
     updatedAgo: fmtDate(c.created_at),
   }));
@@ -67,6 +68,7 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
         {[
           ['published', t('tab_published'), mine.length],
           ['drafts', t('tab_drafts'), drafts.length],
+          ...(deleted.length > 0 ? [['deleted', t('tab_deleted') || '삭제됨', deleted.length]] : []),
         ].map(([id, label, count]) => (
           <button key={id} className={`tab ${tab===id?'active':''}`} onClick={() => setTab(id)}>
             {label} <span className="tab-count">{count}</span>
@@ -140,11 +142,25 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
         </div>
       )}
 
-      {tab === 'activity' && (
-        <div className="empty-state card card-pad" style={{textAlign: 'center', padding: 40}}>
-          <Icons.Clock size={24} style={{color: 'var(--text-4)', marginBottom: 8}}/>
-          <div style={{fontWeight: 600, color: 'var(--text-2)', marginBottom: 4}}>No activity yet</div>
-          <div className="muted-sm">Activity feed will appear here as users interact with your components.</div>
+      {tab === 'deleted' && (
+        <div className="col" style={{gap: 12}}>
+          <div className="card card-pad" style={{padding: '12px 16px', background: 'var(--warn-bg)', border: '1px solid var(--warn)', fontSize: 13, color: 'var(--warn-fg)'}}>
+            관리자에 의해 삭제된 항목입니다. 수정 후 다시 제출하면 심사를 받을 수 있습니다.
+          </div>
+          {deleted.map(d => (
+            <div key={d.id} className="draft-card" style={{opacity: 0.75}}>
+              <div className="row gap-8" style={{marginBottom: 10}}>
+                <span className={`chip chip-${d.type}`}>{d.type === 'py' ? '.py' : '.json'}</span>
+                <span style={{fontWeight: 600, fontSize: 15}}>{d.title}</span>
+                <span className="spacer"/>
+                <span className="chip chip-err" style={{fontSize: 11}}>삭제됨</span>
+              </div>
+              <div className="muted" style={{fontSize: 13, marginBottom: 10}}>{d.desc}</div>
+              <div className="row gap-8">
+                <button className="btn btn-accent btn-sm" onClick={onOpenUpload}><Icons.Upload size={11}/> 다시 제출</button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

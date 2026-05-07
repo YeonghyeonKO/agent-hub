@@ -50,6 +50,7 @@ async def get_my_components(
                 stars_count=star_count,
                 downloads_count=dl_count,
                 created_at=c.created_at,
+                deleted_at=c.deleted_at,
             )
         )
     return items
