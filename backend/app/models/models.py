@@ -37,6 +37,7 @@ class Component(Base):
     max_langflow_ver: Mapped[str | None] = mapped_column(String(20))
     tested_versions: Mapped[list | None] = mapped_column(JSON, default=list)
     file_path: Mapped[str | None] = mapped_column(Text)
+    file_content: Mapped[str | None] = mapped_column(Text)
     readme: Mapped[str | None] = mapped_column(Text)
     icon: Mapped[str | None] = mapped_column(String(50))
     is_standard: Mapped[bool] = mapped_column(Boolean, default=False)

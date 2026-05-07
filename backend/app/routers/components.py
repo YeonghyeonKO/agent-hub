@@ -144,12 +144,13 @@ async def create_component(
     readme: str = Form(None),
     icon: str = Form(None),
 ):
-    # Save file
+    # Save file to disk + store content in DB
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     file_id = str(uuid.uuid4())
     ext = os.path.splitext(file.filename or "")[1]
     file_path = os.path.join(settings.UPLOAD_DIR, f"{file_id}{ext}")
     content = await file.read()
+    file_content_str = content.decode("utf-8", errors="replace")
     with open(file_path, "wb") as f:
         f.write(content)
 
@@ -165,6 +166,7 @@ async def create_component(
         max_langflow_ver=max_langflow_ver,
         tested_versions=tested,
         file_path=file_path,
+        file_content=file_content_str,
         readme=readme,
         icon=icon,
         status="pending",
@@ -248,6 +250,7 @@ async def update_component(
         with open(file_path, "wb") as f:
             f.write(content)
         component.file_path = file_path
+        component.file_content = content.decode("utf-8", errors="replace")
 
     # Update fields
     component.version = new_version
@@ -353,13 +356,20 @@ async def get_file_content(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     component = await db.get(Component, component_id)
-    if not component or not component.file_path:
-        raise HTTPException(status_code=404, detail="File not found")
-    if not os.path.exists(component.file_path):
-        raise HTTPException(status_code=404, detail="File not found on disk")
-    with open(component.file_path, "r", encoding="utf-8", errors="replace") as f:
-        content = f.read()
-    return {"filename": os.path.basename(component.file_path), "content": content, "type": component.type}
+    if not component:
+        raise HTTPException(status_code=404, detail="Component not found")
+
+    # Try disk first, fall back to DB content
+    if component.file_path and os.path.exists(component.file_path):
+        with open(component.file_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+        return {"filename": os.path.basename(component.file_path), "content": content, "type": component.type}
+
+    if component.file_content:
+        ext = ".py" if component.type == "py" else ".json"
+        return {"filename": component.title + ext, "content": component.file_content, "type": component.type}
+
+    raise HTTPException(status_code=404, detail="File not found")
 
 
 @router.get("/{component_id}/download-file")
