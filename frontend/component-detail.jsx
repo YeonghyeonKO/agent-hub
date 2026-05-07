@@ -108,7 +108,14 @@ function ComponentDetail({ component, onBack }) {
           }}><Icons.Copy size={13}/> 코드 복사</button>
           <button className="btn btn-primary" onClick={() => {
             if (c.id && String(c.id).includes('-')) {
-              window.open(`/api/v1/components/${c.id}/download-file`, '_blank');
+              api.components.file(c.id).then(d => {
+                const ext = c.type === 'json' ? '.json' : '.py';
+                const blob = new Blob([d.content], {type: 'text/plain'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = (c.title || 'file').replace(/\s+/g, '_') + ext; a.click();
+                URL.revokeObjectURL(url);
+                api.components.download(c.id).catch(() => {});
+              }).catch(() => alert('Download failed'));
             } else {
               const blob = new Blob([fileContent || ''], {type: 'text/plain'});
               const url = URL.createObjectURL(blob);
@@ -288,6 +295,12 @@ function UpdateModal({ component, onClose, onUpdated }) {
   const [fileError, setFileError] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
 
+  const safeClose = () => {
+    const hasChanges = changelog.trim() || newFile || desc !== (c.desc || c.description || '') || readme !== (c.readme || '');
+    if (hasChanges && !confirm('작성 중인 내용이 있습니다. 정말 닫으시겠습니까?')) return;
+    onClose();
+  };
+
   const curVer = (c.version || 'v1.0.0').replace('v', '');
   const parts = curVer.split('.').map(Number);
   const nextVer = bump === 'major' ? `v${parts[0]+1}.0.0` : bump === 'minor' ? `v${parts[0]}.${parts[1]+1}.0` : `v${parts[0]}.${parts[1]}.${parts[2]+1}`;
@@ -320,7 +333,7 @@ function UpdateModal({ component, onClose, onUpdated }) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={safeClose}>
       <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: 540}}>
         <div className="modal-header">
           <div>
@@ -329,7 +342,7 @@ function UpdateModal({ component, onClose, onUpdated }) {
               <span className={`chip chip-${c.type}`}>{expectedExt}</span> {c.type === 'py' ? 'Component' : 'Flow'}
             </div>
           </div>
-          <button className="btn btn-icon btn-ghost" onClick={onClose}><Icons.X/></button>
+          <button className="btn btn-icon btn-ghost" onClick={safeClose}><Icons.X/></button>
         </div>
         <div className="modal-body">
           <div className="field">
@@ -374,7 +387,7 @@ function UpdateModal({ component, onClose, onUpdated }) {
           </div>
         </div>
         <div className="modal-footer">
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>취소</button>
+          <button className="btn btn-ghost btn-sm" onClick={safeClose}>취소</button>
           <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={submitting || !!fileError} style={{opacity: (submitting || fileError) ? 0.5 : 1}}>
             <Icons.Check size={11}/> {submitting ? '업데이트 중...' : `${nextVer} 업데이트`}
           </button>

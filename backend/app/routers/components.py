@@ -260,20 +260,24 @@ async def update_component(
         component.readme = readme
 
     await db.commit()
-    await db.refresh(component, ["author"])
 
-    star_count = (await db.execute(select(func.count()).where(Star.component_id == component.id))).scalar() or 0
-    dl_count = (await db.execute(select(func.count()).where(Download.component_id == component.id))).scalar() or 0
+    # Re-fetch to avoid lazy loading issues in async
+    result2 = await db.execute(
+        select(Component).where(Component.id == component_id).options(selectinload(Component.author))
+    )
+    updated = result2.scalar_one()
+    star_count = (await db.execute(select(func.count()).where(Star.component_id == updated.id))).scalar() or 0
+    dl_count = (await db.execute(select(func.count()).where(Download.component_id == updated.id))).scalar() or 0
 
     return ComponentResponse(
-        id=component.id, title=component.title, type=component.type,
-        description=component.description, category=component.category,
-        version=component.version, min_langflow_ver=component.min_langflow_ver,
-        max_langflow_ver=component.max_langflow_ver, tested_versions=component.tested_versions,
-        icon=component.icon, is_standard=component.is_standard, status=component.status,
-        readme=component.readme, author=UserResponse.model_validate(component.author),
+        id=updated.id, title=updated.title, type=updated.type,
+        description=updated.description, category=updated.category,
+        version=updated.version, min_langflow_ver=updated.min_langflow_ver,
+        max_langflow_ver=updated.max_langflow_ver, tested_versions=updated.tested_versions,
+        icon=updated.icon, is_standard=updated.is_standard, status=updated.status,
+        readme=updated.readme, author=UserResponse.model_validate(updated.author),
         stars_count=star_count, downloads_count=dl_count,
-        created_at=component.created_at, updated_at=component.updated_at,
+        created_at=updated.created_at, updated_at=updated.updated_at,
     )
 
 

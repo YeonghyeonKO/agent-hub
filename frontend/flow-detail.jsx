@@ -98,7 +98,13 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
           }}><Icons.Code size={13}/> JSON 복사</button>
           <button className="btn btn-primary" onClick={() => {
             if (c.id && String(c.id).includes('-')) {
-              window.open((window.location.port === '3000' ? 'http://localhost:8000' : '') + `/api/v1/components/${c.id}/download-file`, '_blank');
+              api.components.file(c.id).then(d => {
+                const blob = new Blob([d.content], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = (c.title || 'flow').replace(/\s+/g, '_') + '.json'; a.click();
+                URL.revokeObjectURL(url);
+                api.components.download(c.id).catch(() => {});
+              }).catch(() => alert('Download failed'));
             }
           }}><Icons.Download size={13}/> 다운로드</button>
           <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> 업데이트</button>
