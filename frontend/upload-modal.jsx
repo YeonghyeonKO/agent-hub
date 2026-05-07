@@ -147,15 +147,21 @@ function UploadModal({ onClose }) {
     );
   }
 
+  const safeClose = () => {
+    const hasData = title.trim() || desc.trim() || readme !== getTemplate(fileType) || realFile;
+    if (hasData && !confirm('작성 중인 내용이 있습니다. 정말 닫으시겠습니까?')) return;
+    onClose();
+  };
+
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={safeClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div>
             <div className="h2">{t('upload_title')}</div>
             <div className="muted-sm" style={{marginTop: 4}}>{t('upload_subtitle')}</div>
           </div>
-          <button className="btn btn-icon btn-ghost" onClick={onClose}><Icons.X/></button>
+          <button className="btn btn-icon btn-ghost" onClick={safeClose}><Icons.X/></button>
         </div>
 
         <div style={{padding: '14px 24px 0'}}>
@@ -385,7 +391,7 @@ function UploadModal({ onClose }) {
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-ghost btn-sm" onClick={onClose}>{t('upload_cancel')}</button>
+          <button className="btn btn-ghost btn-sm" onClick={safeClose}>{t('upload_cancel')}</button>
           <div className="row gap-8">
             {step > 0 && (
               <button className="btn btn-secondary btn-sm" onClick={() => setStep(s => s - 1)}>{t('upload_prev')}</button>
