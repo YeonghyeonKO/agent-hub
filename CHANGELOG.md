@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.9.3 (2026-05-07)
+
+### Fixes
+- **Download 403**: use fetch+blob instead of window.open (auth context issue)
+- **PATCH 500 MissingGreenlet**: re-query after commit instead of db.refresh
+- **Update modal**: confirm dialog on close when changes exist (mistouch guard)
+
+---
+
 ## v0.9.2 (2026-05-07)
 
 ### Fixes
