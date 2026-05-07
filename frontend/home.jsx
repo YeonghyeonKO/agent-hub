@@ -43,7 +43,11 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   const loadComponents = () => {
     setLoading(true);
     api.components.list({ sort: sortBy, search: query || undefined, limit: 50 })
-      .then(d => { setComponents((d.items || []).map(apiToCard)); setLoading(false); })
+      .then(d => {
+        const items = (d.items || []).map(item => { try { return apiToCard(item); } catch(e) { console.error('apiToCard error:', e, item); return null; } }).filter(Boolean);
+        setComponents(items);
+        setLoading(false);
+      })
       .catch(e => { console.error('Failed to load components:', e); setLoading(false); });
   };
 
@@ -159,6 +163,7 @@ function ComponentCard({ c: raw, onClick }) {
   const chipClass = c.type === 'py' ? 'chip-py' : 'chip-json';
   const isIncompat = c.incompat;
   const { t } = useI18n();
+  const authorName = c.author?.name || c.author || '';
 
   return (
     <div className={`cc ${isIncompat ? 'cc-incompat' : ''}`} onClick={onClick}>
@@ -203,7 +208,7 @@ function ComponentCard({ c: raw, onClick }) {
         <div className="spacer"/>
         <div className="cc-author">
           <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}><Icons.Users size={10}/></div>
-          <span>{c.author.name}</span>
+          <span>{authorName}</span>
         </div>
       </div>
     </div>
