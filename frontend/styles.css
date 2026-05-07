@@ -2467,6 +2467,13 @@ input[type=range].native-slider {
 
   /* Detail overlay */
   .detail-overlay { width: 100%; max-width: 100%; border-radius: 0; }
+  .detail-overlay-header {
+    position: sticky; top: 0; z-index: 10;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--line);
+  }
   .detail-overlay-body { padding: 0; }
   .detail-header { flex-direction: column; gap: 12px; align-items: flex-start; }
   .detail-actions { flex-wrap: wrap; gap: 6px; }

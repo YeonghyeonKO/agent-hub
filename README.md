@@ -261,6 +261,7 @@ Score = Star × 1 + Download × 2
 ### Mobile Responsive
 - 햄버거 메뉴 (768px 이하)
 - 전 페이지 모바일 대응 (그리드, 카드, 모달, 관리자)
+- Detail overlay: PC 82% slide-over (바깥 클릭 닫기), 모바일 전체 너비 + 고정 헤더
 
 ### Vercel Deployment
 - `vercel.json` + `api/index.py` serverless wrapper

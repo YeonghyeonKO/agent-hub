@@ -49,8 +49,11 @@ function DetailOverlay({ detail, onClose, onOpenComponent }) {
     <div className="detail-overlay-backdrop" onClick={onClose}>
       <div className="detail-overlay" onClick={e => e.stopPropagation()}>
         <div className="detail-overlay-header">
+          <button className="btn btn-ghost btn-sm" onClick={onClose} style={{display: 'flex', alignItems: 'center', gap: 6}}>
+            <Icons.ArrowRight size={14} style={{transform: 'rotate(180deg)'}}/> <span>{useI18n().t('nav_home')}</span>
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={onClose}>
-            <Icons.X size={14}/> 닫기
+            <Icons.X size={16}/>
           </button>
         </div>
         <div className="detail-overlay-body">

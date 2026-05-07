@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.9.0 (2026-05-07)
+
+### Features
+- **Detail overlay UX** — PC: 82% 너비 slide-over (왼쪽 클릭으로 닫기), 모바일: 전체 너비 + 상단 고정 뒤로가기/닫기 버튼
+- **Admin detail preview** — 승인/반려 탭에서 눈 아이콘으로 component/flow 상세 열람
+- **Settings: reviewers auto-sync** — 사용자 관리에서 reviewer/admin 역할 지정 시 설정 탭에 자동 반영
+- **Review score i18n** — 기능성/독창성/활용도/문서화 라벨 한/영 전환
+- **File content in DB** — Vercel 서버리스 환경에서 파일 영속 저장 (migration 004)
+- **My Components: 반려/삭제 탭** — rejected + deleted 항목 통합 표시, 다시 제출 버튼
+
+### Fixes
+- PATCH /components/{id} 500 에러 수정 (file_content DB 저장)
+- GET /components/{id}/file 404 수정 (디스크 → DB fallback)
+- Admin soft-delete 쿼리에 deleted_at 필터 추가
+- 심사대기 dummy data fallback 제거
+- Settings API 연동 (시즌/심사항목 저장)
+
+### Database Migration
+- **004**: `components` 테이블에 `file_content` TEXT 컬럼 추가
+
+---
+
 ## v0.8.1 (2026-05-07)
 
 ### Features
