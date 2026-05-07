@@ -42,7 +42,13 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
   React.useEffect(() => {
     if (c.id && String(c.id).includes('-')) {
       api.components.file(c.id)
-        .then(d => { try { setFlowData(JSON.parse(d.content)); } catch {} })
+        .then(d => {
+          try {
+            const parsed = JSON.parse(d.content);
+            // Langflow wraps in data: { nodes, edges } — unwrap if needed
+            setFlowData(parsed.data?.nodes ? parsed.data : parsed);
+          } catch {}
+        })
         .catch(() => {});
     }
   }, [c.id]);
@@ -216,14 +222,17 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
   let layoutNodes;
   if (flowData && flowData.nodes) {
     const cols = Math.ceil(Math.sqrt(flowData.nodes.length));
-    layoutNodes = flowData.nodes.map((n, i) => ({
-      id: n.data?.id || n.id || String(i),
-      label: n.data?.node?.display_name || n.data?.display_name || n.data?.type || n.type || 'Node',
-      sub: n.data?.type || '',
-      kind: 'process',
-      x: (i % cols) * 170 + 30,
-      y: Math.floor(i / cols) * 110 + 30,
-    }));
+    layoutNodes = flowData.nodes.map((n, i) => {
+      const d = n.data || {};
+      return {
+        id: d.id || n.id || String(i),
+        label: d.display_name || d.node?.display_name || d.type || n.type || 'Node',
+        sub: d.type || '',
+        kind: 'process',
+        x: (i % cols) * 170 + 30,
+        y: Math.floor(i / cols) * 110 + 30,
+      };
+    });
   } else {
     layoutNodes = FLOW_NODES;
   }
@@ -231,12 +240,13 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
   const nodeMap = Object.fromEntries(layoutNodes.map(n => [n.id, n]));
   const NODE_W = 130, NODE_H = 50;
 
-  // Build renderable edges — support Langflow edge format: data.sourceHandle.id → data.targetHandle.id
+  // Build renderable edges — Langflow format: data.sourceHandle.id → data.targetHandle.id
   let layoutEdges;
   if (flowData && flowData.edges) {
     layoutEdges = flowData.edges.map(e => {
-      const src = e.data?.sourceHandle?.id || e.source || e.from;
-      const tgt = e.data?.targetHandle?.id || e.target || e.to;
+      const d = e.data || {};
+      const src = d.sourceHandle?.id || e.source || e.from;
+      const tgt = d.targetHandle?.id || e.target || e.to;
       return [src, tgt, false];
     }).filter(([f, t]) => nodeMap[f] && nodeMap[t]);
   } else {
