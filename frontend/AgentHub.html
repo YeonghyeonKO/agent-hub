@@ -218,7 +218,7 @@ function App() {
         />
       )}
       {route.name === 'admin' && (
-        <AdminDashboard onBack={goHome} userRole={userRole}/>
+        <AdminDashboard onBack={goHome} userRole={userRole} onOpenComponent={openComponent}/>
       )}
       {route.name === 'mine' && (
         <MyAssetsPage onOpenComponent={openComponent} onOpenUpload={() => setShowUpload(true)}/>

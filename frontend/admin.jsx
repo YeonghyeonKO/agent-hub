@@ -32,7 +32,7 @@ function PeopleHover({ id, name, initial, children, side = 'bottom' }) {
   );
 }
 
-function AdminDashboard({ onBack, userRole }) {
+function AdminDashboard({ onBack, userRole, onOpenComponent }) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = React.useState('pending');
   const [pendingList, setPendingList] = React.useState([]);
@@ -127,6 +127,11 @@ function AdminDashboard({ onBack, userRole }) {
               {activeSubId === s.id && (
                 <div style={{borderBottom: '1px solid var(--line)', background: 'var(--bg-muted)'}}>
                   <div style={{padding: '16px 20px'}}>
+                    <div style={{marginBottom: 14}}>
+                      <button className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); if (onOpenComponent) onOpenComponent({ id: s.id, type: s.type, title: s.title }); }}>
+                        <Icons.Eye size={12}/> 미리보기 (코드 · 다운로드)
+                      </button>
+                    </div>
                     <div style={{marginBottom: 16}}>
                       <ScoreSlider label="Functionality" value={scores.functionality} onChange={v => setScores(sc => ({...sc, functionality: v}))}/>
                       <ScoreSlider label="Originality" value={scores.originality} onChange={v => setScores(sc => ({...sc, originality: v}))}/>
