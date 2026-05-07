@@ -184,44 +184,7 @@ const CATEGORIES = [
 ];
 
 // Submissions for admin dashboard (some pending)
-const SUBMISSIONS = [
-  {
-    id: 'sub-1',
-    type: 'py', title: 'SmartChunker', author: '고영현', authorId: '2074795', authorInitial: '고',
-    version: 'v1.2.0',
-    minLF: '1.8.0', maxLF: '1.9.1',
-    submittedAgo: '2시간 전',
-    status: 'pending',
-    flagged: false,
-  },
-  {
-    id: 'sub-2',
-    type: 'json', title: '사내 위키 RAG', author: '김정호', authorId: '2074814', authorInitial: '김',
-    version: 'v1.0.0',
-    minLF: '1.9.0', maxLF: '1.9.1',
-    submittedAgo: '5시간 전',
-    status: 'pending',
-    flagged: false,
-  },
-  {
-    id: 'sub-3',
-    type: 'py', title: 'SAP Connector', author: '이창수', authorId: '2068420', authorInitial: '이',
-    version: 'v0.4.2',
-    minLF: '1.3.0', maxLF: null, legacy: true,
-    submittedAgo: '1일 전',
-    status: 'flagged',
-    flagged: true,
-  },
-  {
-    id: 'sub-4',
-    type: 'py', title: 'JiraTicketCreator', author: '박지원', authorId: '2074821', authorInitial: '박',
-    version: 'v1.0.0',
-    minLF: '1.9.0', maxLF: '1.9.1',
-    submittedAgo: '1일 전',
-    status: 'pending',
-    flagged: false,
-  },
-];
+const SUBMISSIONS = [];
 
 // helper
 function pythonHighlight(code) {
