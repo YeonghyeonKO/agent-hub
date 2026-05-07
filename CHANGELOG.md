@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.8.1 (2026-05-07)
+
+### Features
+- **Reviewer preview** — 심사대기 항목에 "미리보기 (코드 · 다운로드)" 버튼 추가, ComponentDetail/FlowDetail 오버레이로 전체 코드 검토 가능
+
+### Fixes
+- Admin 삭제 후 내 Component/Flow에서 '삭제됨' 탭 표시 + "다시 제출" 버튼
+- Admin 심사대기 dummy data fallback 제거
+- Admin Settings API 연동 (GET/PUT /admin/settings) + Save 버튼
+- Admin 사용자 관리: Team 열 제거, Name 넓힘
+- Admin 승인됨: version 열 제거
+- Admin 삭제 확인 "(복구 가능)" 문구 제거
+- Hamburger 메뉴 관리자 클릭 시 닫힘 수정
+- Loading indicator 추가 (랭킹, 관리자 탭)
+
+---
+
 ## v0.8.0 (2026-05-07)
 
 ### Features
