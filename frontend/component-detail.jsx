@@ -157,7 +157,7 @@ function ComponentDetail({ component, onBack }) {
 
       <div>
         {tab === 'readme' && <ReadmeContent c={c}/>}
-        {tab === 'code' && <CodePreview code={fileContent} filename={fileName || 'code.py'} onCopy={() => {
+        {tab === 'code' && <CodePreview code={fileContent} filename={fileName || 'code.py'} componentId={c.id} onCopy={() => {
           if (c.id && String(c.id).includes('-') && !starred) {
             api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
           }
@@ -215,17 +215,42 @@ function ReadmeContent({ c }) {
   );
 }
 
-function CodePreview({ code, filename, onCopy }) {
+function CodePreview({ code, filename, onCopy, componentId }) {
   const [copied, setCopied] = React.useState(false);
   const src = code || '';
+  const sizeBytes = new Blob([src]).size;
+  const sizeKB = (sizeBytes / 1024).toFixed(1);
+  const tooLarge = sizeBytes > 1024 * 1024; // 1MB
+
   const handleCopy = () => {
     navigator.clipboard?.writeText(src);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
     if (onCopy) onCopy();
   };
+
+  if (tooLarge) {
+    const dlUrl = (window.location.port === '3000' ? 'http://localhost:8000' : '') + '/api/v1/components/' + (componentId || '') + '/download-file';
+    return (
+      <div className="codeblock">
+        <div className="codeblock-header">
+          <div className="row gap-8">
+            <Icons.Code size={13}/>
+            <span style={{fontWeight: 600}}>{filename || 'code'}</span>
+            <span style={{color: '#6b7d6b'}}>· {sizeKB} KB</span>
+          </div>
+        </div>
+        <div style={{padding: 40, textAlign: 'center', color: 'var(--text-3)'}}>
+          <Icons.Download size={24} style={{marginBottom: 10, opacity: 0.4}}/>
+          <div style={{fontWeight: 500, marginBottom: 6}}>파일 크기가 1MB를 초과합니다</div>
+          <div style={{fontSize: 13, marginBottom: 14}}>미리보기 대신 직접 다운로드해 주세요.</div>
+          <a className="btn btn-accent btn-sm" href={dlUrl} target="_blank"><Icons.Download size={11}/> 다운로드 ({sizeKB} KB)</a>
+        </div>
+      </div>
+    );
+  }
+
   const lines = src.split('\n');
-  const sizeKB = (new Blob([src]).size / 1024).toFixed(1);
   return (
     <div className="codeblock">
       <div className="codeblock-header">

@@ -38,6 +38,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   const [components, setComponents] = React.useState([]);
   const [notices, setNotices] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [season, setSeason] = React.useState(null);
 
   const loadComponents = () => {
     setLoading(true);
@@ -55,9 +56,8 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
     return () => { window.removeEventListener('focus', onReload); window.removeEventListener('agenthub:reload', onReload); };
   }, [sortBy]);
   React.useEffect(() => {
-    api.notices.list()
-      .then(d => { if (d) setNotices(d); })
-      .catch(() => {});
+    api.notices.list().then(d => { if (d) setNotices(d); }).catch(() => {});
+    api.get('/admin/settings').then(d => { if (d) setSeason(d); }).catch(() => {});
   }, []);
 
   const filtered = components.filter(c => {
@@ -76,10 +76,11 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
       {/* Hero / season banner */}
       <div className="season-banner">
         <div>
-          <div className="season-eyebrow">{t('season_eyebrow')}</div>
+          <div className="season-eyebrow">{season?.name || t('season_eyebrow')}</div>
           <div className="season-title">{t('season_title')}</div>
           <div className="season-meta">
             <span><Icons.Users size={11}/> {components.length} Components / Flows</span>
+            {season?.submit_end && <span>· 제출 마감: {season.submit_end}</span>}
           </div>
         </div>
         <div className="season-cta row gap-8">

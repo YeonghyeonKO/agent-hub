@@ -217,9 +217,9 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
   if (flowData && flowData.nodes) {
     const cols = Math.ceil(Math.sqrt(flowData.nodes.length));
     layoutNodes = flowData.nodes.map((n, i) => ({
-      id: n.id || n.data?.id || String(i),
-      label: n.data?.type || n.type || n.id || 'Node',
-      sub: n.data?.node?.display_name || n.data?.display_name || '',
+      id: n.data?.id || n.id || String(i),
+      label: n.data?.node?.display_name || n.data?.display_name || n.data?.type || n.type || 'Node',
+      sub: n.data?.type || '',
       kind: 'process',
       x: (i % cols) * 170 + 30,
       y: Math.floor(i / cols) * 110 + 30,
@@ -231,10 +231,14 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
   const nodeMap = Object.fromEntries(layoutNodes.map(n => [n.id, n]));
   const NODE_W = 130, NODE_H = 50;
 
-  // Build renderable edges
+  // Build renderable edges — support Langflow edge format: data.sourceHandle.id → data.targetHandle.id
   let layoutEdges;
   if (flowData && flowData.edges) {
-    layoutEdges = flowData.edges.map(e => [e.source || e.from, e.target || e.to, false]).filter(([f, t]) => nodeMap[f] && nodeMap[t]);
+    layoutEdges = flowData.edges.map(e => {
+      const src = e.data?.sourceHandle?.id || e.source || e.from;
+      const tgt = e.data?.targetHandle?.id || e.target || e.to;
+      return [src, tgt, false];
+    }).filter(([f, t]) => nodeMap[f] && nodeMap[t]);
   } else {
     layoutEdges = FLOW_EDGES;
   }

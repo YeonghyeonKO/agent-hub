@@ -379,15 +379,26 @@ async def download_file(
     user: Annotated[User, Depends(get_current_user)],
 ):
     component = await db.get(Component, component_id)
-    if not component or not component.file_path:
-        raise HTTPException(status_code=404, detail="File not found")
-    if not os.path.exists(component.file_path):
-        raise HTTPException(status_code=404, detail="File not found on disk")
+    if not component:
+        raise HTTPException(status_code=404, detail="Component not found")
 
     download = Download(user_id=user.employee_id, component_id=component_id)
     db.add(download)
     await db.commit()
 
-    ext = os.path.splitext(component.file_path)[1]
+    ext = ".py" if component.type == "py" else ".json"
     filename = component.title.replace(" ", "_") + ext
-    return FileResponse(component.file_path, filename=filename)
+
+    # Try disk first
+    if component.file_path and os.path.exists(component.file_path):
+        return FileResponse(component.file_path, filename=filename)
+
+    # Fall back to DB content
+    if component.file_content:
+        return PlainTextResponse(
+            content=component.file_content,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    raise HTTPException(status_code=404, detail="File not found")
