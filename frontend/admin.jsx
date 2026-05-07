@@ -133,10 +133,10 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
                       </button>
                     </div>
                     <div style={{marginBottom: 16}}>
-                      <ScoreSlider label="Functionality" value={scores.functionality} onChange={v => setScores(sc => ({...sc, functionality: v}))}/>
-                      <ScoreSlider label="Originality" value={scores.originality} onChange={v => setScores(sc => ({...sc, originality: v}))}/>
-                      <ScoreSlider label="Utility" value={scores.internalUtility} onChange={v => setScores(sc => ({...sc, internalUtility: v}))}/>
-                      <ScoreSlider label="Documentation" value={scores.documentation} onChange={v => setScores(sc => ({...sc, documentation: v}))}/>
+                      <ScoreSlider label={t('score_functionality') || '기능성 / 완성도'} value={scores.functionality} onChange={v => setScores(sc => ({...sc, functionality: v}))}/>
+                      <ScoreSlider label={t('score_originality') || '독창성'} value={scores.originality} onChange={v => setScores(sc => ({...sc, originality: v}))}/>
+                      <ScoreSlider label={t('score_utility') || '사내 활용도'} value={scores.internalUtility} onChange={v => setScores(sc => ({...sc, internalUtility: v}))}/>
+                      <ScoreSlider label={t('score_documentation') || '문서화 품질'} value={scores.documentation} onChange={v => setScores(sc => ({...sc, documentation: v}))}/>
                     </div>
                     <div className="field" style={{marginBottom: 12}}>
                       <label className="field-label">Comment</label>
@@ -155,7 +155,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
         </div>
       )}
 
-      {activeTab !== 'pending' && <AdminTabPanel tab={activeTab}/>}
+      {activeTab !== 'pending' && <AdminTabPanel tab={activeTab} onOpenComponent={onOpenComponent}/>}
     </div>
   );
 }
@@ -180,15 +180,15 @@ const ISSUE_ROWS = [
   { id: 'iss-013', target: '사내 위키 RAG v2.1.0', kind: 'bug', severity: 'medium', reporter: '한지원', reporterId: '2074879', reportedAgo: '1일 전', summary: 'PDF 입력 시 한국어 표 셀이 잘림' },
 ];
 
-function AdminTabPanel({ tab }) {
-  if (tab === 'approved') return <ApprovedTab/>;
-  if (tab === 'rejected') return <RejectedTab/>;
+function AdminTabPanel({ tab, onOpenComponent }) {
+  if (tab === 'approved') return <ApprovedTab onOpenComponent={onOpenComponent}/>;
+  if (tab === 'rejected') return <RejectedTab onOpenComponent={onOpenComponent}/>;
   if (tab === 'users') return <UsersTab/>;
   if (tab === 'settings') return <SettingsTab/>;
   return null;
 }
 
-function ApprovedTab() {
+function ApprovedTab({ onOpenComponent }) {
   const { t } = useI18n();
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -215,7 +215,10 @@ function ApprovedTab() {
             <div>{r.stars_count ?? 0}</div>
             <div>{r.downloads_count ?? 0}</div>
             <div className="muted-sm">{fmtDate(r.created_at)}</div>
-            <div><button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/> {t('settings_remove')}</button></div>
+            <div className="row gap-8">
+              <button className="btn btn-ghost btn-sm" style={{fontSize: 11}} onClick={() => onOpenComponent && onOpenComponent({id: r.id, type: r.type, title: r.title})}><Icons.Eye size={10}/></button>
+              <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/></button>
+            </div>
           </div>
         ))}
         {loading && <LoadingIndicator/>}
@@ -225,7 +228,7 @@ function ApprovedTab() {
   );
 }
 
-function RejectedTab() {
+function RejectedTab({ onOpenComponent }) {
   const { t } = useI18n();
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -250,7 +253,10 @@ function RejectedTab() {
                 <span className="muted-sm">· {fmtDate(r.created_at)}</span>
               </div>
             </div>
-            <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/> {t('settings_remove')}</button>
+            <div className="row gap-8">
+              <button className="btn btn-ghost btn-sm" style={{fontSize: 11}} onClick={() => onOpenComponent && onOpenComponent({id: r.id, type: r.type, title: r.title})}><Icons.Eye size={10}/></button>
+              <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/></button>
+            </div>
           </div>
         ))}
         {loading && <LoadingIndicator/>}
@@ -339,12 +345,11 @@ function SettingsTab() {
   });
   const [criteria, setCriteria] = React.useState(DEFAULT_CRITERIA);
   const [draftLabel, setDraftLabel] = React.useState('');
-  const [reviewers, setReviewers] = React.useState(REVIEWERS);
-  const [draftReviewer, setDraftReviewer] = React.useState({ id: '', name: '' });
+  const [reviewers, setReviewers] = React.useState([]);
   const [saving, setSaving] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
 
-  // Load settings from API
+  // Load settings from API + reviewers from users
   React.useEffect(() => {
     api.admin.settings().then(d => {
       if (d) {
@@ -361,6 +366,13 @@ function SettingsTab() {
       }
       setLoaded(true);
     }).catch(() => setLoaded(true));
+    // Load reviewers from user list
+    api.admin.users().then(users => {
+      setReviewers((users || []).filter(u => u.role === 'reviewer' || u.role === 'admin').map(u => ({
+        id: u.employee_id, name: u.name, initial: (u.name || '?')[0], role: u.role,
+        avatarBg: 'var(--bg-muted)', avatarFg: 'var(--text-2)',
+      })));
+    }).catch(() => {});
   }, []);
 
   // Save to API
@@ -473,53 +485,17 @@ function SettingsTab() {
         <div className="muted-sm" style={{marginBottom: 14}}>{t('settings_reviewers_desc')}</div>
         <div className="reviewer-list">
           {reviewers.map(r => (
-            <div key={r.id} className="reviewer-row">
-              <PeopleHover id={r.id} name={r.name} initial={r.initial} side="top">
-                <span className="people-trigger reviewer-row-person">
-                  <div className="avatar sm" style={{background: r.avatarBg, color: r.avatarFg}}>{r.initial}</div>
-                  <div style={{minWidth: 0}}>
-                    <div className="reviewer-row-name">
-                      {r.name}
-                      {r.primary && <span className="chip chip-info" style={{fontSize: 10, marginLeft: 6}}>{t('settings_primary')}</span>}
-                    </div>
-                    <div className="muted-sm" style={{fontSize: 11}}>
-                      <span className="mono">({r.id})</span> · {r.role}
-                    </div>
-                  </div>
-                </span>
-              </PeopleHover>
+            <div key={r.id} className="reviewer-row" style={{padding: '8px 0'}}>
               <div className="row gap-8">
-                {!r.primary && (
-                  <button className="btn btn-sm btn-ghost" onClick={() => setPrimary(r.id)} title={t('settings_set_primary')}>
-                    <Icons.Star size={11}/>
-                  </button>
-                )}
-                <button className="btn btn-sm btn-ghost" onClick={() => removeReviewer(r.id)} title={t('settings_remove')} disabled={reviewers.length <= 1}>
-                  <Icons.X size={11}/>
-                </button>
+                <div className="avatar sm" style={{background: r.avatarBg, color: r.avatarFg}}>{r.initial}</div>
+                <div>
+                  <div style={{fontWeight: 600, fontSize: 13}}>{r.name}</div>
+                  <div className="muted-sm" style={{fontSize: 11}}><span className="mono">({r.id})</span> · {r.role === 'admin' ? t('role_admin') : t('role_reviewer')}</div>
+                </div>
               </div>
             </div>
           ))}
-        </div>
-        <div className="row gap-8" style={{marginTop: 12}}>
-          <input
-            className="input"
-            placeholder={t('settings_emp_id')}
-            value={draftReviewer.id}
-            onChange={e => setDraftReviewer(d => ({...d, id: e.target.value}))}
-            style={{width: 120, fontSize: 12.5, fontFamily: 'JetBrains Mono, monospace'}}
-          />
-          <input
-            className="input"
-            placeholder={t('settings_name')}
-            value={draftReviewer.name}
-            onChange={e => setDraftReviewer(d => ({...d, name: e.target.value}))}
-            style={{flex: 1, fontSize: 12.5}}
-            onKeyDown={e => { if (e.key === 'Enter') addReviewer(); }}
-          />
-          <button className="btn btn-secondary btn-sm" onClick={addReviewer}>
-            <Icons.Plus size={12}/> {t('settings_add')}
-          </button>
+          {reviewers.length === 0 && <div className="muted-sm" style={{padding: 12, textAlign: 'center'}}>사용자 관리 탭에서 심사위원을 지정해주세요.</div>}
         </div>
       </div>
 

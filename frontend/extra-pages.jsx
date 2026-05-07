@@ -25,7 +25,7 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
   }, []);
 
   const mine = myComponents.filter(c => c.status === 'approved' && !c.deleted_at).map(apiToCard);
-  const deleted = myComponents.filter(c => c.deleted_at).map(c => ({ ...c, desc: c.description || '', updatedAgo: fmtDate(c.created_at) }));
+  const deleted = myComponents.filter(c => c.deleted_at || c.status === 'rejected').map(c => ({ ...c, desc: c.description || '', updatedAgo: fmtDate(c.created_at), isRejected: c.status === 'rejected', isDeleted: !!c.deleted_at }));
   const drafts = myComponents.filter(c => (c.status === 'pending' || c.status === 'draft') && !c.deleted_at).map(c => ({
     ...c, desc: c.description || '', state: c.status === 'pending' ? 'review' : 'draft',
     updatedAgo: fmtDate(c.created_at),
@@ -153,7 +153,7 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
                 <span className={`chip chip-${d.type}`}>{d.type === 'py' ? '.py' : '.json'}</span>
                 <span style={{fontWeight: 600, fontSize: 15}}>{d.title}</span>
                 <span className="spacer"/>
-                <span className="chip chip-err" style={{fontSize: 11}}>삭제됨</span>
+                <span className="chip chip-err" style={{fontSize: 11}}>{d.isRejected ? '반려됨' : '삭제됨'}</span>
               </div>
               <div className="muted" style={{fontSize: 13, marginBottom: 10}}>{d.desc}</div>
               <div className="row gap-8">
