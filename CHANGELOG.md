@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.9.2 (2026-05-07)
+
+### Fixes
+- **Flow graph**: correct Langflow JSON parsing — unwrap `data:{}` wrapper, use `data.display_name`/`data.type` for nodes, `data.sourceHandle.id`→`data.targetHandle.id` for edges
+- **Download file**: DB fallback for serverless (Vercel /tmp ephemeral)
+- **Large files**: 1MB+ shows download prompt instead of code preview
+- **Home cards**: defensive null author handling
+- **Season banner**: fetches from Admin Settings API (season name + submit deadline)
+- **Upload modal**: confirm dialog on close when data exists (mistouch protection)
+- **Admin pending**: dummy data (SUBMISSIONS) completely removed
+
+---
+
 ## v0.9.0 (2026-05-07)
 
 ### Features
