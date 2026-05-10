@@ -82,7 +82,7 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
             <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}><Icons.Users size={10}/></div>
             <span style={{color: 'var(--text-2)', fontWeight: 500}}>{c.author.name}</span>
             <span className="breadcrumb-sep">·</span>
-            <span>{c.updatedAgo || fmtDate(c.created_at)} 등록</span>
+            <span>{fmtDate(c.created_at)} 등록</span>
           </div>
         </div>
         <div className="detail-actions">

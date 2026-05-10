@@ -134,8 +134,6 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
 
               <div className="row gap-8" style={{marginTop: 16}}>
                 <button className="btn btn-secondary btn-sm" onClick={() => onOpenComponent && onOpenComponent(apiToCard(d))}>{t('draft_preview')}</button>
-                <span className="spacer"/>
-                {d.state === 'review' && <span className="chip chip-warn" style={{fontSize: 11}}><Icons.Clock size={10}/> {t('draft_reviewing')}</span>}
               </div>
             </div>
           ))}

@@ -304,7 +304,7 @@ function StatisticsTab() {
       item.downloads_count,
       item.id,
       getUrl(item),
-      item.created_at ? item.created_at.slice(0, 10) : '',
+      item.created_at ? item.created_at.slice(0, 19).replace('T', ' ') : '',
     ]);
     const csv = [header, ...rows].map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
     const bom = '\uFEFF';
@@ -365,7 +365,7 @@ function StatisticsTab() {
                   <td style={{padding: '8px 12px'}}><span style={{color: statusColor, fontWeight: 600, fontSize: 11, textTransform: 'uppercase'}}>{statusLabel}</span></td>
                   <td style={{padding: '8px 12px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace'}}>{item.stars_count}</td>
                   <td style={{padding: '8px 12px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace'}}>{item.downloads_count}</td>
-                  <td style={{padding: '8px 12px', fontSize: 11, color: 'var(--text-3)'}}>{item.created_at ? item.created_at.slice(0, 10) : '-'}</td>
+                  <td style={{padding: '8px 12px', fontSize: 11, color: 'var(--text-3)', whiteSpace: 'nowrap'}}>{item.created_at ? item.created_at.slice(0, 16).replace('T', ' ') : '-'}</td>
                   <td style={{padding: '8px 12px', textAlign: 'center'}}>
                     <button className="btn btn-ghost btn-sm" style={{fontSize: 11}} onClick={() => { navigator.clipboard?.writeText(getUrl(item)); }}><Icons.Link size={10}/></button>
                   </td>
