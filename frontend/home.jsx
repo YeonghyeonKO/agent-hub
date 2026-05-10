@@ -35,29 +35,44 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   const { t } = useI18n();
 
   // Fetch from API only — DB is seeded with real data
+  const PAGE_SIZE = 20;
   const [components, setComponents] = React.useState([]);
   const [notices, setNotices] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [total, setTotal] = React.useState(0);
   const [season, setSeason] = React.useState(null);
 
-  const loadComponents = () => {
-    setLoading(true);
-    api.components.list({ sort: sortBy, search: query || undefined, limit: 50 })
+  const loadComponents = (append = false, searchOverride) => {
+    const searchQ = searchOverride !== undefined ? searchOverride : query;
+    const offset = append ? components.length : 0;
+    append ? setLoadingMore(true) : setLoading(true);
+    api.components.list({ sort: sortBy, search: searchQ || undefined, limit: PAGE_SIZE, offset })
       .then(d => {
         const items = (d.items || []).map(item => { try { return apiToCard(item); } catch(e) { console.error('apiToCard error:', e, item); return null; } }).filter(Boolean);
-        setComponents(items);
+        setComponents(prev => append ? [...prev, ...items] : items);
+        setTotal(d.total || 0);
         setLoading(false);
+        setLoadingMore(false);
       })
-      .catch(e => { console.error('Failed to load components:', e); setLoading(false); });
+      .catch(e => { console.error('Failed to load components:', e); setLoading(false); setLoadingMore(false); });
   };
 
   // Load on mount, sort change, and when page gets focus (e.g. after admin approval)
-  React.useEffect(loadComponents, [sortBy]);
+  React.useEffect(() => loadComponents(false), [sortBy]);
   React.useEffect(() => {
-    const onReload = () => loadComponents();
+    const onReload = () => loadComponents(false);
+    const onSearch = () => {
+      const q = window.__agenthub_search_query || '';
+      window.__agenthub_search_query = '';
+      setQuery(q);
+      loadComponents(false, q);
+    };
     window.addEventListener('focus', onReload);
     window.addEventListener('agenthub:reload', onReload);
-    return () => { window.removeEventListener('focus', onReload); window.removeEventListener('agenthub:reload', onReload); };
+    window.addEventListener('agenthub:search', onSearch);
+    if (window.__agenthub_search_query) { onSearch(); }
+    return () => { window.removeEventListener('focus', onReload); window.removeEventListener('agenthub:reload', onReload); window.removeEventListener('agenthub:search', onSearch); };
   }, [sortBy]);
   React.useEffect(() => {
     api.notices.list().then(d => { if (d) setNotices(d); }).catch(() => {});
@@ -135,7 +150,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
         <div className="spacer"/>
         <div className="nav-search" style={{width: 280, height: 32}}>
           <Icons.Search size={13}/>
-          <input placeholder={t('search_inline')} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') loadComponents(); }}/>
+          <input placeholder={t('search_inline')} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') loadComponents(false); }}/>
         </div>
       </div>
 
@@ -144,6 +159,14 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
       {!loading && (
         <div className="grid-3">
           {filtered.map(c => <ComponentCard key={c.id} c={c} onClick={() => onOpenComponent(c)} />)}
+        </div>
+      )}
+
+      {!loading && components.length < total && (
+        <div style={{textAlign: 'center', marginTop: 20}}>
+          <button className="btn btn-secondary" onClick={() => loadComponents(true)} disabled={loadingMore} style={{opacity: loadingMore ? 0.5 : 1}}>
+            {loadingMore ? 'Loading...' : t('load_more') || 'Load More'} ({components.length} / {total})
+          </button>
         </div>
       )}
 

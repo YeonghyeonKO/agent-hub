@@ -124,9 +124,9 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
                 <span className="mono muted-sm">{d.version}</span>
                 <span className="spacer"/>
                 {d.state === 'review' ? (
-                  <span className="chip chip-warn"><Icons.Clock size={10}/> 심사 중</span>
+                  <span className="chip chip-warn"><Icons.Clock size={10}/> {t('draft_reviewing')}</span>
                 ) : (
-                  <span className="chip chip-neutral">초안</span>
+                  <span className="chip chip-neutral">{t('draft_draft')}</span>
                 )}
                 <span className="muted-sm">· {d.updatedAgo}</span>
               </div>
@@ -145,7 +145,7 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
       {tab === 'deleted' && (
         <div className="col" style={{gap: 12}}>
           <div className="card card-pad" style={{padding: '12px 16px', background: 'var(--warn-bg)', border: '1px solid var(--warn)', fontSize: 13, color: 'var(--warn-fg)'}}>
-            관리자에 의해 삭제된 항목입니다. 수정 후 다시 제출하면 심사를 받을 수 있습니다.
+            {t('deleted_notice')}
           </div>
           {deleted.map(d => (
             <div key={d.id} className="draft-card" style={{opacity: 0.75}}>
@@ -153,11 +153,11 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
                 <span className={`chip chip-${d.type}`}>{d.type === 'py' ? '.py' : '.json'}</span>
                 <span style={{fontWeight: 600, fontSize: 15}}>{d.title}</span>
                 <span className="spacer"/>
-                <span className="chip chip-err" style={{fontSize: 11}}>{d.isRejected ? '반려됨' : '삭제됨'}</span>
+                <span className="chip chip-err" style={{fontSize: 11}}>{d.isRejected ? t('status_rejected') : t('status_deleted')}</span>
               </div>
               <div className="muted" style={{fontSize: 13, marginBottom: 10}}>{d.desc}</div>
               <div className="row gap-8">
-                <button className="btn btn-accent btn-sm" onClick={onOpenUpload}><Icons.Upload size={11}/> 다시 제출</button>
+                <button className="btn btn-accent btn-sm" onClick={() => onOpenUpload && onOpenUpload(d)}><Icons.Upload size={11}/> {t('btn_resubmit')}</button>
               </div>
             </div>
           ))}

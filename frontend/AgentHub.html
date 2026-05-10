@@ -86,6 +86,7 @@ function getDetailFromHash() {
 function App() {
   const [route, setRoute] = React.useState(getRouteFromHash());
   const [showUpload, setShowUpload] = React.useState(false);
+  const [uploadPrefill, setUploadPrefill] = React.useState(null);
   const [detailModal, setDetailModal] = React.useState(null);
 
   // Open detail from URL on load (e.g. #/component/{uuid})
@@ -193,6 +194,7 @@ function App() {
   const goGuide = () => setRoute({ name: 'guide' });
   const goNotice = (noticeId) => setRoute({ name: 'notice', noticeId: (noticeId && typeof noticeId === 'string') ? noticeId : undefined });
   const goVoc = () => setRoute({ name: 'voc' });
+  const handleSearch = (q) => { window.__agenthub_search_query = q; setRoute({ name: 'home' }); window.dispatchEvent(new Event('agenthub:search')); };
 
   return (
     <div data-screen-label={`AgentHub · ${route.name}`}>
@@ -207,6 +209,7 @@ function App() {
         onGoVoc={goVoc}
         onOpenUpload={() => setShowUpload(true)}
         onToggleLang={toggleLang}
+        onSearch={handleSearch}
         lang={lang}
         role={userRole}
         userName={userName}
@@ -224,7 +227,7 @@ function App() {
         <AdminDashboard onBack={goHome} userRole={userRole} onOpenComponent={openComponent}/>
       )}
       {route.name === 'mine' && (
-        <MyAssetsPage onOpenComponent={openComponent} onOpenUpload={() => setShowUpload(true)}/>
+        <MyAssetsPage onOpenComponent={openComponent} onOpenUpload={(prefill) => { setUploadPrefill(prefill || null); setShowUpload(true); }}/>
       )}
       {route.name === 'ranking' && (
         <RankingPage onOpenComponent={openComponent}/>
@@ -240,7 +243,7 @@ function App() {
       )}
 
       {detailModal && <DetailOverlay detail={detailModal} onClose={closeDetail} onOpenComponent={openComponent}/>}
-      {showUpload && <UploadModal onClose={() => setShowUpload(false)}/>}
+      {showUpload && <UploadModal onClose={() => { setShowUpload(false); setUploadPrefill(null); }} prefill={uploadPrefill}/>}
 
       <footer className="page-footer">
         <div className="page-footer-inner">
@@ -264,10 +267,12 @@ function App() {
   );
 }
 
-function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, onToggleLang, lang, role, userName }) {
+function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, onToggleLang, onSearch, lang, role, userName }) {
   const { t } = useI18n();
   const [mobileMenu, setMobileMenu] = React.useState(false);
+  const [searchVal, setSearchVal] = React.useState('');
   const navClick = (fn) => { fn(); setMobileMenu(false); };
+  const handleSearch = () => { if (searchVal.trim() && onSearch) { onSearch(searchVal.trim()); setSearchVal(''); } };
   return (
     <div className="topbar">
       <button className="hamburger-btn" onClick={() => setMobileMenu(!mobileMenu)}>
@@ -290,7 +295,7 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
       <div className="nav-spacer"/>
       <div className="nav-search">
         <Icons.Search size={13}/>
-        <input placeholder={t('search_placeholder')}/>
+        <input placeholder={t('search_placeholder')} value={searchVal} onChange={e => setSearchVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}/>
       </div>
       <button className="btn btn-secondary btn-sm topbar-submit" onClick={onOpenUpload}>
         <Icons.Plus size={12}/> <span className="topbar-submit-label">{t('btn_submit')}</span>
@@ -299,7 +304,7 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
         {lang === 'en' ? '🇺🇸' : '🇰🇷'}
       </button>
       <div className="topbar-right">
-        <button className="mobile-search-btn" onClick={() => { const q = prompt(t('search_placeholder')); if (q) { window.__agenthub_search = q; window.dispatchEvent(new Event('agenthub:search')); } }}>
+        <button className="mobile-search-btn" onClick={() => { const q = prompt(t('search_placeholder')); if (q && onSearch) onSearch(q); }}>
           <Icons.Search size={16}/>
         </button>
         <div className="user-chip" style={{cursor: 'pointer'}} onClick={() => { if (confirm('로그아웃 하시겠습니까?')) auth.logout(); }} title={userName || 'User'}>

@@ -17,6 +17,7 @@ const I18N = {
     search_inline: '이름·설명 검색…',
     empty_title: '검색 결과가 없습니다',
     empty_desc: '다른 키워드로 시도해보거나, 직접 만들어 제출해보세요.',
+    load_more: '더 보기',
     pinned_label: '공지',
     type_component: 'Component', type_flow: 'Flow',
     chip_standard: '표준', chip_incompat: '호환 주의',
@@ -46,6 +47,8 @@ const I18N = {
     col_download: '다운로드', col_update: '업데이트',
     draft_reviewing: '심사 중', draft_draft: '초안', draft_continue: '이어서 작성',
     draft_preview: '미리보기', draft_cancel_submit: '제출 취소',
+    deleted_notice: '관리자에 의해 반려/삭제된 항목입니다. 수정 후 다시 제출하면 심사를 받을 수 있습니다.',
+    status_rejected: '반려됨', status_deleted: '삭제됨', btn_resubmit: '다시 제출',
     draft_validation: '자동 검증', draft_passed: '통과',
 
     // Ranking
@@ -120,7 +123,7 @@ const I18N = {
 
     // Admin
     admin_pending: '심사 대기', admin_approved: '승인됨', admin_rejected: '반려됨',
-    admin_users: '사용자 관리', admin_settings: '설정',
+    admin_users: '사용자 관리', admin_settings: '설정', admin_statistics: '통계',
     admin_dashboard: '관리자 대시보드', admin_home: '홈', admin_delete_confirm: '정말 삭제하시겠습니까?',
     score_functionality: '기능성 / 완성도', score_originality: '독창성', score_utility: '사내 활용도', score_documentation: '문서화 품질',
     admin_no_users: '등록된 사용자가 없습니다. Keycloak SSO로 로그인하면 자동 등록됩니다.',
@@ -162,6 +165,7 @@ const I18N = {
     search_inline: 'Search name / description…',
     empty_title: 'No results found',
     empty_desc: 'Try different keywords, or create and submit your own.',
+    load_more: 'Load More',
     pinned_label: 'Notice',
     type_component: 'Component', type_flow: 'Flow',
     chip_standard: 'Standard', chip_incompat: 'Compat. Warning',
@@ -191,6 +195,8 @@ const I18N = {
     col_download: 'Downloads', col_update: 'Updated',
     draft_reviewing: 'In Review', draft_draft: 'Draft', draft_continue: 'Continue',
     draft_preview: 'Preview', draft_cancel_submit: 'Cancel Submission',
+    deleted_notice: 'These items were rejected or deleted by admin. You can edit and resubmit for review.',
+    status_rejected: 'Rejected', status_deleted: 'Deleted', btn_resubmit: 'Resubmit',
     draft_validation: 'Auto Validation', draft_passed: 'passed',
 
     // Ranking
@@ -265,7 +271,7 @@ const I18N = {
 
     // Admin
     admin_pending: 'Pending', admin_approved: 'Approved', admin_rejected: 'Rejected',
-    admin_users: 'User Management', admin_settings: 'Settings',
+    admin_users: 'User Management', admin_settings: 'Settings', admin_statistics: 'Statistics',
     admin_dashboard: 'Admin Dashboard', admin_home: 'Home', admin_delete_confirm: 'Delete this item?',
     score_functionality: 'Functionality', score_originality: 'Originality', score_utility: 'Internal Utility', score_documentation: 'Documentation',
     admin_no_users: 'No users registered. Users are auto-registered upon Keycloak SSO login.',

@@ -1,25 +1,26 @@
 // Upload modal — multi-step submission (wired to API)
 
-function UploadModal({ onClose }) {
+function UploadModal({ onClose, prefill }) {
   const { t } = useI18n();
+  const pf = prefill || {};
   const [step, setStep] = React.useState(0);
   const [realFile, setRealFile] = React.useState(null);
   const [drag, setDrag] = React.useState(false);
-  const [fileType, setFileType] = React.useState('py');
-  const [title, setTitle] = React.useState('');
-  const [desc, setDesc] = React.useState('');
-  const [category, setCategory] = React.useState('RAG / Search');
-  const [icon, setIcon] = React.useState('Box');
+  const [fileType, setFileType] = React.useState(pf.type || 'py');
+  const [title, setTitle] = React.useState(pf.title || '');
+  const [desc, setDesc] = React.useState(pf.description || pf.desc || '');
+  const [category, setCategory] = React.useState(pf.category || 'RAG / Search');
+  const [icon, setIcon] = React.useState(pf.icon || 'Box');
   const [tags, setTags] = React.useState([]);
   const [tagInput, setTagInput] = React.useState('');
-  const [minVer, setMinVer] = React.useState('1.8.0');
-  const [maxVer, setMaxVer] = React.useState('1.9.1');
-  const [tested, setTested] = React.useState(['1.9.1', '1.9.0']);
+  const [minVer, setMinVer] = React.useState(pf.min_langflow_ver || '1.8.0');
+  const [maxVer, setMaxVer] = React.useState(pf.max_langflow_ver || '1.9.1');
+  const [tested, setTested] = React.useState(pf.tested_versions || ['1.9.1', '1.9.0']);
   const [deps, setDeps] = React.useState('');
   const COMPONENT_TEMPLATE = "## 개요\n\n이 Component가 무엇을 하는지 간단히 설명하세요.\n\n## 사용법\n\n1. components/custom/ 디렉토리에 파일 배치\n2. 의존성 설치: pip install ...\n3. Langflow 재시작\n\n## 입력 / 출력\n\n| 이름 | 타입 | 설명 |\n|------|------|------|\n| input_name | str | 입력 설명 |\n| output_name | str | 출력 설명 |\n\n## 참고\n\n- 추가 의존성, 주의사항 등\n";
   const FLOW_TEMPLATE = "## 개요\n\n이 Flow가 어떤 워크플로우를 수행하는지 설명하세요.\n\n## 구성 노드\n\n1. 입력 노드: ...\n2. 처리 노드: ...\n3. 출력 노드: ...\n\n## 사용법\n\n1. JSON 파일을 Langflow에 Import\n2. 필요한 API Key / 환경변수 설정\n3. Flow 실행\n\n## 참고\n\n- 필요한 외부 서비스, 주의사항 등\n";
   const getTemplate = (type) => type === 'json' ? FLOW_TEMPLATE : COMPONENT_TEMPLATE;
-  const [readme, setReadme] = React.useState(getTemplate(fileType));
+  const [readme, setReadme] = React.useState(pf.readme || getTemplate(fileType));
   const [readmeMode, setReadmeMode] = React.useState('write');
   const readmeRef = React.useRef(null);
 
@@ -44,6 +45,20 @@ function UploadModal({ onClose }) {
   // User info from API
   const [user, setUser] = React.useState(null);
   React.useEffect(() => { api.users.me().then(setUser).catch(() => {}); }, []);
+
+  // Pre-fill: fetch the original file as a File object so user can resubmit
+  React.useEffect(() => {
+    if (pf.id && String(pf.id).includes('-') && !realFile) {
+      api.components.file(pf.id).then(d => {
+        const ext = pf.type === 'json' ? '.json' : '.py';
+        const mime = pf.type === 'json' ? 'application/json' : 'text/x-python';
+        const blob = new Blob([d.content], { type: mime });
+        const file = new File([blob], (d.filename || pf.title + ext), { type: mime });
+        setRealFile(file);
+        setStep(1); // skip file drop step
+      }).catch(() => {});
+    }
+  }, []);
 
   const validateFile = (file) => {
     const checks = [];

@@ -212,6 +212,38 @@ async def update_user_role(
     return UserResponse.model_validate(user)
 
 
+@router.get("/statistics")
+async def get_statistics(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[User, Depends(require_admin)],
+):
+    """Return all components with their stats for the statistics table."""
+    result = await db.execute(
+        select(Component)
+        .options(selectinload(Component.author))
+        .order_by(Component.created_at.desc())
+    )
+    components = result.scalars().all()
+    items = []
+    for c in components:
+        sc = (await db.execute(select(func.count()).where(Star.component_id == c.id))).scalar() or 0
+        dc = (await db.execute(select(func.count()).where(Download.component_id == c.id))).scalar() or 0
+        items.append({
+            "id": str(c.id),
+            "title": c.title,
+            "type": c.type,
+            "status": c.status,
+            "version": c.version,
+            "author_id": c.author.employee_id if c.author else "",
+            "author_name": c.author.name if c.author else "",
+            "stars_count": sc,
+            "downloads_count": dc,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+            "deleted_at": c.deleted_at.isoformat() if c.deleted_at else None,
+        })
+    return items
+
+
 @router.get("/settings", response_model=SeasonSettings | None)
 async def get_settings(
     db: Annotated[AsyncSession, Depends(get_db)],

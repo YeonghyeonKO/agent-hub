@@ -102,7 +102,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
           ['pending', t('admin_pending'), pendingList.length],
           ['approved', t('admin_approved'), null],
           ['rejected', t('admin_rejected'), null],
-          ...(userRole === 'admin' ? [['users', t('admin_users'), null], ['settings', t('admin_settings'), null]] : []),
+          ...(userRole === 'admin' ? [['statistics', t('admin_statistics') || 'Statistics', null], ['users', t('admin_users'), null], ['settings', t('admin_settings'), null]] : []),
         ].map(([id, label, count]) => (
           <button key={id} className={`tab ${activeTab===id?'active':''}`} onClick={() => setActiveTab(id)}>
             {label} {count != null && count > 0 && <span className="tab-count">{count}</span>}
@@ -183,6 +183,7 @@ const ISSUE_ROWS = [
 function AdminTabPanel({ tab, onOpenComponent }) {
   if (tab === 'approved') return <ApprovedTab onOpenComponent={onOpenComponent}/>;
   if (tab === 'rejected') return <RejectedTab onOpenComponent={onOpenComponent}/>;
+  if (tab === 'statistics') return <StatisticsTab/>;
   if (tab === 'users') return <UsersTab/>;
   if (tab === 'settings') return <SettingsTab/>;
   return null;
@@ -262,6 +263,120 @@ function RejectedTab({ onOpenComponent }) {
         {loading && <LoadingIndicator/>}
         {!loading && items.length === 0 && <div className="empty-state" style={{padding: 30}}>No rejected items</div>}
       </div>
+    </div>
+  );
+}
+
+function StatisticsTab() {
+  const { t } = useI18n();
+  const [items, setItems] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [filterAuthor, setFilterAuthor] = React.useState('');
+  const [filterStatus, setFilterStatus] = React.useState('all');
+
+  React.useEffect(() => {
+    api.admin.statistics().then(d => { setItems(d || []); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
+
+  const filtered = items.filter(item => {
+    if (filterAuthor && !item.author_id.includes(filterAuthor) && !(item.author_name || '').toLowerCase().includes(filterAuthor.toLowerCase())) return false;
+    if (filterStatus !== 'all') {
+      if (filterStatus === 'deleted') return !!item.deleted_at;
+      return item.status === filterStatus && !item.deleted_at;
+    }
+    return true;
+  });
+
+  const getUrl = (item) => {
+    const type = item.type === 'json' ? 'flow' : 'component';
+    return window.location.origin + window.location.pathname + '#/' + type + '/' + item.id;
+  };
+
+  const downloadCsv = () => {
+    const header = ['author_id', 'author_name', 'title', 'type', 'status', 'stars', 'downloads', 'id', 'url', 'created_at'];
+    const rows = filtered.map(item => [
+      item.author_id,
+      item.author_name,
+      item.title,
+      item.type === 'py' ? 'component' : 'flow',
+      item.deleted_at ? 'deleted' : item.status,
+      item.stars_count,
+      item.downloads_count,
+      item.id,
+      getUrl(item),
+      item.created_at ? item.created_at.slice(0, 10) : '',
+    ]);
+    const csv = [header, ...rows].map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'agenthub-statistics-' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+      <div className="admin-panel-head" style={{flexWrap: 'wrap', gap: 10}}>
+        <div>
+          <div className="h3"><Icons.BarChart size={14} style={{marginRight: 6}}/>Statistics</div>
+          <div className="muted-sm">{filtered.length} / {items.length} items</div>
+        </div>
+        <div className="row gap-8" style={{flexWrap: 'wrap'}}>
+          <input className="input" placeholder="Author ID or name" value={filterAuthor} onChange={e => setFilterAuthor(e.target.value)} style={{width: 160, height: 30, fontSize: 12}}/>
+          <select className="select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{height: 30, fontSize: 12}}>
+            <option value="all">All Status</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Pending</option>
+            <option value="rejected">Rejected</option>
+            <option value="deleted">Deleted</option>
+          </select>
+          <button className="btn btn-accent btn-sm" onClick={downloadCsv}><Icons.Download size={11}/> CSV</button>
+        </div>
+      </div>
+      <div style={{overflowX: 'auto'}}>
+        <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 12.5}}>
+          <thead>
+            <tr style={{background: 'var(--bg-elev)', borderBottom: '1px solid var(--line)'}}>
+              <th style={{padding: '10px 12px', textAlign: 'left', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-3)'}}>Author</th>
+              <th style={{padding: '10px 12px', textAlign: 'left', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-3)'}}>Title</th>
+              <th style={{padding: '10px 12px', textAlign: 'left', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-3)'}}>Type</th>
+              <th style={{padding: '10px 12px', textAlign: 'left', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-3)'}}>Status</th>
+              <th style={{padding: '10px 12px', textAlign: 'right', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-3)'}}>Stars</th>
+              <th style={{padding: '10px 12px', textAlign: 'right', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-3)'}}>Downloads</th>
+              <th style={{padding: '10px 12px', textAlign: 'left', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-3)'}}>Date</th>
+              <th style={{padding: '10px 12px', textAlign: 'center', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-3)'}}>Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(item => {
+              const statusColor = item.deleted_at ? 'var(--text-4)' : item.status === 'approved' ? 'var(--ok-fg)' : item.status === 'rejected' ? 'var(--err-fg)' : 'var(--warn-fg)';
+              const statusLabel = item.deleted_at ? 'deleted' : item.status;
+              return (
+                <tr key={item.id} style={{borderBottom: '1px solid var(--line)'}}>
+                  <td style={{padding: '8px 12px', whiteSpace: 'nowrap'}}>
+                    <span className="mono" style={{fontSize: 11, color: 'var(--text-3)'}}>{item.author_id}</span>
+                    <span style={{marginLeft: 6}}>{item.author_name}</span>
+                  </td>
+                  <td style={{padding: '8px 12px', fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{item.title}</td>
+                  <td style={{padding: '8px 12px'}}><span className={`chip chip-${item.type}`}>{item.type === 'py' ? '.py' : '.json'}</span></td>
+                  <td style={{padding: '8px 12px'}}><span style={{color: statusColor, fontWeight: 600, fontSize: 11, textTransform: 'uppercase'}}>{statusLabel}</span></td>
+                  <td style={{padding: '8px 12px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace'}}>{item.stars_count}</td>
+                  <td style={{padding: '8px 12px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace'}}>{item.downloads_count}</td>
+                  <td style={{padding: '8px 12px', fontSize: 11, color: 'var(--text-3)'}}>{item.created_at ? item.created_at.slice(0, 10) : '-'}</td>
+                  <td style={{padding: '8px 12px', textAlign: 'center'}}>
+                    <button className="btn btn-ghost btn-sm" style={{fontSize: 11}} onClick={() => { navigator.clipboard?.writeText(getUrl(item)); }}><Icons.Link size={10}/></button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {loading && <LoadingIndicator/>}
+      {!loading && filtered.length === 0 && <div className="empty-state" style={{padding: 30}}>No items found</div>}
     </div>
   );
 }

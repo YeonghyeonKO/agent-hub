@@ -28,14 +28,26 @@ const MOCK_VOC = [
 
 // ─── Notice Board ───────────────────────────────────────────────────
 function NoticePage({ initialNoticeId }) {
+  const NOTICE_LIMIT = 20;
   const { t } = useI18n();
   const [notices, setNotices] = React.useState([]);
   const [selected, setSelected] = React.useState(initialNoticeId || null);
   const [showForm, setShowForm] = React.useState(false);
+  const [hasMore, setHasMore] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
 
   // Fetch from API
-  const loadNotices = () => { api.notices.list().then(d => { if (d && d.length > 0) setNotices(d); }).catch(() => {}); };
-  React.useEffect(loadNotices, []);
+  const loadNotices = (append = false) => {
+    const offset = append ? notices.length : 0;
+    append ? setLoadingMore(true) : null;
+    api.notices.list({ limit: NOTICE_LIMIT, offset }).then(d => {
+      const items = d || [];
+      if (append) { setNotices(prev => [...prev, ...items]); } else { setNotices(items); }
+      setHasMore(items.length >= NOTICE_LIMIT);
+      setLoadingMore(false);
+    }).catch(() => { setLoadingMore(false); });
+  };
+  React.useEffect(() => loadNotices(false), []);
 
   const [formTitle, setFormTitle] = React.useState('');
   const [formContent, setFormContent] = React.useState('');
@@ -149,6 +161,13 @@ function NoticePage({ initialNoticeId }) {
               <Icons.ChevronRight size={14} style={{color: 'var(--text-4)'}}/>
             </div>
           ))}
+          {hasMore && (
+            <div style={{textAlign: 'center', padding: '16px 0'}}>
+              <button className="btn btn-secondary btn-sm" onClick={() => loadNotices(true)} disabled={loadingMore} style={{opacity: loadingMore ? 0.5 : 1}}>
+                {loadingMore ? 'Loading...' : t('load_more') || 'Load More'}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div>
@@ -185,14 +204,26 @@ function NoticePage({ initialNoticeId }) {
 
 // ─── VoC Board ──────────────────────────────────────────────────────
 function VocPage() {
+  const VOC_LIMIT = 20;
   const { t } = useI18n();
   const [filter, setFilter] = React.useState('all');
   const [sort, setSort] = React.useState('popular');
   const [selected, setSelected] = React.useState(null);
   const [showForm, setShowForm] = React.useState(false);
   const [posts, setPosts] = React.useState([]);
-  const loadVoc = () => { api.voc.list({ sort: sort === 'popular' ? 'popular' : 'newest' }).then(d => { if (d && d.length > 0) setPosts(d); }).catch(() => {}); };
-  React.useEffect(loadVoc, []);
+  const [hasMore, setHasMore] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const loadVoc = (append = false) => {
+    const offset = append ? posts.length : 0;
+    append ? setLoadingMore(true) : null;
+    api.voc.list({ sort: sort === 'popular' ? 'popular' : 'newest', limit: VOC_LIMIT, offset }).then(d => {
+      const items = d || [];
+      if (append) { setPosts(prev => [...prev, ...items]); } else { setPosts(items); }
+      setHasMore(items.length >= VOC_LIMIT);
+      setLoadingMore(false);
+    }).catch(() => { setLoadingMore(false); });
+  };
+  React.useEffect(() => loadVoc(false), []);
 
   const [formCat, setFormCat] = React.useState('suggestion');
   const [formTitle, setFormTitle] = React.useState('');
@@ -383,6 +414,13 @@ function VocPage() {
           </div>
         ))}
       </div>
+      {hasMore && (
+        <div style={{textAlign: 'center', marginTop: 16}}>
+          <button className="btn btn-secondary btn-sm" onClick={() => loadVoc(true)} disabled={loadingMore} style={{opacity: loadingMore ? 0.5 : 1}}>
+            {loadingMore ? 'Loading...' : t('load_more') || 'Load More'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

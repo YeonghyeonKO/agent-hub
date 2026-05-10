@@ -62,7 +62,8 @@ const api = {
   // Convenience
   components: {
     list: (params = {}) => {
-      const q = new URLSearchParams(params).toString();
+      const filtered = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+      const q = new URLSearchParams(filtered).toString();
       return api.get('/components' + (q ? '?' + q : ''));
     },
     get: (id) => api.get(`/components/${id}`),
@@ -75,12 +76,17 @@ const api = {
   },
   rankings: {
     list: (params = {}) => {
-      const q = new URLSearchParams(params).toString();
+      const filtered = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+      const q = new URLSearchParams(filtered).toString();
       return api.get('/rankings' + (q ? '?' + q : ''));
     },
   },
   notices: {
-    list: () => api.get('/notices'),
+    list: (params = {}) => {
+      const filtered = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+      const q = new URLSearchParams(filtered).toString();
+      return api.get('/notices' + (q ? '?' + q : ''));
+    },
     get: (id) => api.get(`/notices/${id}`),
     create: (body) => api.post('/notices', body),
     update: (id, body) => api.put(`/notices/${id}`, body),
@@ -88,7 +94,8 @@ const api = {
   },
   voc: {
     list: (params = {}) => {
-      const q = new URLSearchParams(params).toString();
+      const filtered = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+      const q = new URLSearchParams(filtered).toString();
       return api.get('/voc' + (q ? '?' + q : ''));
     },
     get: (id) => api.get(`/voc/${id}`),
@@ -112,6 +119,7 @@ const api = {
     users: () => api.get('/admin/users'),
     updateRole: (empId, role) => api.patch(`/admin/users/${empId}/role`, { role }),
     deleteComponent: (id) => api.del(`/admin/components/${id}`),
+    statistics: () => api.get('/admin/statistics'),
   },
 };
 

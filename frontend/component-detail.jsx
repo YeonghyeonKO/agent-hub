@@ -42,7 +42,7 @@ function ComponentDetail({ component, onBack }) {
   const [starCount, setStarCount] = React.useState(c.stars_count ?? c.stars ?? 0);
   const [starred, setStarred] = React.useState(false);
   const [showUpdate, setShowUpdate] = React.useState(false);
-  const [copyToast, setCopyToast] = React.useState(false);
+  const [copyToast, setCopyToast] = React.useState('');
   const [versionHistory, setVersionHistory] = React.useState([]);
 
   // Fetch full component data (including readme) and check star status
@@ -104,7 +104,7 @@ function ComponentDetail({ component, onBack }) {
             if (c.id && String(c.id).includes('-') && !starred) {
               api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
             }
-            setCopyToast(true); setTimeout(() => setCopyToast(false), 3000);
+            setCopyToast('코드를 복사했어요! 개발자에게 star도 같이 전달할게요 ⭐️'); setTimeout(() => setCopyToast(''), 3000);
           }}><Icons.Copy size={13}/> 코드 복사</button>
           <button className="btn btn-primary" onClick={() => {
             if (c.id && String(c.id).includes('-')) {
@@ -123,13 +123,19 @@ function ComponentDetail({ component, onBack }) {
               URL.revokeObjectURL(url);
             }
           }}><Icons.Download size={13}/> 다운로드</button>
+          <button className="btn btn-secondary" onClick={() => {
+            const type = c.type === 'json' ? 'flow' : 'component';
+            const url = window.location.origin + window.location.pathname + '#/' + type + '/' + c.id;
+            navigator.clipboard?.writeText(url);
+            setCopyToast('링크를 복사했어요!'); setTimeout(() => setCopyToast(''), 2000);
+          }}><Icons.Link size={13}/> 링크 복사</button>
           <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> 업데이트</button>
         </div>
       </div>
 
       {copyToast && (
         <div className="copy-toast">
-          코드를 복사했어요! 개발자에게 star도 같이 전달할게요 ⭐️
+          {copyToast}
         </div>
       )}
 
@@ -168,7 +174,7 @@ function ComponentDetail({ component, onBack }) {
           if (c.id && String(c.id).includes('-') && !starred) {
             api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
           }
-          setCopyToast(true); setTimeout(() => setCopyToast(false), 3000);
+          setCopyToast('코드를 복사했어요! 개발자에게 star도 같이 전달할게요 ⭐️'); setTimeout(() => setCopyToast(''), 3000);
         }}/>}
         {tab === 'versions' && (
           <div className="card" style={{padding: 0, overflow: 'hidden'}}>
