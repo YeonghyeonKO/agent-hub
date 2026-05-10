@@ -15,7 +15,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AgentHub API",
     description="Internal Langflow Component & Flow Registry",
-    version="0.9.3",
+    version="0.9.4",
     lifespan=lifespan,
 )
 

@@ -95,10 +95,10 @@ agent-hub/
 | **Flow 상세** | `#/flow/{uuid}` | 인터랙티브 노드 그래프 + JSON 뷰 (slide-over) |
 | **업로드** | modal | 3-step wizard (파일 검증 → 기준 정보 → 호환성), 개요/사용법 에디터, 이미지 붙여넣기 |
 | **2026 랭킹** | `#/ranking` | Component / Flow 부문 2-column 분리 |
-| **내 Component / Flow** | `#/mine` | 게시됨 · 초안/심사 중 · 활동 피드 |
+| **내 Component / Flow** | `#/mine` | 게시됨 · 초안/심사 중 · 반려/삭제 (다시 제출) |
 | **공지사항** | `#/notice` | 공지 CRUD (관리자), markdown, 핀 고정 |
 | **VoC 게시판** | `#/voc` | 제안·버그·질문, upvote, 댓글, markdown |
-| **관리자 대시보드** | `#/admin` | 심사 대기 · 승인/반려 · 이슈 · 설정 |
+| **관리자 대시보드** | `#/admin` | 심사 대기 · 승인/반려 · 통계 · 사용자 관리 · 설정 |
 | **가이드** | `#/guide` | 빠른 시작 · 네이밍 · 표준 인증 · 심사 · FAQ |
 
 ---
@@ -191,7 +191,12 @@ kubectl exec -it deploy/agent-hub-backend -n agent-hub -- alembic upgrade head
 | `GET` | `/api/v1/admin/approved` | admin | 승인 목록 |
 | `GET` | `/api/v1/admin/rejected` | admin | 반려 목록 |
 | `POST` | `/api/v1/admin/review/{id}` | admin | 심사 제출 (승인/반려) |
+| `GET` | `/api/v1/admin/statistics` | admin | 전체 통계 (CSV 다운로드용) |
 | `GET/PUT` | `/api/v1/admin/settings` | admin | 시즌 설정 |
+| `PATCH` | `/api/v1/components/{id}` | user | Component/Flow 업데이트 (버전 bump) |
+| `GET` | `/api/v1/components/{id}/versions` | - | 버전 이력 |
+| `GET` | `/api/v1/components/{id}/starred` | user | Star 여부 확인 |
+| `DELETE` | `/api/v1/admin/components/{id}` | admin | Soft delete |
 | `POST` | `/api/v1/seed` | dev | 시드 데이터 투입 (DEV_MODE only) |
 
 ---
@@ -286,8 +291,19 @@ Score = Star × 1 + Download × 2
 ### Admin & Reviewer
 - **심사위원(reviewer) 역할**: 관리자 페이지 접근 가능, 심사대기/승인/반려 탭만 표시
 - **심사대기 fold/expand**: 항목 클릭 시 인라인으로 심사 카드 펼침
-- **Loading indicator**: 탭 전환 시 flow-dot 펄스 애니메이션
+- **동적 심사항목**: 설정 탭에서 추가/삭제한 criteria가 심사 슬라이더에 실시간 반영
+- **Statistics 탭**: 전체 Component/Flow 통계 테이블 (작성자·상태·Star·다운로드·날짜+시간), CSV 다운로드
+- **Loading indicator**: 전 탭 flow-dot 펄스 애니메이션
 - 관리자 설정 전체 i18n 완료 (시즌, 심사항목, 랭킹 공식, 심사위원, 호환성)
+
+### Link Sharing & Search
+- **링크 복사**: Component/Flow detail에서 공유 URL 클립보드 복사
+- **Topbar 검색**: Enter 키로 API 검색 + Home 이동, 모바일 검색 프롬프트 연동
+- **Reupload prefill**: 반려/삭제 항목 "다시 제출" 시 이전 데이터(제목·설명·README·파일) 자동 채움
+
+### Pagination
+- Home: 20개씩 "더 보기" (backend total count 기반)
+- 공지사항 / VoC: 20개씩 "더 보기"
 
 ---
 

@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.9.4 (2026-05-10)
+
+### Features
+- **Admin Statistics tab**: table view of all components/flows with author, status, stars, downloads, date+time — CSV export
+- **Link copy button**: shareable URL copy on component/flow detail pages
+- **Topbar search**: global search input now functional (Enter to search, navigates to Home)
+- **Reupload prefill**: rejected/deleted items pre-fill upload modal (title, desc, readme, file)
+- **Dynamic review criteria**: pending review sliders load from Settings API (add/remove criteria reflected)
+- **Pagination**: "Load More" on Home (20/page), Notices, VoC
+
+### Fixes
+- **Home empty**: `URLSearchParams` sent literal `"undefined"` as search — filter null/undefined params
+- **Duplicate label**: "심사 중" chip shown twice in drafts tab
+- **Detail date**: show `created_at` (registration date) instead of `updated_at`
+- **Statistics datetime**: DATE column shows `YYYY-MM-DD HH:MM` (table + CSV)
+- **Notice page crash**: loading state caused detail branch to render with null notice
+- **Loading indicators**: added to Admin Pending/Users, Notices, VoC, My Components (metrics + published)
+- **Score slider i18n**: removed hardcoded Korean fallbacks, consistent `t()` usage
+- **i18n**: translate hardcoded Korean in drafts/deleted tabs (심사 중, 초안, 반려됨, 삭제됨, 다시 제출)
+
+---
+
 ## v0.9.3 (2026-05-07)
 
 ### Fixes
