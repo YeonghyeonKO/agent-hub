@@ -36,6 +36,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = React.useState('pending');
   const [pendingList, setPendingList] = React.useState([]);
+  const [pendingLoading, setPendingLoading] = React.useState(true);
   const [activeSubId, setActiveSubId] = React.useState(null);
   const [scores, setScores] = React.useState({
     functionality: 9,
@@ -47,6 +48,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
 
   // Fetch pending submissions from API
   const loadPending = () => {
+    setPendingLoading(true);
     api.admin.pending().then(d => {
       const items = (d || []).map(c => ({
         id: c.id, type: c.type, title: c.title,
@@ -58,7 +60,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
       }));
       setPendingList(items);
       if (items.length > 0 && !activeSubId) setActiveSubId(items[0].id);
-    }).catch(() => setPendingList([]));
+    }).catch(() => setPendingList([])).finally(() => setPendingLoading(false));
   };
   React.useEffect(loadPending, []);
 
@@ -75,7 +77,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
       .catch(e => console.error(e));
   };
 
-  const submissions = pendingList.length > 0 ? pendingList : SUBMISSIONS;
+  const submissions = pendingList;
   const activeSub = submissions.find(s => s.id === activeSubId) || submissions[0];
 
   return (
@@ -133,10 +135,10 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
                       </button>
                     </div>
                     <div style={{marginBottom: 16}}>
-                      <ScoreSlider label={t('score_functionality') || '기능성 / 완성도'} value={scores.functionality} onChange={v => setScores(sc => ({...sc, functionality: v}))}/>
-                      <ScoreSlider label={t('score_originality') || '독창성'} value={scores.originality} onChange={v => setScores(sc => ({...sc, originality: v}))}/>
-                      <ScoreSlider label={t('score_utility') || '사내 활용도'} value={scores.internalUtility} onChange={v => setScores(sc => ({...sc, internalUtility: v}))}/>
-                      <ScoreSlider label={t('score_documentation') || '문서화 품질'} value={scores.documentation} onChange={v => setScores(sc => ({...sc, documentation: v}))}/>
+                      <ScoreSlider label={t('score_functionality')} value={scores.functionality} onChange={v => setScores(sc => ({...sc, functionality: v}))}/>
+                      <ScoreSlider label={t('score_originality')} value={scores.originality} onChange={v => setScores(sc => ({...sc, originality: v}))}/>
+                      <ScoreSlider label={t('score_utility')} value={scores.internalUtility} onChange={v => setScores(sc => ({...sc, internalUtility: v}))}/>
+                      <ScoreSlider label={t('score_documentation')} value={scores.documentation} onChange={v => setScores(sc => ({...sc, documentation: v}))}/>
                     </div>
                     <div className="field" style={{marginBottom: 12}}>
                       <label className="field-label">Comment</label>
@@ -151,7 +153,8 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
               )}
             </React.Fragment>
           ))}
-          {submissions.length === 0 && <div className="empty-state" style={{padding: 30}}>No pending submissions</div>}
+          {pendingLoading && <LoadingIndicator/>}
+          {!pendingLoading && submissions.length === 0 && <div className="empty-state" style={{padding: 30}}>No pending submissions</div>}
         </div>
       )}
 
@@ -384,8 +387,9 @@ function StatisticsTab() {
 function UsersTab() {
   const { t } = useI18n();
   const [users, setUsers] = React.useState([]);
+  const [usersLoading, setUsersLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
-  const loadUsers = () => { api.admin.users().then(setUsers).catch(() => {}); };
+  const loadUsers = () => { setUsersLoading(true); api.admin.users().then(setUsers).catch(() => {}).finally(() => setUsersLoading(false)); };
   React.useEffect(loadUsers, []);
 
   const changeRole = (empId, newRole) => {
@@ -431,7 +435,8 @@ function UsersTab() {
             </div>
           </div>
         ))}
-        {users.length === 0 && (
+        {usersLoading && <LoadingIndicator/>}
+        {!usersLoading && users.length === 0 && (
           <div className="empty-state" style={{padding: 40, textAlign: 'center', color: 'var(--text-3)'}}>
             {t('admin_no_users')}
           </div>

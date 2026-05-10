@@ -34,18 +34,20 @@ function NoticePage({ initialNoticeId }) {
   const [selected, setSelected] = React.useState(initialNoticeId || null);
   const [showForm, setShowForm] = React.useState(false);
   const [hasMore, setHasMore] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
 
   // Fetch from API
   const loadNotices = (append = false) => {
     const offset = append ? notices.length : 0;
-    append ? setLoadingMore(true) : null;
+    append ? setLoadingMore(true) : setLoading(true);
     api.notices.list({ limit: NOTICE_LIMIT, offset }).then(d => {
       const items = d || [];
       if (append) { setNotices(prev => [...prev, ...items]); } else { setNotices(items); }
       setHasMore(items.length >= NOTICE_LIMIT);
+      setLoading(false);
       setLoadingMore(false);
-    }).catch(() => { setLoadingMore(false); });
+    }).catch(() => { setLoading(false); setLoadingMore(false); });
   };
   React.useEffect(() => loadNotices(false), []);
 
@@ -137,7 +139,8 @@ function NoticePage({ initialNoticeId }) {
         </div>
       )}
 
-      {!showDetail ? (
+      {loading && <LoadingIndicator/>}
+      {!loading && !showDetail ? (
         <div className="card" style={{padding: 0, overflow: 'hidden'}}>
           {sorted.map((n, i) => (
             <div key={n.id} style={{
@@ -212,16 +215,18 @@ function VocPage() {
   const [showForm, setShowForm] = React.useState(false);
   const [posts, setPosts] = React.useState([]);
   const [hasMore, setHasMore] = React.useState(false);
+  const [vocLoading, setVocLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const loadVoc = (append = false) => {
     const offset = append ? posts.length : 0;
-    append ? setLoadingMore(true) : null;
+    append ? setLoadingMore(true) : setVocLoading(true);
     api.voc.list({ sort: sort === 'popular' ? 'popular' : 'newest', limit: VOC_LIMIT, offset }).then(d => {
       const items = d || [];
       if (append) { setPosts(prev => [...prev, ...items]); } else { setPosts(items); }
       setHasMore(items.length >= VOC_LIMIT);
+      setVocLoading(false);
       setLoadingMore(false);
-    }).catch(() => { setLoadingMore(false); });
+    }).catch(() => { setVocLoading(false); setLoadingMore(false); });
   };
   React.useEffect(() => loadVoc(false), []);
 
@@ -387,7 +392,8 @@ function VocPage() {
         </div>
       </div>
 
-      <div className="col" style={{gap: 10}}>
+      {vocLoading && <LoadingIndicator/>}
+      {!vocLoading && <div className="col" style={{gap: 10}}>
         {filtered.map(v => (
           <div key={v.id} className="card" style={{padding: '16px 20px', cursor: 'pointer', transition: 'all 0.12s'}}
                onClick={() => setSelected(v.id)}
@@ -413,7 +419,7 @@ function VocPage() {
             </div>
           </div>
         ))}
-      </div>
+      </div>}
       {hasMore && (
         <div style={{textAlign: 'center', marginTop: 16}}>
           <button className="btn btn-secondary btn-sm" onClick={() => loadVoc(true)} disabled={loadingMore} style={{opacity: loadingMore ? 0.5 : 1}}>

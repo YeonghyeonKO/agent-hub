@@ -18,10 +18,11 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
   const [tab, setTab] = React.useState('published');
   const [me, setMe] = React.useState({ name: '고영현', id: '2074795', initial: '고' });
   const [myComponents, setMyComponents] = React.useState([]);
+  const [mineLoading, setMineLoading] = React.useState(true);
 
   React.useEffect(() => {
     api.users.me().then(u => setMe({ name: u.name, id: u.employee_id, initial: u.name?.[0] || '?' })).catch(() => {});
-    api.users.myComponents().then(items => setMyComponents(items || [])).catch(() => {});
+    api.users.myComponents().then(items => { setMyComponents(items || []); setMineLoading(false); }).catch(() => setMineLoading(false));
   }, []);
 
   const mine = myComponents.filter(c => c.status === 'approved' && !c.deleted_at).map(apiToCard);
@@ -57,12 +58,14 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
         </div>
       </div>
 
-      <div className="grid-4" style={{marginBottom: 28}}>
-        <StatTile label={t('mine_registered')} value={mine.length} icon={<Icons.Box size={12}/>} />
-        <StatTile label={t('mine_total_stars')} value={totals.stars} icon={<Icons.Star size={12}/>}/>
-        <StatTile label={t('mine_total_dl')} value={totals.downloads} icon={<Icons.Download size={12}/>}/>
-        <StatTile label={t('tab_drafts')} value={drafts.length} icon={<Icons.Clock size={12}/>}/>
-      </div>
+      {mineLoading ? <LoadingIndicator/> : (
+        <div className="grid-4" style={{marginBottom: 28}}>
+          <StatTile label={t('mine_registered')} value={mine.length} icon={<Icons.Box size={12}/>} />
+          <StatTile label={t('mine_total_stars')} value={totals.stars} icon={<Icons.Star size={12}/>}/>
+          <StatTile label={t('mine_total_dl')} value={totals.downloads} icon={<Icons.Download size={12}/>}/>
+          <StatTile label={t('tab_drafts')} value={drafts.length} icon={<Icons.Clock size={12}/>}/>
+        </div>
+      )}
 
       <div className="tabs" style={{display: 'flex', alignItems: 'center'}}>
         {[
@@ -74,12 +77,13 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
             {label} <span className="tab-count">{count}</span>
           </button>
         ))}
-        <button className="btn btn-ghost btn-sm" title="새로고침" onClick={() => { api.users.myComponents().then(items => setMyComponents(items || [])).catch(() => {}); }} style={{fontSize: 12, padding: '4px 6px', marginLeft: 4}}>
+        <button className="btn btn-ghost btn-sm" title="새로고침" onClick={() => { setMineLoading(true); api.users.myComponents().then(items => { setMyComponents(items || []); setMineLoading(false); }).catch(() => setMineLoading(false)); }} style={{fontSize: 12, padding: '4px 6px', marginLeft: 4}}>
           <Icons.Reset size={12}/>
         </button>
       </div>
 
-      {tab === 'published' && (
+      {tab === 'published' && mineLoading && <LoadingIndicator/>}
+      {tab === 'published' && !mineLoading && (
         <div className="my-table">
           <div className="my-table-head">
             <div style={{width: 36}}></div>
