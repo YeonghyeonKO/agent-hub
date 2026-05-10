@@ -38,13 +38,22 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
   const [pendingList, setPendingList] = React.useState([]);
   const [pendingLoading, setPendingLoading] = React.useState(true);
   const [activeSubId, setActiveSubId] = React.useState(null);
-  const [scores, setScores] = React.useState({
-    functionality: 9,
-    originality: 8,
-    internalUtility: 10,
-    documentation: 8,
-  });
+  const [criteria, setCriteria] = React.useState([]);
+  const [scores, setScores] = React.useState({});
   const [comment, setComment] = React.useState('');
+
+  // Load criteria from settings API
+  React.useEffect(() => {
+    api.admin.settings().then(d => {
+      if (d && d.criteria_weights) {
+        const keys = Object.keys(d.criteria_weights);
+        setCriteria(keys);
+        const init = {};
+        keys.forEach(k => { init[k] = 8; });
+        setScores(init);
+      }
+    }).catch(() => {});
+  }, []);
 
   // Fetch pending submissions from API
   const loadPending = () => {
@@ -135,10 +144,10 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
                       </button>
                     </div>
                     <div style={{marginBottom: 16}}>
-                      <ScoreSlider label={t('score_functionality')} value={scores.functionality} onChange={v => setScores(sc => ({...sc, functionality: v}))}/>
-                      <ScoreSlider label={t('score_originality')} value={scores.originality} onChange={v => setScores(sc => ({...sc, originality: v}))}/>
-                      <ScoreSlider label={t('score_utility')} value={scores.internalUtility} onChange={v => setScores(sc => ({...sc, internalUtility: v}))}/>
-                      <ScoreSlider label={t('score_documentation')} value={scores.documentation} onChange={v => setScores(sc => ({...sc, documentation: v}))}/>
+                      {criteria.map(key => (
+                        <ScoreSlider key={key} label={key} value={scores[key] ?? 8} onChange={v => setScores(sc => ({...sc, [key]: v}))}/>
+                      ))}
+                      {criteria.length === 0 && <div className="muted-sm" style={{padding: 8}}>설정 &gt; 심사항목을 먼저 등록해주세요.</div>}
                     </div>
                     <div className="field" style={{marginBottom: 12}}>
                       <label className="field-label">Comment</label>
