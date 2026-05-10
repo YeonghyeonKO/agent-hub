@@ -139,8 +139,8 @@ function NoticePage({ initialNoticeId }) {
         </div>
       )}
 
-      {loading && <LoadingIndicator/>}
-      {!loading && !showDetail ? (
+      {!showDetail && loading && <LoadingIndicator/>}
+      {!showDetail && !loading && (
         <div className="card" style={{padding: 0, overflow: 'hidden'}}>
           {sorted.map((n, i) => (
             <div key={n.id} style={{
@@ -172,7 +172,8 @@ function NoticePage({ initialNoticeId }) {
             </div>
           )}
         </div>
-      ) : (
+      )}
+      {showDetail && (
         <div>
           <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} style={{marginBottom: 16}}>
             {t('notice_back')}
