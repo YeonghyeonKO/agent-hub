@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.6 (2026-05-11)
+
+### Fixes
+- **Flow graph**: scrollable canvas for large flows, dynamic SVG sizing from node positions
+- **Tag search confirmed**: backend ILIKE on tags::text works correctly (tested with real data)
+
+---
+
 ## v1.0.5 (2026-05-11)
 
 ### Fixes
