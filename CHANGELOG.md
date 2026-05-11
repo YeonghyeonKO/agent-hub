@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.0.2 (2026-05-11)
+
+### Features
+- **Tag click filter**: click `#tag` on Home cards to filter, active tag bar with clear button
+- **Tag search everywhere**: Home inline search, Topbar search, backend `tag` query param
+- **Contact Channel**: admin-configurable via Settings, displayed in Guide sidebar as "VoC Channel"
+
+### Fixes
+- **Tag limit**: max 5 tags per component/flow, UI hides input when full
+- **Image paste in upload**: `useImagePaste` now detects textarea after step change
+- **Component template**: usage updated to Custom Component node copy/paste (not file placement)
+- **Guide sidebar**: VoC Channel shows label instead of raw URL
+
+### Database Migration
+- **006**: `seasons.contact_channel` TEXT column
+
+---
+
 ## v1.0.1 (2026-05-11)
 
 ### Fixes
