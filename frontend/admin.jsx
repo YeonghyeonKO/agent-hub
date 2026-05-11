@@ -479,6 +479,7 @@ function SettingsTab() {
     submitEnd: '2026-05-23',
     reviewEnd: '2026-06-07',
     awardDay: '2026-06-21',
+    contactChannel: '',
   });
   const [criteria, setCriteria] = React.useState(DEFAULT_CRITERIA);
   const [draftLabel, setDraftLabel] = React.useState('');
@@ -496,6 +497,7 @@ function SettingsTab() {
           submitEnd: d.submit_end || '',
           reviewEnd: d.review_end || '',
           awardDay: d.award_day || '',
+          contactChannel: d.contact_channel || '',
         });
         if (d.criteria_weights) {
           setCriteria(Object.entries(d.criteria_weights).map(([k, v], i) => ({ id: 'c' + i, label: k, value: v })));
@@ -524,6 +526,7 @@ function SettingsTab() {
       review_end: season.reviewEnd,
       award_day: season.awardDay,
       criteria_weights: criteriaWeights,
+      contact_channel: season.contactChannel,
     }).then(() => setSaving(false)).catch(() => setSaving(false));
   };
 
@@ -634,6 +637,12 @@ function SettingsTab() {
           ))}
           {reviewers.length === 0 && <div className="muted-sm" style={{padding: 12, textAlign: 'center'}}>사용자 관리 탭에서 심사위원을 지정해주세요.</div>}
         </div>
+      </div>
+
+      <div className="card settings-card">
+        <div className="h3" style={{marginBottom: 4}}>{t('settings_contact') || 'Contact Channel'}</div>
+        <div className="muted-sm" style={{marginBottom: 14}}>{t('settings_contact_desc') || 'URL or channel name for user inquiries'}</div>
+        <EditableRow label={t('settings_contact_url') || 'Channel URL'} value={season.contactChannel} onChange={v => setField('contactChannel', v)}/>
       </div>
 
       <div className="card settings-card">

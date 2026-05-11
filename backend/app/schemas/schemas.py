@@ -133,6 +133,7 @@ class SeasonSettings(BaseModel):
     award_day: date
     criteria_weights: dict | None = None
     score_formula: dict | None = None
+    contact_channel: str | None = None
     is_active: bool = True
 
     model_config = {"from_attributes": True}
@@ -146,6 +147,7 @@ class SeasonUpdate(BaseModel):
     award_day: date | None = None
     criteria_weights: dict | None = None
     score_formula: dict | None = None
+    contact_channel: str | None = None
 
 
 # ─── Issue ──────────────────────────────────────────────────────────────

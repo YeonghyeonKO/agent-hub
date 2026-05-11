@@ -189,4 +189,5 @@ class Season(Base):
     award_day: Mapped[date] = mapped_column(Date)
     criteria_weights: Mapped[dict | None] = mapped_column(JSON, default=dict)
     score_formula: Mapped[dict | None] = mapped_column(JSON, default=lambda: {"star_weight": 2, "download_weight": 1})
+    contact_channel: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)

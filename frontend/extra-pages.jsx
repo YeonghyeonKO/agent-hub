@@ -274,6 +274,10 @@ function RankingPage({ onOpenComponent, starWeight = 1, downloadWeight = 2 }) {
 function GuidePage() {
   const { t } = useI18n();
   const [active, setActive] = React.useState('quickstart');
+  const [contactChannel, setContactChannel] = React.useState('#agenthub-help');
+  React.useEffect(() => {
+    api.get('/admin/settings').then(d => { if (d && d.contact_channel) setContactChannel(d.contact_channel); }).catch(() => {});
+  }, []);
 
   const sections = [
     { id: 'quickstart', title: t('guide_quickstart'), icon: 'Zap' },
@@ -304,7 +308,7 @@ function GuidePage() {
     { q: '외부 OSS Component를 그대로 올려도 되나요?', a: '라이선스가 MIT / Apache 2.0인 경우, 출처 명시 후 등록 가능합니다. GPL 계열은 사내 정책상 등록 불가합니다.' },
     { q: '제출한 Component를 수정하고 싶어요.', a: '"내 Component / Flow" > 해당 항목 > [새 버전] 버튼으로 patch 버전을 올려주세요. 이전 버전은 보존되며 사용자가 선택할 수 있습니다.' },
     { q: '랭킹 점수는 어떻게 계산되나요?', a: 'Star × 2 + 다운로드 수. 자기 자신의 Star · 다운로드는 집계에서 제외됩니다. 매일 09:00 KST에 갱신됩니다.' },
-    { q: '심사가 너무 오래 걸려요.', a: '제출 후 영업일 기준 평균 1.8일이며, 이슈가 발견되면 댓글로 안내됩니다. 7일 이상 지연 시 #agenthub-help 채널에 문의해주세요.' },
+    { q: '심사가 너무 오래 걸려요.', a: '제출 후 영업일 기준 평균 1.8일이며, 이슈가 발견되면 댓글로 안내됩니다. 7일 이상 지연 시 문의 채널에 문의해주세요.' },
   ];
 
   return (
@@ -345,7 +349,7 @@ function GuidePage() {
             <div className="muted-sm" style={{fontSize: 11.5, marginBottom: 6}}>{t('guide_external')}</div>
             <a className="guide-side-link" href="https://docs.langflow.org/" target="_blank" rel="noopener"><Icons.Globe size={11}/> {t('guide_lf_docs')}</a>
             <a className="guide-side-link" href="https://langflow-guide.posong.space" target="_blank" rel="noopener"><Icons.Globe size={11}/> {t('guide_lf_internal')}</a>
-            <a className="guide-side-link"><Icons.Comment size={11}/> {t('guide_contact_channel')}</a>
+            <a className="guide-side-link" href={contactChannel.startsWith('http') ? contactChannel : undefined} target="_blank" rel="noopener"><Icons.Comment size={11}/> {contactChannel}</a>
           </div>
         </aside>
 
@@ -456,7 +460,7 @@ function GuidePage() {
           {active === 'faq' && (
             <div>
               <div className="h2">자주 묻는 질문</div>
-              <div className="muted" style={{fontSize: 13.5, marginTop: 6, marginBottom: 20}}>여기에서 답을 찾지 못했다면 #agenthub-help 채널을 이용해주세요.</div>
+              <div className="muted" style={{fontSize: 13.5, marginTop: 6, marginBottom: 20}}>여기에서 답을 찾지 못했다면 문의 채널({contactChannel})을 이용해주세요.</div>
               <div className="col" style={{gap: 8}}>
                 {faqs.map((f, i) => <FaqItem key={i} q={f.q} a={f.a}/>)}
               </div>
