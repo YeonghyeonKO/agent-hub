@@ -72,7 +72,7 @@ agent-hub/
 │   │   ├── schemas/         # Pydantic v2 request/response
 │   │   ├── routers/         # API 라우터 (7개)
 │   │   └── services/        # 비즈니스 로직 (랭킹 계산)
-│   ├── alembic/             # DB 마이그레이션 (5개 버전)
+│   ├── alembic/             # DB 마이그레이션 (6개 버전)
 │   ├── Dockerfile           # python:3.12-slim 멀티스테이지
 │   └── requirements.txt
 ├── infra/

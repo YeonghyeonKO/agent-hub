@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.0.0 (2026-05-11)
+
+### Features
+- **Tags**: searchable tags on components/flows — displayed as `#tag` chips in Home cards, detail pages
+- **Tag search**: Home/Topbar/Statistics search includes tags
+- **Upload file validation**: block non `.py`/`.json` files and >5MB with error message + disabled Next
+- **Update button restriction**: only author or admin can see "업데이트" button
+- **Contact Channel**: configurable via Admin Settings — replaces hardcoded `#agenthub-help` in Guide/FAQ
+- **Ingress TLS options**: `tlsDisable`, `tlsSecretName` in Helm chart
+- **Ingress host override**: `ingress.host` for custom domains without subdomain prefix
+
+### Database Migrations
+- **005**: `components.tags` JSON column
+- **006**: `seasons.contact_channel` TEXT column
+
+---
+
 ## v0.9.6 (2026-05-11)
 
 ### Features
