@@ -236,20 +236,50 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
     );
   }
 
-  // Auto-layout: arrange nodes in a grid if using real flowData
+  // Auto-layout: topological left-to-right layers
   let layoutNodes;
   if (flowData && flowData.nodes) {
-    const cols = Math.ceil(Math.sqrt(flowData.nodes.length));
-    layoutNodes = flowData.nodes.map((n, i) => {
+    const nodes = flowData.nodes.map(n => {
       const d = n.data || {};
-      return {
-        id: d.id || n.id || String(i),
-        label: d.display_name || d.node?.display_name || d.type || n.type || 'Node',
-        sub: d.type || '',
-        kind: 'process',
-        x: (i % cols) * 170 + 30,
-        y: Math.floor(i / cols) * 110 + 30,
-      };
+      return { id: d.id || n.id, label: d.display_name || d.node?.display_name || d.type || n.type || 'Node', sub: d.type || '', kind: 'process' };
+    });
+    const edges = (flowData.edges || []).map(e => {
+      const d = e.data || {};
+      return { src: d.sourceHandle?.id || e.source, tgt: d.targetHandle?.id || e.target };
+    });
+    const nodeIds = new Set(nodes.map(n => n.id));
+    const validEdges = edges.filter(e => nodeIds.has(e.src) && nodeIds.has(e.tgt));
+
+    // Build adjacency + in-degree for topological layering
+    const inDeg = {}; const children = {};
+    nodes.forEach(n => { inDeg[n.id] = 0; children[n.id] = []; });
+    validEdges.forEach(e => { inDeg[e.tgt] = (inDeg[e.tgt] || 0) + 1; children[e.src] = children[e.src] || []; children[e.src].push(e.tgt); });
+
+    // BFS layering (Kahn's algorithm)
+    const layers = []; const layerOf = {}; const queue = [];
+    nodes.forEach(n => { if (inDeg[n.id] === 0) queue.push(n.id); });
+    while (queue.length > 0) {
+      const layer = [...queue]; layers.push(layer); queue.length = 0;
+      for (const nid of layer) {
+        layerOf[nid] = layers.length - 1;
+        for (const ch of (children[nid] || [])) {
+          inDeg[ch]--;
+          if (inDeg[ch] === 0) queue.push(ch);
+        }
+      }
+    }
+    // Any remaining nodes (cycles) go to last layer
+    nodes.forEach(n => { if (layerOf[n.id] === undefined) { layers.push([n.id]); layerOf[n.id] = layers.length - 1; } });
+
+    const COL_GAP = 180, ROW_GAP = 80, PAD = 30;
+    const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
+    layoutNodes = [];
+    layers.forEach((layer, col) => {
+      const startY = PAD + (layers.reduce((max, l) => Math.max(max, l.length), 0) - layer.length) * ROW_GAP / 2;
+      layer.forEach((nid, row) => {
+        const n = nodeById[nid];
+        if (n) layoutNodes.push({ ...n, x: PAD + col * COL_GAP, y: startY + row * ROW_GAP });
+      });
     });
   } else {
     layoutNodes = FLOW_NODES;
@@ -279,10 +309,10 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
           <span className="muted-sm">· {nodeCount} 노드 · {edgeCount} 연결</span>
         </div>
       </div>
-      <div className="flow-graph-canvas" style={{minHeight: flowData ? Math.ceil(nodeCount / Math.ceil(Math.sqrt(nodeCount))) * 110 + 80 : undefined}}>
+      <div className="flow-graph-canvas" style={{minHeight: flowData ? Math.max(...layoutNodes.map(n => n.y)) + NODE_H + 40 : undefined}}>
         <svg width="100%" height="100%" style={{position: 'absolute', inset: 0}}>
           <defs>
-            <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
               <path d="M0,1 L10,5 L0,9 z" fill="#94a3b8"/>
             </marker>
           </defs>
