@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.0.3 (2026-05-11)
+
+### Features
+- **Tag click filter**: click `#tag` on Home cards to filter, active tag bar with clear button
+- **Tag search everywhere**: Home inline, Topbar, backend `tag` query param
+
+### Fixes
+- **Flow graph arrows**: larger/darker markers, thicker edges, connect node edge-to-edge
+- **Topbar search timing**: delay event for Home mount when navigating from other pages
+- **Tag limit**: max 5 tags per component/flow
+- **Image paste in upload**: detect textarea after step change
+- **Component template**: Custom Component node copy/paste usage
+
+---
+
 ## v1.0.2 (2026-05-11)
 
 ### Features
