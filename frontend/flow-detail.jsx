@@ -282,17 +282,22 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
       <div className="flow-graph-canvas" style={{minHeight: flowData ? Math.ceil(nodeCount / Math.ceil(Math.sqrt(nodeCount))) * 110 + 80 : undefined}}>
         <svg width="100%" height="100%" style={{position: 'absolute', inset: 0}}>
           <defs>
-            <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M0,0 L10,5 L0,10 z" fill="#d8d6d2"/>
+            <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M0,1 L10,5 L0,9 z" fill="#94a3b8"/>
             </marker>
           </defs>
           {layoutEdges.map(([from, to, dashed], i) => {
             const a = nodeMap[from], b = nodeMap[to];
             if (!a || !b) return null;
-            const x1 = a.x + NODE_W/2, y1 = a.y + NODE_H/2;
-            const x2 = b.x + NODE_W/2, y2 = b.y + NODE_H/2;
-            const dx = (x2 - x1) * 0.5;
-            const path = `M ${x1} ${y1} C ${x1+dx} ${y1}, ${x2-dx} ${y2}, ${x2} ${y2}`;
+            const cx1 = a.x + NODE_W/2, cy1 = a.y + NODE_H/2;
+            const cx2 = b.x + NODE_W/2, cy2 = b.y + NODE_H/2;
+            // Start from right edge of source, end at left edge of target
+            const x1 = cx2 > cx1 ? a.x + NODE_W : a.x;
+            const y1 = cy1;
+            const x2 = cx2 > cx1 ? b.x : b.x + NODE_W;
+            const y2 = cy2;
+            const dx = Math.abs(x2 - x1) * 0.4;
+            const path = `M ${x1} ${y1} C ${x1 + (cx2 > cx1 ? dx : -dx)} ${y1}, ${x2 + (cx2 > cx1 ? -dx : dx)} ${y2}, ${x2} ${y2}`;
             return <path key={i} d={path} className={`flow-edge ${dashed ? 'dashed' : ''}`} markerEnd="url(#arr)"/>;
           })}
         </svg>

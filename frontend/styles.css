@@ -743,8 +743,8 @@ input[type=range].native-slider {
 .flow-node.llm { border-color: #fb923c; background: #fff7ed; }
 .flow-node.format { border-color: #f9a8d4; background: #fdf2f8; }
 .flow-edge {
-  stroke: var(--line-strong);
-  stroke-width: 1.5;
+  stroke: #94a3b8;
+  stroke-width: 2;
   fill: none;
 }
 .flow-edge.dashed { stroke-dasharray: 4 3; }

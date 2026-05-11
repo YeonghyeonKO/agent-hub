@@ -194,7 +194,7 @@ function App() {
   const goGuide = () => setRoute({ name: 'guide' });
   const goNotice = (noticeId) => setRoute({ name: 'notice', noticeId: (noticeId && typeof noticeId === 'string') ? noticeId : undefined });
   const goVoc = () => setRoute({ name: 'voc' });
-  const handleSearch = (q) => { window.__agenthub_search_query = q; setRoute({ name: 'home' }); window.dispatchEvent(new Event('agenthub:search')); };
+  const handleSearch = (q) => { window.__agenthub_search_query = q; setRoute({ name: 'home' }); setTimeout(() => window.dispatchEvent(new Event('agenthub:search')), 100); };
 
   return (
     <div data-screen-label={`AgentHub · ${route.name}`}>
