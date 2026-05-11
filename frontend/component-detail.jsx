@@ -92,6 +92,11 @@ function ComponentDetail({ component, onBack }) {
           </div>
           <h1 className="detail-title">{c.title}</h1>
           <div className="detail-desc">{c.desc}</div>
+          {c.tags && c.tags.length > 0 && (
+            <div style={{display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8}}>
+              {c.tags.map(tag => <span key={tag} className="chip chip-neutral" style={{fontSize: 11, padding: '2px 8px'}}>#{tag}</span>)}
+            </div>
+          )}
           <div className="author-row">
             <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}><Icons.Users size={10}/></div>
             <span style={{color: 'var(--text-2)', fontWeight: 500}}>{c.author.name}</span>

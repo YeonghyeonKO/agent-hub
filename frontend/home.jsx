@@ -18,6 +18,7 @@ function apiToCard(item) {
     minLF: item.min_langflow_ver || item.minLF || '',
     maxLF: item.max_langflow_ver || item.maxLF || '',
     testedVersions: item.tested_versions || item.testedVersions || [],
+    tags: item.tags || [],
     standard: item.is_standard ?? item.standard ?? false,
     incompat: item.min_langflow_ver && item.max_langflow_ver && item.min_langflow_ver === item.max_langflow_ver && item.min_langflow_ver < '1.8.0',
     updatedAgo: item.updated_at ? fmtDate(item.updated_at) : item.updatedAgo || '',
@@ -210,6 +211,11 @@ function ComponentCard({ c: raw, onClick }) {
       <div>
         <div className="cc-title">{c.title}</div>
         <div className="cc-desc" style={{marginTop: 4}}>{c.desc}</div>
+        {c.tags && c.tags.length > 0 && (
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6}}>
+            {c.tags.map(tag => <span key={tag} className="chip chip-neutral" style={{fontSize: 10, padding: '1px 6px'}}>#{tag}</span>)}
+          </div>
+        )}
       </div>
       <div style={{
         background: 'var(--bg-muted)',
