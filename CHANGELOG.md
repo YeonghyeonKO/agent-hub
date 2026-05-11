@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.7 (2026-05-11)
+
+### Fixes
+- **Tag search Korean**: use `json_array_elements_text()` instead of `cast(Text)` — fixes unicode escape mismatch for Korean tags
+
+---
+
 ## v1.0.6 (2026-05-11)
 
 ### Fixes
