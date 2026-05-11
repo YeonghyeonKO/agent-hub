@@ -28,7 +28,11 @@ app.kubernetes.io/component: frontend
 {{- end }}
 
 {{- define "agent-hub.host" -}}
+{{- if .Values.ingress.host -}}
+{{ .Values.ingress.host }}
+{{- else -}}
 {{ include "agent-hub.fullname" . }}.{{ .Values.ingress.domain }}
+{{- end }}
 {{- end }}
 
 {{- define "agent-hub.databaseUrl" -}}

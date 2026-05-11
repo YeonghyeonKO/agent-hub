@@ -43,7 +43,8 @@ frontend:
 
 ingress:
   enabled: true
-  domain: aipp02.skhynix.com
+  host: ""                   # full hostname override (e.g. agent-hub.company.com) — takes priority over domain
+  domain: aipp02.skhynix.com # used as {fullname}.{domain} when host is empty
   tlsDisable: false          # set true to disable TLS (e.g. SSL terminated at L7 LB)
   tlsSecretName: ""          # TLS secret name (leave empty for default cert)
   annotations:
