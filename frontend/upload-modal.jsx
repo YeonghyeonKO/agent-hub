@@ -17,7 +17,7 @@ function UploadModal({ onClose, prefill }) {
   const [maxVer, setMaxVer] = React.useState(pf.max_langflow_ver || '1.9.1');
   const [tested, setTested] = React.useState(pf.tested_versions || ['1.9.1', '1.9.0']);
   const [deps, setDeps] = React.useState('');
-  const COMPONENT_TEMPLATE = "## 개요\n\n이 Component가 무엇을 하는지 간단히 설명하세요.\n\n## 사용법\n\n1. components/custom/ 디렉토리에 파일 배치\n2. 의존성 설치: pip install ...\n3. Langflow 재시작\n\n## 입력 / 출력\n\n| 이름 | 타입 | 설명 |\n|------|------|------|\n| input_name | str | 입력 설명 |\n| output_name | str | 출력 설명 |\n\n## 참고\n\n- 추가 의존성, 주의사항 등\n";
+  const COMPONENT_TEMPLATE = "## 개요\n\n이 Component가 무엇을 하는지 간단히 설명하세요.\n\n## 사용법\n\n1. Langflow 캔버스에서 Custom Component 노드를 추가\n2. 코드 편집기에 .py 코드를 붙여넣기\n3. 필요한 의존성이 있다면 pip install 로 설치\n\n## 입력 / 출력\n\n| 이름 | 타입 | 설명 |\n|------|------|------|\n| input_name | str | 입력 설명 |\n| output_name | str | 출력 설명 |\n\n## 참고\n\n- 추가 의존성, 주의사항 등\n";
   const FLOW_TEMPLATE = "## 개요\n\n이 Flow가 어떤 워크플로우를 수행하는지 설명하세요.\n\n## 구성 노드\n\n1. 입력 노드: ...\n2. 처리 노드: ...\n3. 출력 노드: ...\n\n## 사용법\n\n1. JSON 파일을 Langflow에 Import\n2. 필요한 API Key / 환경변수 설정\n3. Flow 실행\n\n## 참고\n\n- 필요한 외부 서비스, 주의사항 등\n";
   const getTemplate = (type) => type === 'json' ? FLOW_TEMPLATE : COMPONENT_TEMPLATE;
   const [readme, setReadme] = React.useState(pf.readme || getTemplate(fileType));
@@ -155,7 +155,7 @@ function UploadModal({ onClose, prefill }) {
   };
 
   const toggleVer = (v) => { setTested(t => t.includes(v) ? t.filter(x => x !== v) : [...t, v]); };
-  const addTag = () => { if (tagInput.trim() && !tags.includes(tagInput.trim())) { setTags([...tags, tagInput.trim()]); setTagInput(''); } };
+  const addTag = () => { if (tagInput.trim() && !tags.includes(tagInput.trim()) && tags.length < 5) { setTags([...tags, tagInput.trim()]); setTagInput(''); } };
   const removeTag = (t) => { setTags(tags.filter(x => x !== t)); };
 
   const VERSIONS = ['1.9.1', '1.9.0', '1.8.3', '1.8.2', '1.8.1', '1.8.0'];
@@ -366,8 +366,11 @@ function UploadModal({ onClose, prefill }) {
                     <span key={t} className="tag" style={{cursor: 'pointer'}} onClick={() => removeTag(t)}>#{t} <Icons.X size={10}/></span>
                   ))}
                   <div className="row gap-8">
-                    <input className="input" style={{width: 120, height: 28, fontSize: 12}} placeholder={t("upload_tag_placeholder")} value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}/>
-                    <button className="tag" style={{cursor: 'pointer', borderStyle: 'dashed'}} onClick={addTag}><Icons.Plus size={10}/> {t('upload_tag_add')}</button>
+                    {tags.length < 5 && <>
+                      <input className="input" style={{width: 120, height: 28, fontSize: 12}} placeholder={t("upload_tag_placeholder")} value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}/>
+                      <button className="tag" style={{cursor: 'pointer', borderStyle: 'dashed'}} onClick={addTag}><Icons.Plus size={10}/> {t('upload_tag_add')}</button>
+                    </>}
+                    {tags.length >= 5 && <span className="muted-sm" style={{fontSize: 11}}>max 5</span>}
                   </div>
                 </div>
               </div>

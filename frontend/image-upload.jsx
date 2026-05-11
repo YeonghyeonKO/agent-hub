@@ -45,9 +45,16 @@ function ImageUploadButton({ onInsert }) {
 }
 
 // Paste handler — intercepts image paste and uploads
+// Uses interval to detect when textarea ref becomes available (e.g. after step change)
 function useImagePaste(textareaRef, onInsert) {
+  const [el, setEl] = React.useState(null);
   React.useEffect(() => {
-    const el = textareaRef.current;
+    const check = setInterval(() => {
+      if (textareaRef.current && textareaRef.current !== el) setEl(textareaRef.current);
+    }, 300);
+    return () => clearInterval(check);
+  });
+  React.useEffect(() => {
     if (!el) return;
     const handler = async (e) => {
       const items = e.clipboardData?.items;
@@ -72,7 +79,7 @@ function useImagePaste(textareaRef, onInsert) {
     };
     el.addEventListener('paste', handler);
     return () => el.removeEventListener('paste', handler);
-  }, [textareaRef.current, onInsert]);
+  }, [el, onInsert]);
 }
 
 Object.assign(window, { ImageUploadButton, useImagePaste });
