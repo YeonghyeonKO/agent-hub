@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.5 (2026-05-11)
+
+### Fixes
+- **Flow graph**: topological left-to-right layout (Kahn's algorithm), root nodes on left, smaller arrows (5px)
+- **Topbar tag search**: fire search immediately when on Home, delay only on cross-page navigation
+
+---
+
 ## v1.0.4 (2026-05-11)
 
 ### Features
