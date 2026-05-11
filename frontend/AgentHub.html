@@ -72,6 +72,8 @@ const ROUTES = ['home', 'mine', 'ranking', 'notice', 'voc', 'guide', 'admin'];
 function getRouteFromHash() {
   const parts = window.location.hash.replace('#/', '').split('/');
   const page = parts[0] || 'home';
+  if (page === 'notice' && parts[1]) return { name: 'notice', noticeId: parts[1] };
+  if (page === 'voc' && parts[1]) return { name: 'voc', vocId: parts[1] };
   if (ROUTES.includes(page)) return { name: page };
   return { name: 'home' };
 }
@@ -132,9 +134,11 @@ function App() {
 
   // Sync route → hash
   React.useEffect(() => {
-    const hash = '#/' + route.name;
+    let hash = '#/' + route.name;
+    if (route.name === 'notice' && route.noticeId) hash += '/' + route.noticeId;
+    if (route.name === 'voc' && route.vocId) hash += '/' + route.vocId;
     if (window.location.hash !== hash) window.history.pushState(null, '', hash);
-  }, [route.name]);
+  }, [route.name, route.noticeId, route.vocId]);
 
   // Listen for browser back/forward
   React.useEffect(() => {
@@ -239,7 +243,7 @@ function App() {
         <NoticePage initialNoticeId={route.noticeId}/>
       )}
       {route.name === 'voc' && (
-        <VocPage/>
+        <VocPage initialVocId={route.vocId}/>
       )}
 
       {detailModal && <DetailOverlay detail={detailModal} onClose={closeDetail} onOpenComponent={openComponent}/>}

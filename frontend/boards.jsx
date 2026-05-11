@@ -148,7 +148,7 @@ function NoticePage({ initialNoticeId }) {
               borderBottom: i < sorted.length - 1 ? '1px solid var(--line)' : 'none',
               cursor: 'pointer', transition: 'background 0.12s',
               display: 'flex', alignItems: 'center', gap: 14,
-            }} onClick={() => setSelected(n.id)}
+            }} onClick={() => { setSelected(n.id); window.history.pushState(null, '', '#/notice/' + n.id); }}
                onMouseOver={e => e.currentTarget.style.background = 'var(--bg-muted)'}
                onMouseOut={e => e.currentTarget.style.background = ''}>
               <div style={{flex: 1, minWidth: 0}}>
@@ -175,7 +175,7 @@ function NoticePage({ initialNoticeId }) {
       )}
       {showDetail && (
         <div>
-          <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} style={{marginBottom: 16}}>
+          <button className="btn btn-ghost btn-sm" onClick={() => { setSelected(null); window.history.pushState(null, '', '#/notice'); }} style={{marginBottom: 16}}>
             {t('notice_back')}
           </button>
           <div className="card card-pad" style={{padding: 28}}>
@@ -184,6 +184,7 @@ function NoticePage({ initialNoticeId }) {
                 {notice.is_pinned && <span className="chip chip-accent" style={{fontSize: 10}}><Icons.Star size={9} filled/> {t('notice_pin')}</span>}
               </div>
               <div className="row gap-8">
+                <button className="btn btn-ghost btn-sm" onClick={() => { const url = window.location.origin + window.location.pathname + '#/notice/' + notice.id; navigator.clipboard?.writeText(url); }} title="Copy link"><Icons.Link size={12}/></button>
                 <button className="btn btn-ghost btn-sm" onClick={() => togglePin(notice.id)}>
                   <Icons.Star size={12} filled={notice.is_pinned}/> {notice.is_pinned ? t('notice_unpin') : t('notice_pin')}
                 </button>
@@ -207,12 +208,12 @@ function NoticePage({ initialNoticeId }) {
 }
 
 // ─── VoC Board ──────────────────────────────────────────────────────
-function VocPage() {
+function VocPage({ initialVocId }) {
   const VOC_LIMIT = 20;
   const { t } = useI18n();
   const [filter, setFilter] = React.useState('all');
   const [sort, setSort] = React.useState('popular');
-  const [selected, setSelected] = React.useState(null);
+  const [selected, setSelected] = React.useState(initialVocId || null);
   const [showForm, setShowForm] = React.useState(false);
   const [posts, setPosts] = React.useState([]);
   const [hasMore, setHasMore] = React.useState(false);
@@ -276,13 +277,16 @@ function VocPage() {
     const commentCount = typeof d.comment_count === 'number' ? d.comment_count : (Array.isArray(comments) ? comments.length : 0);
     return (
       <div className="page fade-in">
-        <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)} style={{marginBottom: 16}}>
+        <button className="btn btn-ghost btn-sm" onClick={() => { setSelected(null); window.history.pushState(null, '', '#/voc'); }} style={{marginBottom: 16}}>
           {t('voc_back')}
         </button>
         <div className="card card-pad" style={{padding: 28}}>
-          <div className="row gap-8" style={{marginBottom: 10}}>
-            <span className={`chip ${statusChip[d.status]}`}>{statusLabels[d.status]}</span>
-            <span className="chip chip-neutral">{catLabels[d.category]}</span>
+          <div className="row gap-8" style={{marginBottom: 10, justifyContent: 'space-between'}}>
+            <div className="row gap-8">
+              <span className={`chip ${statusChip[d.status]}`}>{statusLabels[d.status]}</span>
+              <span className="chip chip-neutral">{catLabels[d.category]}</span>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={() => { const url = window.location.origin + window.location.pathname + '#/voc/' + d.id; navigator.clipboard?.writeText(url); }} title="Copy link"><Icons.Link size={12}/></button>
           </div>
           <h2 className="h2" style={{marginBottom: 12}}>{d.title}</h2>
           <div className="row gap-8 muted-sm" style={{marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--line)'}}>
@@ -397,7 +401,7 @@ function VocPage() {
       {!vocLoading && <div className="col" style={{gap: 10}}>
         {filtered.map(v => (
           <div key={v.id} className="card" style={{padding: '16px 20px', cursor: 'pointer', transition: 'all 0.12s'}}
-               onClick={() => setSelected(v.id)}
+               onClick={() => { setSelected(v.id); window.history.pushState(null, '', '#/voc/' + v.id); }}
                onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--line-strong)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
                onMouseOut={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.transform = ''; }}>
             <div className="row" style={{gap: 16}}>
