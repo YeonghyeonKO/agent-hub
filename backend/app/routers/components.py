@@ -29,6 +29,7 @@ async def list_components(
     type: str | None = None,
     sort: str = "popular",
     search: str | None = None,
+    tag: str | None = None,
     limit: int = 20,
     offset: int = 0,
 ):
@@ -38,6 +39,8 @@ async def list_components(
         query = query.where(Component.category == category)
     if type:
         query = query.where(Component.type == type)
+    if tag:
+        query = query.where(Component.tags.cast(Text).ilike(f"%{tag}%"))
     if search:
         query = query.where(
             Component.title.ilike(f"%{search}%")

@@ -94,7 +94,7 @@ function ComponentDetail({ component, onBack }) {
           <div className="detail-desc">{c.desc}</div>
           {c.tags && c.tags.length > 0 && (
             <div style={{display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8}}>
-              {c.tags.map(tag => <span key={tag} className="chip chip-neutral" style={{fontSize: 11, padding: '2px 8px'}}>#{tag}</span>)}
+              {c.tags.map(tag => <span key={tag} className="chip chip-neutral" style={{fontSize: 11, padding: '2px 8px', cursor: 'pointer'}} onClick={() => { window.__agenthub_search_query = tag; onBack(); window.dispatchEvent(new Event('agenthub:search')); }}>#{tag}</span>)}
             </div>
           )}
           <div className="author-row">

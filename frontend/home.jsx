@@ -80,9 +80,14 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
     api.get('/admin/settings').then(d => { if (d) setSeason(d); }).catch(() => {});
   }, []);
 
+  const [activeTag, setActiveTag] = React.useState('');
+
   const filtered = components.filter(c => {
+    if (activeTag && !(c.tags || []).includes(activeTag)) return false;
+    const q = query.toLowerCase();
     const desc = c.desc || c.description || '';
-    if (query && !c.title.toLowerCase().includes(query.toLowerCase()) && !desc.includes(query)) return false;
+    const tagMatch = (c.tags || []).some(t => t.toLowerCase().includes(q));
+    if (query && !c.title.toLowerCase().includes(q) && !desc.toLowerCase().includes(q) && !tagMatch) return false;
     return true;
   }).sort((a, b) => {
     if (sortBy === 'new') return new Date(b.created_at || 0) - new Date(a.created_at || 0);
@@ -155,11 +160,21 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
         </div>
       </div>
 
+      {/* Active tag filter */}
+      {activeTag && (
+        <div style={{display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14}}>
+          <span className="muted-sm">Tag:</span>
+          <span className="chip chip-accent" style={{fontSize: 11, padding: '2px 10px', cursor: 'pointer'}} onClick={() => setActiveTag('')}>
+            #{activeTag} <Icons.X size={9} style={{marginLeft: 4}}/>
+          </span>
+        </div>
+      )}
+
       {/* Grid */}
       {loading && <LoadingIndicator/>}
       {!loading && (
         <div className="grid-3">
-          {filtered.map(c => <ComponentCard key={c.id} c={c} onClick={() => onOpenComponent(c)} />)}
+          {filtered.map(c => <ComponentCard key={c.id} c={c} onClick={() => onOpenComponent(c)} onTagClick={(tag) => setActiveTag(tag)}/>)}
         </div>
       )}
 
@@ -181,7 +196,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
   );
 }
 
-function ComponentCard({ c: raw, onClick }) {
+function ComponentCard({ c: raw, onClick, onTagClick }) {
   const c = raw.stars_count !== undefined ? apiToCard(raw) : raw;
   const Icon = Icons[c.icon] || Icons.Box;
   const chipClass = c.type === 'py' ? 'chip-py' : 'chip-json';
@@ -213,7 +228,7 @@ function ComponentCard({ c: raw, onClick }) {
         <div className="cc-desc" style={{marginTop: 4}}>{c.desc}</div>
         {c.tags && c.tags.length > 0 && (
           <div style={{display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6}}>
-            {c.tags.map(tag => <span key={tag} className="chip chip-neutral" style={{fontSize: 10, padding: '1px 6px'}}>#{tag}</span>)}
+            {c.tags.map(tag => <span key={tag} className="chip chip-neutral" style={{fontSize: 10, padding: '1px 6px', cursor: 'pointer'}} onClick={(e) => { e.stopPropagation(); if (onTagClick) onTagClick(tag); }}>#{tag}</span>)}
           </div>
         )}
       </div>
