@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, PlainTextResponse
-from sqlalchemy import Text, func, select
+from sqlalchemy import Text, exists, func, literal_column, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -40,12 +40,22 @@ async def list_components(
     if type:
         query = query.where(Component.type == type)
     if tag:
-        query = query.where(Component.tags.cast(Text).ilike(f"%{tag}%"))
+        tag_exists = exists(
+            select(literal_column("1")).select_from(
+                func.json_array_elements_text(Component.tags).alias("t")
+            ).where(literal_column("t").ilike(f"%{tag}%"))
+        )
+        query = query.where(tag_exists)
     if search:
+        tag_search = exists(
+            select(literal_column("1")).select_from(
+                func.json_array_elements_text(Component.tags).alias("t")
+            ).where(literal_column("t").ilike(f"%{search}%"))
+        )
         query = query.where(
             Component.title.ilike(f"%{search}%")
             | Component.description.ilike(f"%{search}%")
-            | Component.tags.cast(Text).ilike(f"%{search}%")
+            | tag_search
         )
 
     # Count total
