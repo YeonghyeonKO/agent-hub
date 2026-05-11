@@ -4,7 +4,7 @@ instanceName: ""
 backend:
   image:
     repository: dk02315/agent-hub-backend
-    tag: v0.3.0
+    tag: "0.9.5"
     pullPolicy: IfNotPresent
   replicaCount: 2
   resources:
@@ -29,7 +29,7 @@ backend:
 frontend:
   image:
     repository: dk02315/agent-hub-frontend
-    tag: v0.3.0
+    tag: "0.9.5"
     pullPolicy: IfNotPresent
   replicaCount: 2
   port: 80
@@ -44,6 +44,8 @@ frontend:
 ingress:
   enabled: true
   domain: aipp02.skhynix.com
+  tlsDisable: false          # set true to disable TLS (e.g. SSL terminated at L7 LB)
+  tlsSecretName: ""          # TLS secret name (leave empty for default cert)
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
