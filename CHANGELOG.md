@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.9.6 (2026-05-11)
+
+### Features
+- **Tags UI**: display `#tag` chips in Home cards, Component detail, Flow detail
+- **Tag search**: Home/Topbar search includes tags (cast JSON→Text ILIKE)
+
+### Fixes
+- **Search crash**: `String` cast on JSON column fails on PostgreSQL — use `Text` cast
+- **Ingress TLS**: add `tlsDisable` / `tlsSecretName` options in Helm chart
+- **Helm image tags**: bump from v0.3.0 to 0.9.5
+
+---
+
 ## v0.9.5 (2026-05-11)
 
 ### Features
