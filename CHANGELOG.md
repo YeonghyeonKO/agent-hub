@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.0.4 (2026-05-11)
+
+### Features
+- **Notice/VoC deep links**: shareable URLs `#/notice/{id}`, `#/voc/{id}` with link copy buttons
+- **Tag click filter**: click `#tag` on Home cards to filter with active tag bar
+- **Tag search**: works in Home inline, Topbar, backend `tag` query param
+- **Contact Channel**: admin-configurable via Settings, "VoC Channel" in Guide sidebar
+
+### Fixes
+- **Flow graph arrows**: visible directional markers, edge-to-edge connections
+- **Topbar search timing**: delay for Home mount on cross-page navigation
+- **Tag limit**: max 5 per component/flow
+- **Image paste in upload**: detect textarea after step change
+- **Component template**: Custom Component node copy/paste usage
+
+### Database Migration
+- **006**: `seasons.contact_channel` TEXT column
+
+---
+
 ## v1.0.3 (2026-05-11)
 
 ### Features
