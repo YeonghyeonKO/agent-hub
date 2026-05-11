@@ -287,6 +287,8 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
 
   const nodeMap = Object.fromEntries(layoutNodes.map(n => [n.id, n]));
   const NODE_W = 130, NODE_H = 50;
+  const canvasW = layoutNodes.length > 0 ? Math.max(...layoutNodes.map(n => n.x)) + NODE_W + 40 : 600;
+  const canvasH = layoutNodes.length > 0 ? Math.max(...layoutNodes.map(n => n.y)) + NODE_H + 40 : 300;
 
   // Build renderable edges — Langflow format: data.sourceHandle.id → data.targetHandle.id
   let layoutEdges;
@@ -309,8 +311,8 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
           <span className="muted-sm">· {nodeCount} 노드 · {edgeCount} 연결</span>
         </div>
       </div>
-      <div className="flow-graph-canvas" style={{minHeight: flowData ? Math.max(...layoutNodes.map(n => n.y)) + NODE_H + 40 : undefined}}>
-        <svg width="100%" height="100%" style={{position: 'absolute', inset: 0}}>
+      <div className="flow-graph-canvas" style={{height: Math.max(canvasH, 300)}}>
+        <svg width={canvasW} height={canvasH} style={{position: 'absolute', top: 0, left: 0}}>
           <defs>
             <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
               <path d="M0,1 L10,5 L0,9 z" fill="#94a3b8"/>

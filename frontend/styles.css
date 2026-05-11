@@ -704,12 +704,12 @@ input[type=range].native-slider {
 }
 .flow-graph-canvas {
   position: relative;
-  height: 460px;
+  min-height: 300px;
   background:
     radial-gradient(circle, #e8e7e4 1px, transparent 1px),
     var(--bg-elev);
   background-size: 18px 18px;
-  overflow: hidden;
+  overflow: auto;
 }
 .flow-node {
   position: absolute;
