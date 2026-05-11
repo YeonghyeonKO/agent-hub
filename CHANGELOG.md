@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.1 (2026-05-11)
+
+### Fixes
+- **Guide sidebar**: VoC Channel link shows label instead of raw URL, icon changed to Users
+
+---
+
 ## v1.0.0 (2026-05-11)
 
 ### Features
