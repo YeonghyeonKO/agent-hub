@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.9.5 (2026-05-11)
+
+### Features
+- **Tags**: JSON tags column on components (migration 005), stored on upload, searchable via Home/Topbar
+- **Tag search in Statistics**: filter by title or tag in Admin Statistics tab, tags included in CSV export
+- **Upload file validation**: block Next button for non `.py`/`.json` files or files >5MB with error message
+- **Update button restriction**: only author or admin can see "업데이트" button (backend already enforced 403)
+
+### Database Migration
+- **005**: `components` 테이블에 `tags` JSON 컬럼 추가
+
+---
+
 ## v0.9.4 (2026-05-10)
 
 ### Features
