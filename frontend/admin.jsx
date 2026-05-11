@@ -284,6 +284,7 @@ function StatisticsTab() {
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [filterAuthor, setFilterAuthor] = React.useState('');
+  const [filterSearch, setFilterSearch] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState('all');
 
   React.useEffect(() => {
@@ -292,6 +293,11 @@ function StatisticsTab() {
 
   const filtered = items.filter(item => {
     if (filterAuthor && !item.author_id.includes(filterAuthor) && !(item.author_name || '').toLowerCase().includes(filterAuthor.toLowerCase())) return false;
+    if (filterSearch) {
+      const q = filterSearch.toLowerCase();
+      const tagMatch = (item.tags || []).some(t => t.toLowerCase().includes(q));
+      if (!item.title.toLowerCase().includes(q) && !tagMatch) return false;
+    }
     if (filterStatus !== 'all') {
       if (filterStatus === 'deleted') return !!item.deleted_at;
       return item.status === filterStatus && !item.deleted_at;
@@ -305,12 +311,13 @@ function StatisticsTab() {
   };
 
   const downloadCsv = () => {
-    const header = ['author_id', 'author_name', 'title', 'type', 'status', 'stars', 'downloads', 'id', 'url', 'created_at'];
+    const header = ['author_id', 'author_name', 'title', 'type', 'tags', 'status', 'stars', 'downloads', 'id', 'url', 'created_at'];
     const rows = filtered.map(item => [
       item.author_id,
       item.author_name,
       item.title,
       item.type === 'py' ? 'component' : 'flow',
+      (item.tags || []).join('; '),
       item.deleted_at ? 'deleted' : item.status,
       item.stars_count,
       item.downloads_count,
@@ -337,6 +344,7 @@ function StatisticsTab() {
           <div className="muted-sm">{filtered.length} / {items.length} items</div>
         </div>
         <div className="row gap-8" style={{flexWrap: 'wrap'}}>
+          <input className="input" placeholder="Title or Tag" value={filterSearch} onChange={e => setFilterSearch(e.target.value)} style={{width: 160, height: 30, fontSize: 12}}/>
           <input className="input" placeholder="Author ID or name" value={filterAuthor} onChange={e => setFilterAuthor(e.target.value)} style={{width: 160, height: 30, fontSize: 12}}/>
           <select className="select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{height: 30, fontSize: 12}}>
             <option value="all">All Status</option>

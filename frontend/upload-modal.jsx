@@ -97,10 +97,25 @@ function UploadModal({ onClose, prefill }) {
     reader.readAsText(file);
   };
 
+  const [fileError, setFileError] = React.useState('');
+
   const handleRealFile = (file) => {
     if (!file) return;
-    setRealFile(file);
     const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext !== 'py' && ext !== 'json') {
+      setFileError('.py 또는 .json 파일만 업로드 가능합니다.');
+      setRealFile(null);
+      setValidation(null);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFileError('파일 크기가 5MB를 초과합니다.');
+      setRealFile(null);
+      setValidation(null);
+      return;
+    }
+    setFileError('');
+    setRealFile(file);
     const newType = ext === 'json' ? 'json' : 'py';
     if (newType !== fileType) {
       setFileType(newType);
@@ -125,6 +140,7 @@ function UploadModal({ onClose, prefill }) {
       fd.append('min_langflow_ver', minVer);
       fd.append('max_langflow_ver', maxVer === t('upload_no_limit') ? '' : maxVer);
       fd.append('tested_versions', tested.join(','));
+      fd.append('tags', tags.join(','));
       fd.append('icon', icon);
       if (readme.trim()) fd.append('readme', readme.trim());
       await api.components.create(fd);
@@ -242,6 +258,11 @@ function UploadModal({ onClose, prefill }) {
                 )}
               </div>
 
+              {fileError && (
+                <div style={{marginTop: 12, padding: '10px 14px', background: 'var(--err-bg, #fef2f2)', border: '1px solid var(--err, #ef4444)', borderRadius: 8, fontSize: 12.5, color: 'var(--err-fg, #dc2626)', fontWeight: 500}}>
+                  <Icons.Warn size={11}/> {fileError}
+                </div>
+              )}
               {hasFile && validation && (
                 <div style={{marginTop: 16, padding: 14, background: valAllClear ? 'var(--ok-bg)' : 'var(--warn-bg)', border: `1px solid ${valAllClear ? 'var(--ok)' : 'var(--warn)'}`, borderRadius: 8}}>
                   <div style={{fontSize: 12.5, fontWeight: 600, color: valAllClear ? 'var(--ok-fg)' : 'var(--warn-fg)', marginBottom: 8}}>
@@ -412,7 +433,7 @@ function UploadModal({ onClose, prefill }) {
               <button className="btn btn-secondary btn-sm" onClick={() => setStep(s => s - 1)}>{t('upload_prev')}</button>
             )}
             {step < 2 ? (
-              <button className="btn btn-accent btn-sm" disabled={(step === 0 && !hasFile) || (step === 1 && (desc.length < 20 || readme.length < 100))} style={{opacity: ((step === 0 && !hasFile) || (step === 1 && (desc.length < 20 || readme.length < 100))) ? 0.5 : 1}} onClick={() => setStep(s => s + 1)}>
+              <button className="btn btn-accent btn-sm" disabled={(step === 0 && (!hasFile || !!fileError)) || (step === 1 && (desc.length < 20 || readme.length < 100))} style={{opacity: ((step === 0 && (!hasFile || !!fileError)) || (step === 1 && (desc.length < 20 || readme.length < 100))) ? 0.5 : 1}} onClick={() => setStep(s => s + 1)}>
                 {t('upload_next')} <Icons.ArrowRight size={11}/>
               </button>
             ) : (

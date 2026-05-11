@@ -29,6 +29,7 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
   const [flowData, setFlowData] = React.useState(null);
   const [showUpdate, setShowUpdate] = React.useState(false);
   const [copyToast, setCopyToast] = React.useState('');
+  const [currentUser, setCurrentUser] = React.useState(null);
   const [versionHistory, setVersionHistory] = React.useState([]);
 
   // Fetch full component data (including readme) and check star status
@@ -37,6 +38,7 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
       if (c.readme === undefined) api.components.get(c.id).then(full => setC(apiToCard(full))).catch(() => {});
       api.get(`/components/${c.id}/starred`).then(r => setStarred(r.starred)).catch(() => {});
     }
+    api.users.me().then(u => setCurrentUser(u)).catch(() => {});
   }, [c.id]);
 
   React.useEffect(() => {
@@ -110,7 +112,9 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
             navigator.clipboard?.writeText(url);
             setCopyToast('링크를 복사했어요!'); setTimeout(() => setCopyToast(''), 2000);
           }}><Icons.Link size={13}/> 링크 복사</button>
-          <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> 업데이트</button>
+          {currentUser && (currentUser.role === 'admin' || currentUser.employee_id === (c.author?.id || c.author_id)) && (
+            <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> 업데이트</button>
+          )}
         </div>
       </div>
 

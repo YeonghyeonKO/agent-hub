@@ -7,7 +7,7 @@ const I18N = {
     // Nav
     nav_home: '홈', nav_mine: '내 Component / Flow', nav_ranking: '2026 랭킹',
     nav_notice: '공지사항', nav_voc: 'VoC', nav_guide: '가이드', nav_admin: '관리자',
-    btn_submit: '제출', search_placeholder: 'Component · Flow · 개발자 검색…',
+    btn_submit: '제출', search_placeholder: 'Component · Flow · Tag 검색…',
 
     // Home
     home_title: '홈',
@@ -155,7 +155,7 @@ const I18N = {
     // Nav
     nav_home: 'Home', nav_mine: 'My Components', nav_ranking: '2026 Ranking',
     nav_notice: 'Notices', nav_voc: 'VoC', nav_guide: 'Guide', nav_admin: 'Admin',
-    btn_submit: 'Submit', search_placeholder: 'Search components, flows, developers…',
+    btn_submit: 'Submit', search_placeholder: 'Search components, flows, tags…',
 
     // Home
     home_title: 'Home',

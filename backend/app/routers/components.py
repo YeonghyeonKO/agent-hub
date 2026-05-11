@@ -40,7 +40,9 @@ async def list_components(
         query = query.where(Component.type == type)
     if search:
         query = query.where(
-            Component.title.ilike(f"%{search}%") | Component.description.ilike(f"%{search}%")
+            Component.title.ilike(f"%{search}%")
+            | Component.description.ilike(f"%{search}%")
+            | Component.tags.cast(String).ilike(f"%{search}%")
         )
 
     # Count total
@@ -77,6 +79,7 @@ async def list_components(
             version=c.version,
             min_langflow_ver=c.min_langflow_ver,
             max_langflow_ver=c.max_langflow_ver,
+            tags=c.tags or [],
             icon=c.icon,
             is_standard=c.is_standard,
             status=c.status,
@@ -115,6 +118,7 @@ async def get_component(
         min_langflow_ver=component.min_langflow_ver,
         max_langflow_ver=component.max_langflow_ver,
         tested_versions=component.tested_versions,
+        tags=component.tags or [],
         icon=component.icon,
         is_standard=component.is_standard,
         status=component.status,
@@ -141,6 +145,7 @@ async def create_component(
     min_langflow_ver: str = Form(None),
     max_langflow_ver: str = Form(None),
     tested_versions: str = Form(""),
+    tags: str = Form(""),
     readme: str = Form(None),
     icon: str = Form(None),
 ):
@@ -155,6 +160,7 @@ async def create_component(
         f.write(content)
 
     tested = [v.strip() for v in tested_versions.split(",") if v.strip()] if tested_versions else []
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
 
     component = Component(
         title=title,
@@ -165,6 +171,7 @@ async def create_component(
         min_langflow_ver=min_langflow_ver,
         max_langflow_ver=max_langflow_ver,
         tested_versions=tested,
+        tags=tag_list,
         file_path=file_path,
         file_content=file_content_str,
         readme=readme,
@@ -186,6 +193,7 @@ async def create_component(
         min_langflow_ver=component.min_langflow_ver,
         max_langflow_ver=component.max_langflow_ver,
         tested_versions=component.tested_versions,
+        tags=component.tags or [],
         icon=component.icon,
         is_standard=component.is_standard,
         status=component.status,

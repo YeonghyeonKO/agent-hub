@@ -43,6 +43,7 @@ function ComponentDetail({ component, onBack }) {
   const [starred, setStarred] = React.useState(false);
   const [showUpdate, setShowUpdate] = React.useState(false);
   const [copyToast, setCopyToast] = React.useState('');
+  const [currentUser, setCurrentUser] = React.useState(null);
   const [versionHistory, setVersionHistory] = React.useState([]);
 
   // Fetch full component data (including readme) and check star status
@@ -51,6 +52,7 @@ function ComponentDetail({ component, onBack }) {
       if (c.readme === undefined) api.components.get(c.id).then(full => setC(apiToCard(full))).catch(() => {});
       api.get(`/components/${c.id}/starred`).then(r => setStarred(r.starred)).catch(() => {});
     }
+    api.users.me().then(u => setCurrentUser(u)).catch(() => {});
   }, [c.id]);
 
   // Fetch real file content if component has UUID
@@ -129,7 +131,9 @@ function ComponentDetail({ component, onBack }) {
             navigator.clipboard?.writeText(url);
             setCopyToast('링크를 복사했어요!'); setTimeout(() => setCopyToast(''), 2000);
           }}><Icons.Link size={13}/> 링크 복사</button>
-          <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> 업데이트</button>
+          {currentUser && (currentUser.role === 'admin' || currentUser.employee_id === (c.author?.id || c.author_id)) && (
+            <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> 업데이트</button>
+          )}
         </div>
       </div>
 

@@ -43,7 +43,7 @@ async def get_pending(
             id=c.id, title=c.title, type=c.type, description=c.description,
             category=c.category, version=c.version,
             min_langflow_ver=c.min_langflow_ver, max_langflow_ver=c.max_langflow_ver,
-            icon=c.icon, is_standard=c.is_standard, status=c.status,
+            tags=c.tags or [], icon=c.icon, is_standard=c.is_standard, status=c.status,
             author=UserResponse.model_validate(c.author),
             stars_count=sc, downloads_count=dc, created_at=c.created_at,
         ))
@@ -70,7 +70,7 @@ async def get_approved(
             id=c.id, title=c.title, type=c.type, description=c.description,
             category=c.category, version=c.version,
             min_langflow_ver=c.min_langflow_ver, max_langflow_ver=c.max_langflow_ver,
-            icon=c.icon, is_standard=c.is_standard, status=c.status,
+            tags=c.tags or [], icon=c.icon, is_standard=c.is_standard, status=c.status,
             author=UserResponse.model_validate(c.author),
             stars_count=sc, downloads_count=dc, created_at=c.created_at,
         ))
@@ -97,7 +97,7 @@ async def get_rejected(
             id=c.id, title=c.title, type=c.type, description=c.description,
             category=c.category, version=c.version,
             min_langflow_ver=c.min_langflow_ver, max_langflow_ver=c.max_langflow_ver,
-            icon=c.icon, is_standard=c.is_standard, status=c.status,
+            tags=c.tags or [], icon=c.icon, is_standard=c.is_standard, status=c.status,
             author=UserResponse.model_validate(c.author),
             stars_count=sc, downloads_count=dc, created_at=c.created_at,
         ))
@@ -232,6 +232,7 @@ async def get_statistics(
             "id": str(c.id),
             "title": c.title,
             "type": c.type,
+            "tags": c.tags or [],
             "status": c.status,
             "version": c.version,
             "author_id": c.author.employee_id if c.author else "",

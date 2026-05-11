@@ -27,6 +27,7 @@ class ComponentCreate(BaseModel):
     min_langflow_ver: str | None = None
     max_langflow_ver: str | None = None
     tested_versions: list[str] = []
+    tags: list[str] = []
     readme: str | None = None
     icon: str | None = None
 
@@ -41,6 +42,7 @@ class ComponentResponse(BaseModel):
     min_langflow_ver: str | None
     max_langflow_ver: str | None
     tested_versions: list[str] | None
+    tags: list[str] | None = []
     icon: str | None
     is_standard: bool
     status: str
@@ -63,6 +65,7 @@ class ComponentListItem(BaseModel):
     version: str
     min_langflow_ver: str | None
     max_langflow_ver: str | None
+    tags: list[str] | None = []
     icon: str | None
     is_standard: bool
     status: str
