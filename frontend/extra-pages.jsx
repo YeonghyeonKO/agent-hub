@@ -349,7 +349,7 @@ function GuidePage() {
             <div className="muted-sm" style={{fontSize: 11.5, marginBottom: 6}}>{t('guide_external')}</div>
             <a className="guide-side-link" href="https://docs.langflow.org/" target="_blank" rel="noopener"><Icons.Globe size={11}/> {t('guide_lf_docs')}</a>
             <a className="guide-side-link" href="https://langflow-guide.posong.space" target="_blank" rel="noopener"><Icons.Globe size={11}/> {t('guide_lf_internal')}</a>
-            <a className="guide-side-link" href={contactChannel.startsWith('http') ? contactChannel : undefined} target="_blank" rel="noopener"><Icons.Comment size={11}/> {contactChannel}</a>
+            <a className="guide-side-link" href={contactChannel.startsWith('http') ? contactChannel : undefined} target="_blank" rel="noopener"><Icons.Users size={11}/> {t('guide_voc_channel')}</a>
           </div>
         </aside>
 

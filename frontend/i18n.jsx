@@ -99,7 +99,7 @@ const I18N = {
     guide_lf_promo_desc: '설치, 노드 구성, 디버깅, 배포까지 Langflow 사용법을 익혀보세요.',
     guide_lf_docs: 'Langflow 공식 문서',
     guide_lf_internal: 'Langflow 사내 가이드',
-    guide_contact_channel: '문의 채널',
+    guide_contact_channel: '문의 채널', guide_voc_channel: 'VoC 채널',
 
     // Upload
     upload_title: '새 Component / Flow 제출',
@@ -248,7 +248,7 @@ const I18N = {
     guide_lf_promo_desc: 'For Langflow usage — installation, node setup, debugging, and deployment — refer to the external guide.',
     guide_lf_docs: 'Langflow Official Docs',
     guide_lf_internal: 'Langflow Internal Guide',
-    guide_contact_channel: 'Contact Channel',
+    guide_contact_channel: 'Contact Channel', guide_voc_channel: 'VoC Channel',
 
     // Upload
     upload_title: 'Submit New Component / Flow',
