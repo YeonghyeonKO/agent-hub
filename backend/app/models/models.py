@@ -11,7 +11,7 @@ from app.database import Base
 class User(Base):
     __tablename__ = "users"
 
-    employee_id: Mapped[str] = mapped_column(String(7), primary_key=True)
+    employee_id: Mapped[str] = mapped_column(String(20), primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
     email: Mapped[str | None] = mapped_column(String(120))
     team: Mapped[str | None] = mapped_column(String(100))

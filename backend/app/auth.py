@@ -124,7 +124,7 @@ async def get_current_user(
     user = result.scalar_one_or_none()
 
     if user is None:
-        employee_id = empno if empno else sub[:7]
+        employee_id = empno if empno else sub[:20]
         logger.info(f"Creating new user: employee_id={employee_id}, name={username or empno}, sub={sub}")
         user = User(
             employee_id=employee_id,
