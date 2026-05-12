@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.9 (2026-05-12)
+
+### Fixes
+- **employee_id widened**: `String(7)` → `String(20)` across 11 tables — supports alphanumeric IDs (e.g. `X9991267`)
+
+### Database Migration
+- **008**: widen all employee_id / FK columns to VARCHAR(20)
+
+---
+
 ## v1.0.8 (2026-05-12)
 
 ### Features
