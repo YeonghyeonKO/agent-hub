@@ -118,6 +118,7 @@ const api = {
     updateSettings: (body) => api.put('/admin/settings', body),
     users: () => api.get('/admin/users'),
     updateRole: (empId, role) => api.patch(`/admin/users/${empId}/role`, { role }),
+    deleted: () => api.get('/admin/deleted'),
     deleteComponent: (id) => api.del(`/admin/components/${id}`),
     statistics: () => api.get('/admin/statistics'),
   },

@@ -112,7 +112,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
         {[
           ['pending', t('admin_pending'), pendingList.length],
           ['approved', t('admin_approved'), null],
-          ['rejected', t('admin_rejected'), null],
+          ['rejected', t('tab_deleted'), null],
           ...(userRole === 'admin' ? [['statistics', t('admin_statistics') || 'Statistics', null], ['users', t('admin_users'), null], ['settings', t('admin_settings'), null]] : []),
         ].map(([id, label, count]) => (
           <button key={id} className={`tab ${activeTab===id?'active':''}`} onClick={() => setActiveTab(id)}>
@@ -194,7 +194,7 @@ const ISSUE_ROWS = [
 
 function AdminTabPanel({ tab, onOpenComponent }) {
   if (tab === 'approved') return <ApprovedTab onOpenComponent={onOpenComponent}/>;
-  if (tab === 'rejected') return <RejectedTab onOpenComponent={onOpenComponent}/>;
+  if (tab === 'rejected') return <RejectedDeletedTab onOpenComponent={onOpenComponent}/>;
   if (tab === 'statistics') return <StatisticsTab/>;
   if (tab === 'users') return <UsersTab/>;
   if (tab === 'settings') return <SettingsTab/>;
@@ -241,19 +241,30 @@ function ApprovedTab({ onOpenComponent }) {
   );
 }
 
-function RejectedTab({ onOpenComponent }) {
+function RejectedDeletedTab({ onOpenComponent }) {
   const { t } = useI18n();
-  const [items, setItems] = React.useState([]);
+  const [rejected, setRejected] = React.useState([]);
+  const [deleted, setDeleted] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
-  const load = () => { setLoading(true); api.admin.rejected().then(setItems).catch(() => {}).finally(() => setLoading(false)); };
+  const load = () => {
+    setLoading(true);
+    Promise.all([
+      api.admin.rejected().then(setRejected).catch(() => {}),
+      api.admin.deleted().then(setDeleted).catch(() => {}),
+    ]).finally(() => setLoading(false));
+  };
   React.useEffect(load, []);
   const handleDelete = (id) => {
     if (!confirm(t('admin_delete_confirm'))) return;
     api.admin.deleteComponent(id).then(load).catch(e => alert('Delete failed: ' + e.message));
   };
+  const items = [
+    ...rejected.map(r => ({ ...r, _kind: 'rejected' })),
+    ...deleted.map(r => ({ ...r, _kind: 'deleted' })),
+  ];
   return (
     <div className="card" style={{padding: 0, overflow: 'hidden'}}>
-      <div className="admin-panel-head"><div className="h3">{t('admin_rejected')}</div></div>
+      <div className="admin-panel-head"><div className="h3">{t('tab_deleted')}</div></div>
       <div className="rejected-list">
         {items.map(r => (
           <div key={r.id} className="rejected-row">
@@ -264,11 +275,12 @@ function RejectedTab({ onOpenComponent }) {
                 <span style={{fontWeight: 600}}>{r.title}</span>
                 <span className="muted-sm">· {r.author?.name}</span>
                 <span className="muted-sm">· {fmtDate(r.created_at)}</span>
+                <span className={`chip ${r._kind === 'deleted' ? 'chip-neutral' : 'chip-warn'}`} style={{fontSize: 10}}>{r._kind === 'deleted' ? t('status_deleted') : t('status_rejected')}</span>
               </div>
             </div>
             <div className="row gap-8">
               <button className="btn btn-ghost btn-sm" style={{fontSize: 11}} onClick={() => onOpenComponent && onOpenComponent({id: r.id, type: r.type, title: r.title})}><Icons.Eye size={10}/></button>
-              <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/></button>
+              {r._kind !== 'deleted' && <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => handleDelete(r.id)}><Icons.X size={10}/></button>}
             </div>
           </div>
         ))}

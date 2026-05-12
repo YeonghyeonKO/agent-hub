@@ -108,6 +108,19 @@ class Download(Base):
     user: Mapped["User"] = relationship()
 
 
+class Image(Base):
+    __tablename__ = "images"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    filename: Mapped[str] = mapped_column(String(255))
+    content_type: Mapped[str] = mapped_column(String(50))
+    data: Mapped[str] = mapped_column(Text)  # base64 encoded
+    uploader_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    uploader: Mapped["User"] = relationship()
+
+
 class Issue(Base):
     __tablename__ = "issues"
 
