@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.0.8 (2026-05-12)
+
+### Features
+- **Images persist in DB**: base64 storage in `images` table, disk as cache — survives pod restart
+- **Admin rejected/deleted tab**: combined into one tab with status labels
+- **Image fade-in**: CSS animation on load with muted placeholder background
+
+### Database Migration
+- **007**: `images` table (filename, content_type, data, uploader_id)
+
+---
+
 ## v1.0.7 (2026-05-11)
 
 ### Fixes
