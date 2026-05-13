@@ -178,16 +178,20 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
 // ─────────────────────────────────────────────────────────────────────
 function RankColumn({ title, chipClass, ranked, onOpenComponent, starWeight, downloadWeight }) {
   const { t } = useI18n();
+  const PAGE_SIZE = 10;
+  const [showCount, setShowCount] = React.useState(PAGE_SIZE);
   const score = (c) => c.stars * starWeight + c.downloads * downloadWeight;
+  const visible = ranked.slice(0, showCount);
   return (
     <div style={{flex: 1, minWidth: 0}}>
       <div className="h3" style={{marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8}}>
         <span className={`chip ${chipClass}`} style={{padding: '0 6px'}}>{chipClass === 'chip-py' ? '.py' : '.json'}</span>
         {title}
+        <span className="muted-sm" style={{fontWeight: 400}}>({ranked.length})</span>
       </div>
       <div style={{border: '1px solid var(--line)', borderRadius: 'var(--radius)', overflow: 'hidden'}}>
         {ranked.length === 0 && <div className="muted-sm" style={{padding: 28, textAlign: 'center'}}>{t('ranking_empty')}</div>}
-        {ranked.map((c, i) => {
+        {visible.map((c, i) => {
           const Icon = Icons[c.icon] || Icons.Box;
           const s = score(c);
           return (
@@ -207,6 +211,13 @@ function RankColumn({ title, chipClass, ranked, onOpenComponent, starWeight, dow
           );
         })}
       </div>
+      {ranked.length > showCount && (
+        <div style={{textAlign: 'center', marginTop: 12}}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowCount(s => s + PAGE_SIZE)}>
+            {t('load_more') || 'Load More'} ({showCount} / {ranked.length})
+          </button>
+        </div>
+      )}
     </div>
   );
 }

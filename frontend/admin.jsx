@@ -417,21 +417,27 @@ function UsersTab() {
   const { t } = useI18n();
   const [users, setUsers] = React.useState([]);
   const [usersLoading, setUsersLoading] = React.useState(true);
+  const [usersTotal, setUsersTotal] = React.useState(0);
   const [search, setSearch] = React.useState('');
   const [sortBy, setSortBy] = React.useState('role'); // 'role' | 'id'
-  const loadUsers = () => { setUsersLoading(true); api.admin.users().then(setUsers).catch(() => {}).finally(() => setUsersLoading(false)); };
-  React.useEffect(loadUsers, []);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const PAGE_SIZE = 50;
+  const loadUsers = (append = false) => {
+    const offset = append ? users.length : 0;
+    append ? setLoadingMore(true) : setUsersLoading(true);
+    api.get('/admin/users', { search: search || undefined, limit: PAGE_SIZE, offset })
+      .then(d => { setUsers(prev => append ? [...prev, ...(d.items || [])] : (d.items || [])); setUsersTotal(d.total || 0); })
+      .catch(() => {})
+      .finally(() => { setUsersLoading(false); setLoadingMore(false); });
+  };
+  React.useEffect(() => loadUsers(false), []);
 
   const changeRole = (empId, newRole) => {
-    api.admin.updateRole(empId, newRole).then(loadUsers).catch(e => console.error(e));
+    api.admin.updateRole(empId, newRole).then(() => loadUsers(false)).catch(e => console.error(e));
   };
 
   const roleOrder = { admin: 0, reviewer: 1, user: 2 };
-  const filtered = users.filter(u => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (u.name || '').toLowerCase().includes(q) || (u.employee_id || '').includes(q) || (u.email || '').toLowerCase().includes(q);
-  }).sort((a, b) => {
+  const filtered = [...users].sort((a, b) => {
     if (sortBy === 'role') return (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9) || a.employee_id.localeCompare(b.employee_id);
     return a.employee_id.localeCompare(b.employee_id);
   });
@@ -441,11 +447,11 @@ function UsersTab() {
       <div className="admin-panel-head">
         <div>
           <div className="h3">{t('admin_users')}</div>
-          <div className="muted-sm">{users.length} users</div>
+          <div className="muted-sm">{usersTotal} users</div>
         </div>
         <div className="nav-search" style={{width: 240, height: 32}}>
           <Icons.Search size={13}/>
-          <input placeholder="Search name, ID, email..." value={search} onChange={e => setSearch(e.target.value)}/>
+          <input placeholder="Search name, ID, email..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') loadUsers(false); }}/>
         </div>
       </div>
       <div style={{display: 'flex', flexDirection: 'column'}}>
@@ -476,6 +482,13 @@ function UsersTab() {
           </div>
         )}
       </div>
+      {users.length < usersTotal && !usersLoading && (
+        <div style={{textAlign: 'center', padding: '14px 0'}}>
+          <button className="btn btn-ghost btn-sm" disabled={loadingMore} onClick={() => loadUsers(true)}>
+            {loadingMore ? 'Loading...' : `${t('load_more') || 'Load More'} (${users.length} / ${usersTotal})`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

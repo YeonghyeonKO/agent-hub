@@ -208,13 +208,27 @@ async def submit_review(
     )
 
 
-@router.get("/users", response_model=list[UserResponse])
+@router.get("/users")
 async def list_users(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[User, Depends(require_admin)],
+    search: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
 ):
-    result = await db.execute(select(User).order_by(User.created_at.desc()))
-    return [UserResponse.model_validate(u) for u in result.scalars().all()]
+    query = select(User)
+    if search:
+        query = query.where(
+            User.employee_id.ilike(f"%{search}%")
+            | User.name.ilike(f"%{search}%")
+            | User.email.ilike(f"%{search}%")
+        )
+    count_query = select(func.count()).select_from(query.subquery())
+    total = (await db.execute(count_query)).scalar() or 0
+    query = query.order_by(User.created_at.desc()).limit(limit).offset(offset)
+    result = await db.execute(query)
+    users = [UserResponse.model_validate(u) for u in result.scalars().all()]
+    return {"items": users, "total": total, "limit": limit, "offset": offset}
 
 
 class RoleUpdate(BaseModel):
