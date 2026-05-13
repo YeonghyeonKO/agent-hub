@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.10 (2026-05-12)
+
+### Features
+- **User delete pending items**: authors can delete their own pending/draft/rejected components
+- **Admin Users sort**: clickable ID/Role column headers (admin→reviewer→user)
+- **SSO login persistence**: sessionStorage → localStorage — new windows stay logged in
+
+---
+
 ## v1.0.9 (2026-05-12)
 
 ### Fixes
