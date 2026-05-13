@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.11 (2026-05-12)
+
+### Features
+- **Ranking pagination**: top 10 per column, "Load More" for rest
+- **Admin Users server-side**: pagination (50/page), search (Enter), sort by Role or ID
+- **User delete pending**: authors can delete their own pending/draft/rejected items
+- **SSO persistence**: sessionStorage → localStorage — new windows stay logged in
+
+---
+
 ## v1.0.10 (2026-05-12)
 
 ### Features
