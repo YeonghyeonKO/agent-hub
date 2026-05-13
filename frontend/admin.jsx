@@ -425,22 +425,18 @@ function UsersTab() {
   const loadUsers = (append = false) => {
     const offset = append ? users.length : 0;
     append ? setLoadingMore(true) : setUsersLoading(true);
-    api.get('/admin/users', { search: search || undefined, limit: PAGE_SIZE, offset })
+    api.get('/admin/users', { search: search || undefined, sort: sortBy, limit: PAGE_SIZE, offset })
       .then(d => { setUsers(prev => append ? [...prev, ...(d.items || [])] : (d.items || [])); setUsersTotal(d.total || 0); })
       .catch(() => {})
       .finally(() => { setUsersLoading(false); setLoadingMore(false); });
   };
-  React.useEffect(() => loadUsers(false), []);
+  React.useEffect(() => loadUsers(false), [sortBy]);
 
   const changeRole = (empId, newRole) => {
     api.admin.updateRole(empId, newRole).then(() => loadUsers(false)).catch(e => console.error(e));
   };
 
-  const roleOrder = { admin: 0, reviewer: 1, user: 2 };
-  const filtered = [...users].sort((a, b) => {
-    if (sortBy === 'role') return (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9) || a.employee_id.localeCompare(b.employee_id);
-    return a.employee_id.localeCompare(b.employee_id);
-  });
+  const filtered = users;
 
   return (
     <div className="card" style={{padding: 0, overflow: 'hidden'}}>

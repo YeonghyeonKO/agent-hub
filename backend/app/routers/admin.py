@@ -213,6 +213,7 @@ async def list_users(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[User, Depends(require_admin)],
     search: str | None = None,
+    sort: str = "role",
     limit: int = 50,
     offset: int = 0,
 ):
@@ -225,7 +226,19 @@ async def list_users(
         )
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar() or 0
-    query = query.order_by(User.created_at.desc()).limit(limit).offset(offset)
+    from sqlalchemy import case
+    if sort == "role":
+        role_order = case(
+            (User.role == "admin", 0),
+            (User.role == "reviewer", 1),
+            else_=2,
+        )
+        query = query.order_by(role_order, User.employee_id)
+    elif sort == "id":
+        query = query.order_by(User.employee_id)
+    else:
+        query = query.order_by(User.created_at.desc())
+    query = query.limit(limit).offset(offset)
     result = await db.execute(query)
     users = [UserResponse.model_validate(u) for u in result.scalars().all()]
     return {"items": users, "total": total, "limit": limit, "offset": offset}
