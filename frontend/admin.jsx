@@ -418,6 +418,7 @@ function UsersTab() {
   const [users, setUsers] = React.useState([]);
   const [usersLoading, setUsersLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
+  const [sortBy, setSortBy] = React.useState('role'); // 'role' | 'id'
   const loadUsers = () => { setUsersLoading(true); api.admin.users().then(setUsers).catch(() => {}).finally(() => setUsersLoading(false)); };
   React.useEffect(loadUsers, []);
 
@@ -425,10 +426,14 @@ function UsersTab() {
     api.admin.updateRole(empId, newRole).then(loadUsers).catch(e => console.error(e));
   };
 
+  const roleOrder = { admin: 0, reviewer: 1, user: 2 };
   const filtered = users.filter(u => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (u.name || '').toLowerCase().includes(q) || (u.employee_id || '').includes(q) || (u.email || '').toLowerCase().includes(q);
+  }).sort((a, b) => {
+    if (sortBy === 'role') return (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9) || a.employee_id.localeCompare(b.employee_id);
+    return a.employee_id.localeCompare(b.employee_id);
   });
 
   return (
@@ -444,11 +449,11 @@ function UsersTab() {
         </div>
       </div>
       <div style={{display: 'flex', flexDirection: 'column'}}>
-        <div style={{display: 'grid', gridTemplateColumns: '60px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg-elev)', borderBottom: '1px solid var(--line)'}}>
-          <div>ID</div><div>Name</div><div>Email</div><div>Role</div>
+        <div style={{display: 'grid', gridTemplateColumns: '80px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg-elev)', borderBottom: '1px solid var(--line)'}}>
+          <div style={{cursor: 'pointer'}} onClick={() => setSortBy('id')}>ID {sortBy === 'id' ? '▲' : ''}</div><div>Name</div><div>Email</div><div style={{cursor: 'pointer'}} onClick={() => setSortBy('role')}>Role {sortBy === 'role' ? '▲' : ''}</div>
         </div>
         {filtered.map(u => (
-          <div key={u.employee_id} style={{display: 'grid', gridTemplateColumns: '60px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--line)', alignItems: 'center', fontSize: 13}}>
+          <div key={u.employee_id} style={{display: 'grid', gridTemplateColumns: '80px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--line)', alignItems: 'center', fontSize: 13}}>
             <div className="mono" style={{fontWeight: 600}}>{u.employee_id}</div>
             <div className="row gap-8">
               <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}>{(u.name || '?')[0]}</div>

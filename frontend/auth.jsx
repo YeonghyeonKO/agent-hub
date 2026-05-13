@@ -27,7 +27,7 @@ const auth = {
   },
 
   getToken() {
-    return sessionStorage.getItem('agenthub_token');
+    return localStorage.getItem('agenthub_token');
   },
 
   isLoggedIn() {
@@ -71,15 +71,14 @@ const auth = {
       throw new Error('Token exchange failed');
     }
     const data = await res.json();
-    sessionStorage.setItem('agenthub_token', data.access_token);
-    if (data.refresh_token) sessionStorage.setItem('agenthub_refresh', data.refresh_token);
+    localStorage.setItem('agenthub_token', data.access_token);
+    if (data.refresh_token) localStorage.setItem('agenthub_refresh', data.refresh_token);
     return data.access_token;
   },
 
   logout() {
-    sessionStorage.removeItem('agenthub_token');
-    sessionStorage.removeItem('agenthub_refresh');
-    sessionStorage.clear();
+    localStorage.removeItem('agenthub_token');
+    localStorage.removeItem('agenthub_refresh');
     // Clear any auth cookies
     document.cookie.split(';').forEach(c => {
       document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
@@ -122,7 +121,7 @@ auth.refreshIfNeeded = async function() {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const expiresIn = payload.exp * 1000 - Date.now();
     if (expiresIn < 60000) {
-      const refresh = sessionStorage.getItem('agenthub_refresh');
+      const refresh = localStorage.getItem('agenthub_refresh');
       if (refresh) {
         const res = await _origFetch('/api/v1/auth/refresh', {
           method: 'POST',
@@ -131,8 +130,8 @@ auth.refreshIfNeeded = async function() {
         });
         if (res.ok) {
           const data = await res.json();
-          sessionStorage.setItem('agenthub_token', data.access_token);
-          if (data.refresh_token) sessionStorage.setItem('agenthub_refresh', data.refresh_token);
+          localStorage.setItem('agenthub_token', data.access_token);
+          if (data.refresh_token) localStorage.setItem('agenthub_refresh', data.refresh_token);
         }
       }
     }
