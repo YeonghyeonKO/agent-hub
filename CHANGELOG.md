@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.12 (2026-05-14)
+
+### Fixes
+- **Admin Approved/Statistics**: paginate 20 per page with Load More
+- **Admin Users sort**: server-side sort reload on column click
+- **Draft delete button**: label changed "삭제됨" → "삭제" / "Deleted" → "Delete"
+- **Rejected/Deleted tab**: removed X icon from row left side
+
+---
+
 ## v1.0.11 (2026-05-12)
 
 ### Features
