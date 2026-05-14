@@ -4,8 +4,8 @@
 
 ### Fixes
 - **Admin Approved/Statistics**: paginate 20 per page with Load More
-- **Admin Users sort**: server-side sort reload on column click
-- **Draft delete button**: label changed "삭제됨" → "삭제" / "Deleted" → "Delete"
+- **Admin Users sort**: clicking ID/Role column triggers server-side sort correctly
+- **Delete button label**: "삭제됨" → "삭제" / "Deleted" → "Delete" in drafts
 - **Rejected/Deleted tab**: removed X icon from row left side
 
 ---
