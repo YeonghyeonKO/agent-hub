@@ -141,7 +141,7 @@ function MyAssetsPage({ onOpenComponent, onOpenUpload }) {
                 <button className="btn btn-ghost btn-sm" style={{color: 'var(--err-fg)', fontSize: 11}} onClick={() => {
                   if (!confirm(t('admin_delete_confirm') || 'Delete this item?')) return;
                   api.del('/components/' + d.id).then(() => { setMyComponents(prev => prev.filter(c => c.id !== d.id)); }).catch(e => alert('Delete failed: ' + e.message));
-                }}><Icons.X size={10}/> {t('status_deleted') || 'Delete'}</button>
+                }}><Icons.X size={10}/> {t('btn_delete')}</button>
               </div>
             </div>
           ))}

@@ -205,8 +205,10 @@ function ApprovedTab({ onOpenComponent }) {
   const { t } = useI18n();
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [showCount, setShowCount] = React.useState(20);
   const load = () => { setLoading(true); api.admin.approved().then(setItems).catch(() => {}).finally(() => setLoading(false)); };
   React.useEffect(load, []);
+  const visible = items.slice(0, showCount);
   const handleDelete = (id) => {
     if (!confirm(t('admin_delete_confirm'))) return;
     api.admin.deleteComponent(id).then(load).catch(e => alert('Delete failed: ' + e.message));
@@ -218,7 +220,7 @@ function ApprovedTab({ onOpenComponent }) {
         <div className="admin-tab-row admin-tab-head">
           <div>{t('col_name')}</div><div>{t('ranking_col_developer')}</div><div>{t('col_star')}</div><div>{t('col_download')}</div><div></div><div></div>
         </div>
-        {items.map(r => (
+        {visible.map(r => (
           <div key={r.id} className="admin-tab-row">
             <div className="row gap-8" style={{minWidth: 0}}>
               <span className={`chip chip-${r.type}`}>{r.type === 'py' ? '.py' : '.json'}</span>
@@ -237,6 +239,11 @@ function ApprovedTab({ onOpenComponent }) {
         {loading && <LoadingIndicator/>}
         {!loading && items.length === 0 && <div className="empty-state" style={{padding: 30}}>No approved items</div>}
       </div>
+      {items.length > showCount && (
+        <div style={{textAlign: 'center', padding: '14px 0'}}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowCount(s => s + 20)}>{t('load_more') || 'Load More'} ({showCount} / {items.length})</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -268,7 +275,6 @@ function RejectedDeletedTab({ onOpenComponent }) {
       <div className="rejected-list">
         {items.map(r => (
           <div key={r.id} className="rejected-row">
-            <div className="rejected-icon"><Icons.X size={14}/></div>
             <div style={{flex: 1, minWidth: 0}}>
               <div className="row gap-8" style={{marginBottom: 4}}>
                 <span className={`chip chip-${r.type}`}>{r.type === 'py' ? '.py' : '.json'}</span>
@@ -298,6 +304,7 @@ function StatisticsTab() {
   const [filterAuthor, setFilterAuthor] = React.useState('');
   const [filterSearch, setFilterSearch] = React.useState('');
   const [filterStatus, setFilterStatus] = React.useState('all');
+  const [showCount, setShowCount] = React.useState(20);
 
   React.useEffect(() => {
     api.admin.statistics().then(d => { setItems(d || []); setLoading(false); }).catch(() => setLoading(false));
@@ -383,7 +390,7 @@ function StatisticsTab() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(item => {
+            {filtered.slice(0, showCount).map(item => {
               const statusColor = item.deleted_at ? 'var(--text-4)' : item.status === 'approved' ? 'var(--ok-fg)' : item.status === 'rejected' ? 'var(--err-fg)' : 'var(--warn-fg)';
               const statusLabel = item.deleted_at ? 'deleted' : item.status;
               return (
@@ -409,6 +416,11 @@ function StatisticsTab() {
       </div>
       {loading && <LoadingIndicator/>}
       {!loading && filtered.length === 0 && <div className="empty-state" style={{padding: 30}}>No items found</div>}
+      {filtered.length > showCount && (
+        <div style={{textAlign: 'center', padding: '14px 0'}}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowCount(s => s + 20)}>{t('load_more') || 'Load More'} ({showCount} / {filtered.length})</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -452,7 +464,7 @@ function UsersTab() {
       </div>
       <div style={{display: 'flex', flexDirection: 'column'}}>
         <div style={{display: 'grid', gridTemplateColumns: '80px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg-elev)', borderBottom: '1px solid var(--line)'}}>
-          <div style={{cursor: 'pointer'}} onClick={() => setSortBy('id')}>ID {sortBy === 'id' ? '▲' : ''}</div><div>Name</div><div>Email</div><div style={{cursor: 'pointer'}} onClick={() => setSortBy('role')}>Role {sortBy === 'role' ? '▲' : ''}</div>
+          <div style={{cursor: 'pointer'}} onClick={() => { setSortBy('id'); if (sortBy === 'id') loadUsers(false); }}>ID {sortBy === 'id' ? '▲' : ''}</div><div>Name</div><div>Email</div><div style={{cursor: 'pointer'}} onClick={() => { setSortBy('role'); if (sortBy === 'role') loadUsers(false); }}>Role {sortBy === 'role' ? '▲' : ''}</div>
         </div>
         {filtered.map(u => (
           <div key={u.employee_id} style={{display: 'grid', gridTemplateColumns: '80px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--line)', alignItems: 'center', fontSize: 13}}>

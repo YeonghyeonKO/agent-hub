@@ -48,7 +48,7 @@ const I18N = {
     draft_reviewing: '심사 중', draft_draft: '초안', draft_continue: '이어서 작성',
     draft_preview: '미리보기', draft_cancel_submit: '제출 취소',
     deleted_notice: '관리자에 의해 반려/삭제된 항목입니다. 수정 후 다시 제출하면 심사를 받을 수 있습니다.',
-    status_rejected: '반려됨', status_deleted: '삭제됨', btn_resubmit: '다시 제출',
+    status_rejected: '반려됨', status_deleted: '삭제됨', btn_delete: '삭제', btn_resubmit: '다시 제출',
     draft_validation: '자동 검증', draft_passed: '통과',
 
     // Ranking
@@ -197,7 +197,7 @@ const I18N = {
     draft_reviewing: 'In Review', draft_draft: 'Draft', draft_continue: 'Continue',
     draft_preview: 'Preview', draft_cancel_submit: 'Cancel Submission',
     deleted_notice: 'These items were rejected or deleted by admin. You can edit and resubmit for review.',
-    status_rejected: 'Rejected', status_deleted: 'Deleted', btn_resubmit: 'Resubmit',
+    status_rejected: 'Rejected', status_deleted: 'Deleted', btn_delete: 'Delete', btn_resubmit: 'Resubmit',
     draft_validation: 'Auto Validation', draft_passed: 'passed',
 
     // Ranking
