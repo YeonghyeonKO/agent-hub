@@ -73,6 +73,19 @@ const api = {
     file: (id) => api.get(`/components/${id}/file`),
     update: (id, formData) => api.patchForm(`/components/${id}`, formData),
     versions: (id) => api.get(`/components/${id}/versions`),
+    versionFile: (id, versionId) => api.get(`/components/${id}/versions/${versionId}/file`),
+    improvements: (id) => api.get(`/components/${id}/improvements`),
+    improvement: (id, impId) => api.get(`/components/${id}/improvements/${impId}`),
+    submitImprovement: (id, formData) => api.postForm(`/components/${id}/improvements`, formData),
+    reviewImprovement: (id, impId, formData) => api.postForm(`/components/${id}/improvements/${impId}/review`, formData),
+    withdrawImprovement: (id, impId) => api.del(`/components/${id}/improvements/${impId}`),
+    contributors: (id) => api.get(`/components/${id}/contributors`),
+  },
+  notifications: {
+    list: (unreadOnly = false) => api.get('/notifications' + (unreadOnly ? '?unread_only=true' : '')),
+    unreadCount: () => api.get('/notifications/unread-count'),
+    read: (id) => api.post(`/notifications/${id}/read`),
+    readAll: () => api.post('/notifications/read-all'),
   },
   rankings: {
     list: (params = {}) => {

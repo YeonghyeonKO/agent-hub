@@ -252,12 +252,13 @@ async def update_component(
         patch_v += 1
     new_version = f"v{major}.{minor}.{patch_v}"
 
-    # Save old version to component_versions
+    # Save old version snapshot to component_versions (preserve code so past versions remain viewable)
     version_record = ComponentVersion(
         component_id=component.id,
         version=component.version,
         changelog=changelog or f"Updated to {new_version}",
         file_path=component.file_path,
+        file_content=component.file_content,
     )
     db.add(version_record)
 
@@ -310,18 +311,65 @@ async def get_versions(
     result = await db.execute(
         select(ComponentVersion)
         .where(ComponentVersion.component_id == component_id)
+        .options(selectinload(ComponentVersion.contributor))
         .order_by(ComponentVersion.created_at.desc())
     )
     versions = result.scalars().all()
-    return [
-        {
+    items = []
+    for v in versions:
+        contributor = None
+        if v.contributor is not None:
+            contributor = UserResponse.model_validate(v.contributor).model_dump()
+        items.append({
             "id": str(v.id),
             "version": v.version,
             "changelog": v.changelog,
+            "has_content": bool(v.file_content or v.file_path),
+            "contributor": contributor,
             "created_at": v.created_at.isoformat() if v.created_at else None,
+        })
+    return items
+
+
+@router.get("/{component_id}/versions/{version_id}/file")
+async def get_version_file(
+    component_id: uuid.UUID,
+    version_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(
+        select(ComponentVersion).where(
+            ComponentVersion.id == version_id,
+            ComponentVersion.component_id == component_id,
+        )
+    )
+    version = result.scalar_one_or_none()
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+
+    component = await db.get(Component, component_id)
+
+    # Prefer DB content (works on serverless where disk is ephemeral)
+    if version.file_content:
+        ext = ".py" if (component and component.type == "py") else ".json"
+        return {
+            "version": version.version,
+            "filename": f"{(component.title if component else 'file')}-{version.version}{ext}",
+            "content": version.file_content,
+            "type": component.type if component else "py",
         }
-        for v in versions
-    ]
+
+    if version.file_path and os.path.exists(version.file_path):
+        with open(version.file_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+        return {
+            "version": version.version,
+            "filename": os.path.basename(version.file_path),
+            "content": content,
+            "type": component.type if component else "py",
+        }
+
+    raise HTTPException(status_code=404, detail="Version file content unavailable (legacy version without snapshot)")
 
 
 @router.get("/{component_id}/starred")

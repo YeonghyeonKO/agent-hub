@@ -15,3 +15,11 @@ build/
 /data/uploads/
 .vercel
 .env*.local
+
+# Claude Code dev artifacts
+CLAUDE.md
+.claude/
+.omc/
+
+# Local docker overrides
+docker-compose.override.yml

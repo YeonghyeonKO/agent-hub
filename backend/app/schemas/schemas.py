@@ -150,6 +150,78 @@ class SeasonUpdate(BaseModel):
     contact_channel: str | None = None
 
 
+# ─── Code Improvement ───────────────────────────────────────────────────
+class CodeImprovementListItem(BaseModel):
+    id: uuid.UUID
+    component_id: uuid.UUID
+    contributor: UserResponse
+    title: str
+    description: str
+    base_version: str | None
+    status: str
+    review_comment: str | None = None
+    applied_version: str | None = None
+    reviewed_at: datetime | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CodeImprovementDetail(CodeImprovementListItem):
+    base_content: str | None = None
+    file_content: str
+
+
+class CodeImprovementReview(BaseModel):
+    decision: str = Field(pattern=r"^(approve|reject)$")
+    review_comment: str | None = None
+
+
+class ContributorEntry(BaseModel):
+    user: UserResponse
+    contributions: int
+    first_contribution_at: datetime
+    last_contribution_at: datetime
+
+
+# ─── Notification ───────────────────────────────────────────────────────
+class NotificationItem(BaseModel):
+    id: uuid.UUID
+    kind: str
+    message: str
+    link: str | None
+    component_id: uuid.UUID | None
+    improvement_id: uuid.UUID | None
+    is_read: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class NotificationListResponse(BaseModel):
+    items: list[NotificationItem]
+    unread_count: int
+
+
+# ─── Version ────────────────────────────────────────────────────────────
+class VersionEntry(BaseModel):
+    id: uuid.UUID
+    version: str
+    changelog: str | None
+    has_content: bool
+    contributor: UserResponse | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class VersionFileResponse(BaseModel):
+    version: str
+    filename: str
+    content: str
+    type: str
+
+
 # ─── Issue ──────────────────────────────────────────────────────────────
 class IssueResponse(BaseModel):
     id: uuid.UUID
