@@ -65,9 +65,12 @@ class ComponentVersion(Base):
     version: Mapped[str] = mapped_column(String(30))
     changelog: Mapped[str | None] = mapped_column(Text)
     file_path: Mapped[str | None] = mapped_column(Text)
+    file_content: Mapped[str | None] = mapped_column(Text)
+    contributor_id: Mapped[str | None] = mapped_column(ForeignKey("users.employee_id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     component: Mapped["Component"] = relationship(back_populates="versions")
+    contributor: Mapped["User | None"] = relationship()
 
 
 class Review(Base):
@@ -189,6 +192,41 @@ class VocUpvote(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     post: Mapped["VocPost"] = relationship(back_populates="upvotes")
+
+
+class CodeImprovement(Base):
+    __tablename__ = "code_improvements"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    component_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("components.id", ondelete="CASCADE"))
+    contributor_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"))
+    title: Mapped[str] = mapped_column(String(300))
+    description: Mapped[str] = mapped_column(Text)  # what was improved + why
+    base_version: Mapped[str | None] = mapped_column(String(30))  # component version at submission
+    base_content: Mapped[str | None] = mapped_column(Text)  # snapshot of original code for diff stability
+    file_content: Mapped[str] = mapped_column(Text)  # the improved code
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending / approved / rejected
+    review_comment: Mapped[str | None] = mapped_column(Text)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    applied_version: Mapped[str | None] = mapped_column(String(30), nullable=True)  # version when approved
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    component: Mapped["Component"] = relationship()
+    contributor: Mapped["User"] = relationship()
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"))  # recipient
+    kind: Mapped[str] = mapped_column(String(40))  # improvement_request / improvement_approved / improvement_rejected
+    message: Mapped[str] = mapped_column(Text)
+    link: Mapped[str | None] = mapped_column(Text)  # hash route, e.g. #/component/{id}?tab=improvements
+    component_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("components.id", ondelete="CASCADE"), nullable=True)
+    improvement_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("code_improvements.id", ondelete="CASCADE"), nullable=True)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Season(Base):

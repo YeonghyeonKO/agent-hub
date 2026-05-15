@@ -35,8 +35,23 @@ class SmartChunker(Component):
         return chunks`;
 
 function ComponentDetail({ component, onBack }) {
+  const { t } = useI18n();
+  // Read tab from hash query string (?tab=improvements&imp=...)
+  const initialTab = (() => {
+    const m = window.location.hash.match(/\?([^#]+)$/);
+    if (!m) return 'readme';
+    const qs = new URLSearchParams(m[1]);
+    const tabParam = qs.get('tab');
+    return ['readme', 'code', 'versions', 'improvements'].includes(tabParam) ? tabParam : 'readme';
+  })();
+  const initialImp = (() => {
+    const m = window.location.hash.match(/\?([^#]+)$/);
+    if (!m) return null;
+    return new URLSearchParams(m[1]).get('imp');
+  })();
+
   const [c, setC] = React.useState(component);
-  const [tab, setTab] = React.useState('readme');
+  const [tab, setTab] = React.useState(initialTab);
   const [fileContent, setFileContent] = React.useState(null);
   const [fileName, setFileName] = React.useState('');
   const [starCount, setStarCount] = React.useState(c.stars_count ?? c.stars ?? 0);
@@ -45,12 +60,22 @@ function ComponentDetail({ component, onBack }) {
   const [copyToast, setCopyToast] = React.useState('');
   const [currentUser, setCurrentUser] = React.useState(null);
   const [versionHistory, setVersionHistory] = React.useState([]);
+  const [contributors, setContributors] = React.useState([]);
+  const [versionCode, setVersionCode] = React.useState(null);  // { version, content, filename }
+
+  const reloadComponent = React.useCallback(() => {
+    if (c.id && String(c.id).includes('-')) {
+      api.components.get(c.id).then(full => setC(apiToCard(full))).catch(() => {});
+      api.components.versions(c.id).then(setVersionHistory).catch(() => {});
+    }
+  }, [c.id]);
 
   // Fetch full component data (including readme) and check star status
   React.useEffect(() => {
     if (c.id && String(c.id).includes('-')) {
       if (c.readme === undefined) api.components.get(c.id).then(full => setC(apiToCard(full))).catch(() => {});
       api.get(`/components/${c.id}/starred`).then(r => setStarred(r.starred)).catch(() => {});
+      api.components.contributors(c.id).then(setContributors).catch(() => {});
     }
     api.users.me().then(u => setCurrentUser(u)).catch(() => {});
   }, [c.id]);
@@ -102,6 +127,20 @@ function ComponentDetail({ component, onBack }) {
             <span style={{color: 'var(--text-2)', fontWeight: 500}}>{c.author.name}</span>
             <span className="breadcrumb-sep">·</span>
             <span>{fmtDate(c.created_at)} 등록</span>
+            {contributors.length > 0 && (
+              <>
+                <span className="breadcrumb-sep">·</span>
+                <span style={{color: 'var(--text-3)'}}>{t('contributors_title')}</span>
+                <div className="contributors-list">
+                  {contributors.slice(0, 6).map(co => (
+                    <span key={co.user.employee_id} className="contributor-chip" title={`${co.user.name} · ${co.contributions}${t('contributions_label')}`}>
+                      <Icons.Users size={9}/> {co.user.name}{co.contributions > 1 ? ` ×${co.contributions}` : ''}
+                    </span>
+                  ))}
+                  {contributors.length > 6 && <span className="muted-sm">+{contributors.length - 6}</span>}
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div className="detail-actions">
@@ -167,9 +206,10 @@ function ComponentDetail({ component, onBack }) {
 
       <div className="tabs" style={{marginTop: 32}}>
         {[
-          ['readme', '개요 / 사용법'],
+          ['readme', t('upload_field_readme') === 'Overview / Usage' ? 'Overview / Usage' : '개요 / 사용법'],
           ['code', '코드 미리보기'],
           ['versions', '버전 이력'],
+          ...(c.type === 'py' ? [['improvements', t('tab_improvements')]] : []),
         ].map(([id, label]) => (
           <button key={id} className={`tab ${tab===id?'active':''}`} onClick={() => { setTab(id); if (id === 'versions' && versionHistory.length === 0 && c.id) api.components.versions(c.id).then(setVersionHistory).catch(() => {}); }}>
             {label}
@@ -193,16 +233,41 @@ function ComponentDetail({ component, onBack }) {
             {versionHistory.length === 0 && <div className="muted-sm" style={{padding: 24, textAlign: 'center'}}>이전 버전이 없습니다</div>}
             {versionHistory.map((v, i) => (
               <div key={v.id} style={{padding: '12px 18px', borderBottom: i < versionHistory.length - 1 ? '1px solid var(--line)' : 'none'}}>
-                <div className="row gap-8" style={{marginBottom: 4}}>
+                <div className="row gap-8" style={{marginBottom: 4, flexWrap: 'wrap'}}>
                   <span className="mono" style={{fontWeight: 700}}>{v.version}</span>
                   <span className="muted-sm">· {fmtDate(v.created_at)}</span>
+                  {v.contributor && (
+                    <span className="contributor-chip" title={v.contributor.name}>
+                      <Icons.Users size={9}/> {t('versions_contributor')} {v.contributor.name}
+                    </span>
+                  )}
+                  {v.has_content && (
+                    <button className="btn btn-ghost btn-sm" style={{marginLeft: 'auto', fontSize: 11}} onClick={() => {
+                      api.components.versionFile(c.id, v.id)
+                        .then(d => setVersionCode({ version: v.version, content: d.content, filename: d.filename }))
+                        .catch(() => alert('해당 버전 코드를 불러올 수 없습니다'));
+                    }}>
+                      <Icons.Code size={10}/> {t('versions_view_code')}
+                    </button>
+                  )}
                 </div>
                 <div style={{fontSize: 13, color: 'var(--text-2)'}}>{v.changelog}</div>
               </div>
             ))}
           </div>
         )}
+        {tab === 'improvements' && (
+          <ImprovementsTab
+            component={c}
+            currentUser={currentUser}
+            currentCode={fileContent || ''}
+            initialImpId={initialImp}
+            onChanged={() => { reloadComponent(); api.components.contributors(c.id).then(setContributors).catch(() => {}); }}
+          />
+        )}
       </div>
+
+      {versionCode && <VersionCodeModal info={versionCode} onClose={() => setVersionCode(null)}/>}
 
       {showUpdate && <UpdateModal component={c} onClose={() => setShowUpdate(false)} onUpdated={(updated) => { setC(apiToCard(updated)); setShowUpdate(false); }}/>}
     </div>
@@ -405,6 +470,382 @@ function UpdateModal({ component, onClose, onUpdated }) {
           <button className="btn btn-ghost btn-sm" onClick={safeClose}>취소</button>
           <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={submitting || !!fileError} style={{opacity: (submitting || fileError) ? 0.5 : 1}}>
             <Icons.Check size={11}/> {submitting ? '업데이트 중...' : `${nextVer} 업데이트`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VersionCodeModal({ info, onClose }) {
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: 920}}>
+        <div className="modal-header">
+          <div>
+            <div className="h2">{info.filename}</div>
+            <div className="muted-sm" style={{marginTop: 4}}>{info.version}</div>
+          </div>
+          <button className="btn btn-icon btn-ghost" onClick={onClose}><Icons.X/></button>
+        </div>
+        <div className="modal-body" style={{maxHeight: '65vh', overflow: 'auto'}}>
+          <CodePreview code={info.content} filename={info.filename}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImprovementsTab({ component, currentUser, currentCode, initialImpId, onChanged }) {
+  const { t } = useI18n();
+  const [improvements, setImprovements] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [showSubmit, setShowSubmit] = React.useState(false);
+  const [expandedId, setExpandedId] = React.useState(initialImpId || null);
+
+  // apiToCard remaps author.employee_id -> author.id, so check both
+  const authorId = component.author?.id || component.author?.employee_id || component.author_id;
+  const isAuthor = currentUser && authorId && currentUser.employee_id === authorId;
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const canPropose = currentUser && !isAuthor;
+
+  const reload = React.useCallback(() => {
+    if (!component.id) return;
+    setLoading(true);
+    api.components.improvements(component.id)
+      .then(items => { setImprovements(items); setLoading(false); })
+      .catch(() => { setLoading(false); });
+  }, [component.id]);
+
+  React.useEffect(reload, [reload]);
+
+  return (
+    <div>
+      <div className="row" style={{justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8}}>
+        <div className="muted-sm">
+          {improvements.length === 0
+            ? null
+            : `${improvements.length}건 · 검토 대기 ${improvements.filter(i => i.status === 'pending').length} · 승인 ${improvements.filter(i => i.status === 'approved').length}`}
+        </div>
+        {canPropose && (
+          <button className="btn btn-accent btn-sm" onClick={() => setShowSubmit(true)}>
+            <Icons.Plus size={11}/> {t('improvement_new')}
+          </button>
+        )}
+        {isAuthor && (
+          <div className="muted-sm" style={{fontSize: 12}}>{t('improvement_self_blocked')}</div>
+        )}
+      </div>
+
+      {loading && <div className="muted-sm" style={{padding: 24, textAlign: 'center'}}>...</div>}
+      {!loading && improvements.length === 0 && (
+        <div className="card card-pad" style={{padding: 28, textAlign: 'center', color: 'var(--text-3)'}}>
+          <div style={{fontSize: 36, marginBottom: 12, opacity: 0.4}}>🛠</div>
+          <div style={{fontWeight: 500, marginBottom: 6}}>{t('improvement_empty')}</div>
+          <div style={{fontSize: 13}}>{t('improvement_empty_desc')}</div>
+        </div>
+      )}
+
+      {!loading && improvements.map(imp => (
+        <ImprovementCard
+          key={imp.id}
+          improvement={imp}
+          componentId={component.id}
+          currentCode={currentCode}
+          currentUser={currentUser}
+          isAuthor={isAuthor}
+          isAdmin={isAdmin}
+          expanded={expandedId === imp.id}
+          onToggle={() => setExpandedId(expandedId === imp.id ? null : imp.id)}
+          onAction={() => { reload(); if (onChanged) onChanged(); }}
+        />
+      ))}
+
+      {showSubmit && (
+        <ImprovementSubmitModal
+          component={component}
+          currentCode={currentCode}
+          onClose={() => setShowSubmit(false)}
+          onSubmitted={() => { setShowSubmit(false); reload(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ImprovementCard({ improvement, componentId, currentCode, currentUser, isAuthor, isAdmin, expanded, onToggle, onAction }) {
+  const { t } = useI18n();
+  const [detail, setDetail] = React.useState(null);
+  const [loadingDetail, setLoadingDetail] = React.useState(false);
+  const [reviewComment, setReviewComment] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const statusClass = improvement.status === 'approved' ? 'chip-ok'
+    : improvement.status === 'rejected' ? 'chip-warn'
+    : 'chip-neutral';
+  const statusLabel = improvement.status === 'approved' ? t('improvement_approved')
+    : improvement.status === 'rejected' ? t('improvement_rejected')
+    : t('improvement_pending');
+
+  React.useEffect(() => {
+    if (expanded && !detail) {
+      setLoadingDetail(true);
+      api.components.improvement(componentId, improvement.id)
+        .then(d => { setDetail(d); setLoadingDetail(false); })
+        .catch(() => setLoadingDetail(false));
+    }
+  }, [expanded, componentId, improvement.id, detail]);
+
+  const canReview = (isAuthor || isAdmin) && improvement.status === 'pending';
+  const canWithdraw = currentUser && currentUser.employee_id === improvement.contributor.employee_id && improvement.status === 'pending';
+
+  const handleReview = async (decision) => {
+    const confirmMsg = decision === 'approve' ? t('improvement_review_confirm_approve') : t('improvement_review_confirm_reject');
+    if (!confirm(confirmMsg)) return;
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append('decision', decision);
+      fd.append('review_comment', reviewComment);
+      await api.components.reviewImprovement(componentId, improvement.id, fd);
+      if (onAction) onAction();
+    } catch (e) {
+      alert('Review failed: ' + e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!confirm('제안을 취소하시겠습니까?')) return;
+    try {
+      await api.components.withdrawImprovement(componentId, improvement.id);
+      if (onAction) onAction();
+    } catch (e) {
+      alert('Withdraw failed: ' + e.message);
+    }
+  };
+
+  return (
+    <div className="card" style={{padding: 0, marginBottom: 10, overflow: 'hidden'}}>
+      <div style={{padding: '14px 18px', cursor: 'pointer'}} onClick={onToggle}>
+        <div className="row gap-8" style={{flexWrap: 'wrap', marginBottom: 6}}>
+          <span className={`chip ${statusClass}`}>{statusLabel}</span>
+          <span style={{fontWeight: 600, fontSize: 14}}>{improvement.title}</span>
+          {improvement.applied_version && (
+            <span className="mono muted-sm">→ {improvement.applied_version}</span>
+          )}
+          <span style={{marginLeft: 'auto', color: 'var(--text-3)'}}>
+            <Icons.ArrowRight size={12} style={{transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s'}}/>
+          </span>
+        </div>
+        <div className="muted-sm">
+          <Icons.Users size={9}/> {improvement.contributor.name} · {fmtDate(improvement.created_at)} · {t('improvement_base_version')} {improvement.base_version || '—'}
+        </div>
+      </div>
+
+      {expanded && (
+        <div style={{padding: '0 18px 18px', borderTop: '1px solid var(--line)'}}>
+          <div style={{padding: '12px 0', fontSize: 13.5, whiteSpace: 'pre-wrap', color: 'var(--text-2)'}}>
+            {improvement.description}
+          </div>
+
+          {improvement.review_comment && (
+            <div style={{padding: 12, background: 'var(--bg-muted)', borderRadius: 6, fontSize: 13, marginBottom: 12}}>
+              <strong>검토 코멘트:</strong> {improvement.review_comment}
+            </div>
+          )}
+
+          {loadingDetail && <div className="muted-sm" style={{padding: 12}}>...</div>}
+          {detail && (
+            <>
+              <div style={{fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8}}>{t('improvement_diff')}</div>
+              <DiffView oldText={detail.base_content || currentCode || ''} newText={detail.file_content}/>
+            </>
+          )}
+
+          {canReview && (
+            <div style={{marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--line)'}}>
+              <textarea
+                className="input"
+                rows={2}
+                style={{resize: 'vertical', fontSize: 13, marginBottom: 10}}
+                placeholder={t('improvement_review_comment_ph')}
+                value={reviewComment}
+                onChange={e => setReviewComment(e.target.value)}
+              />
+              <div className="row gap-8">
+                <button className="btn btn-accent btn-sm" disabled={submitting} onClick={() => handleReview('approve')}>
+                  <Icons.Check size={11}/> {t('improvement_approve')}
+                </button>
+                <button className="btn btn-secondary btn-sm" disabled={submitting} onClick={() => handleReview('reject')}>
+                  <Icons.X size={11}/> {t('improvement_reject')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {canWithdraw && (
+            <div style={{marginTop: 12}}>
+              <button className="btn btn-ghost btn-sm" onClick={handleWithdraw} style={{color: 'var(--err-fg)'}}>
+                {t('improvement_withdraw')}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ImprovementSubmitModal({ component, currentCode, onClose, onSubmitted }) {
+  const { t } = useI18n();
+  const [title, setTitle] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [mode, setMode] = React.useState('file');  // 'file' | 'paste'
+  const [file, setFile] = React.useState(null);
+  const [pastedCode, setPastedCode] = React.useState('');
+  const [pastedFilename, setPastedFilename] = React.useState('');
+  const [fileError, setFileError] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const defaultFilename = React.useMemo(() => {
+    const slug = (component.title || 'component').replace(/[^a-zA-Z0-9_]+/g, '_').toLowerCase();
+    return `${slug}_improved.py`;
+  }, [component.title]);
+
+  const hasContent = mode === 'file' ? !!file : pastedCode.trim().length > 0;
+  const safeClose = () => {
+    if ((title.trim() || description.trim() || hasContent) && !confirm('작성 중인 내용이 있습니다. 정말 닫으시겠습니까?')) return;
+    onClose();
+  };
+
+  const handleFile = (f) => {
+    if (!f) return;
+    const ext = '.' + (f.name.split('.').pop() || '').toLowerCase();
+    if (ext !== '.py') { setFileError('.py 파일만 업로드 가능합니다'); setFile(null); return; }
+    if (f.size > 5 * 1024 * 1024) { setFileError('파일 크기 5MB 초과'); setFile(null); return; }
+    setFileError('');
+    setFile(f);
+  };
+
+  const handlePastedChange = (val) => {
+    setPastedCode(val);
+    const bytes = new Blob([val]).size;
+    if (bytes > 5 * 1024 * 1024) setFileError('코드 크기 5MB 초과');
+    else setFileError('');
+  };
+
+  const canSubmit = title.trim() && description.trim().length >= 10 && hasContent && !fileError;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append('title', title.trim());
+      fd.append('description', description.trim());
+      if (mode === 'file') {
+        fd.append('file', file);
+      } else {
+        const name = (pastedFilename.trim() || defaultFilename).replace(/\.py$/i, '') + '.py';
+        const blob = new Blob([pastedCode], { type: 'text/x-python' });
+        fd.append('file', blob, name);
+      }
+      await api.components.submitImprovement(component.id, fd);
+      if (onSubmitted) onSubmitted();
+    } catch (e) {
+      alert('제출 실패: ' + e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={safeClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: 640}}>
+        <div className="modal-header">
+          <div>
+            <div className="h2">{t('improvement_modal_title')}</div>
+            <div className="muted-sm" style={{marginTop: 4}}>{component.title} · {component.version}</div>
+          </div>
+          <button className="btn btn-icon btn-ghost" onClick={safeClose}><Icons.X/></button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label className="field-label">{t('improvement_title')} <span className="req">*</span></label>
+            <input className="input" placeholder={t('improvement_title_ph')} value={title} onChange={e => setTitle(e.target.value)} maxLength={300}/>
+          </div>
+          <div className="field">
+            <label className="field-label">{t('improvement_description')} <span className="req">*</span></label>
+            <textarea className="input" rows={5} style={{resize: 'vertical', fontSize: 13.5}} placeholder={t('improvement_description_ph')} value={description} onChange={e => setDescription(e.target.value)}/>
+            <div className="field-hint">{description.trim().length} / 10+</div>
+          </div>
+          <div className="field">
+            <label className="field-label">{t('improvement_file')} <span className="req">*</span></label>
+            <div className="segmented" style={{marginBottom: 10}}>
+              <button type="button" className={`segmented-item ${mode === 'file' ? 'active' : ''}`} onClick={() => setMode('file')}>
+                <Icons.Upload size={11}/> {t('improvement_input_mode_file')}
+              </button>
+              <button type="button" className={`segmented-item ${mode === 'paste' ? 'active' : ''}`} onClick={() => setMode('paste')}>
+                <Icons.Code size={11}/> {t('improvement_input_mode_paste')}
+              </button>
+            </div>
+
+            {mode === 'file' ? (
+              <div className="dropzone" style={{padding: 16, cursor: 'pointer', textAlign: 'center'}} onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.py'; inp.onchange = e => handleFile(e.target.files[0]); inp.click(); }}>
+                {file ? <span className="mono" style={{fontSize: 13, color: 'var(--ok-fg)'}}><Icons.Check size={11}/> {file.name} ({(file.size/1024).toFixed(1)} KB)</span> : <span className="muted-sm">클릭하여 .py 파일 선택</span>}
+              </div>
+            ) : (
+              <>
+                <div className="row gap-8" style={{marginBottom: 8, flexWrap: 'wrap'}}>
+                  <input
+                    className="input"
+                    style={{flex: '1 1 280px', fontSize: 13}}
+                    placeholder={t('improvement_filename_ph')}
+                    value={pastedFilename}
+                    onChange={e => setPastedFilename(e.target.value)}
+                  />
+                  {currentCode && (
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => handlePastedChange(currentCode)}>
+                      <Icons.Copy size={11}/> {t('improvement_load_original')}
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  className="input"
+                  rows={14}
+                  style={{
+                    resize: 'vertical',
+                    fontFamily: 'JetBrains Mono, SF Mono, Menlo, monospace',
+                    fontSize: 12.5,
+                    lineHeight: 1.55,
+                    whiteSpace: 'pre',
+                  }}
+                  placeholder={t('improvement_code_placeholder')}
+                  spellCheck={false}
+                  value={pastedCode}
+                  onChange={e => handlePastedChange(e.target.value)}
+                />
+                <div className="field-hint">
+                  {(new Blob([pastedCode]).size / 1024).toFixed(1)} KB · {pastedCode.split('\n').length} lines
+                </div>
+              </>
+            )}
+
+            {fileError && <div style={{color: 'var(--err-fg)', fontSize: 12, marginTop: 6}}>{fileError}</div>}
+            <div className="field-hint">{t('improvement_file_hint')}</div>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-ghost btn-sm" onClick={safeClose}>취소</button>
+          <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={!canSubmit || submitting} style={{opacity: (!canSubmit || submitting) ? 0.5 : 1}}>
+            <Icons.Upload size={11}/> {submitting ? t('improvement_submitting') : t('improvement_submit')}
           </button>
         </div>
       </div>
