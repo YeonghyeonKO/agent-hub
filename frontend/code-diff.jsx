@@ -91,7 +91,7 @@ function DiffView({ oldText, newText, collapse = true }) {
   const diff = React.useMemo(() => computeLineDiff(oldText || '', newText || ''), [oldText, newText]);
   const rendered = React.useMemo(() => collapse ? collapseEqual(diff, 3) : diff, [diff, collapse]);
   const { added, removed } = React.useMemo(() => summarizeDiff(diff), [diff]);
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
 
   return (
     <div className="diff-view">
@@ -102,8 +102,11 @@ function DiffView({ oldText, newText, collapse = true }) {
       <div className="diff-body">
         {rendered.map((d, idx) => {
           if (d.type === 'hunk') {
+            const hunkLabel = lang === 'en'
+              ? `… ${d.skipped} ${t('diff_unchanged_lines')} …`
+              : `… ${d.skipped}${t('diff_unchanged_lines')} …`;
             return (
-              <div key={idx} className="diff-hunk">… {d.skipped} unchanged lines …</div>
+              <div key={idx} className="diff-hunk">{hunkLabel}</div>
             );
           }
           const cls = d.type === 'add' ? 'add' : d.type === 'remove' ? 'remove' : 'equal';

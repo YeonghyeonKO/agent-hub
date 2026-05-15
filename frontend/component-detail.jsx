@@ -502,7 +502,7 @@ function VersionCodeModal({ info, onClose }) {
 }
 
 function ImprovementsTab({ component, currentUser, currentCode, initialImpId, onChanged }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [improvements, setImprovements] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [showSubmit, setShowSubmit] = React.useState(false);
@@ -530,7 +530,14 @@ function ImprovementsTab({ component, currentUser, currentCode, initialImpId, on
         <div className="muted-sm">
           {improvements.length === 0
             ? null
-            : `${improvements.length}건 · 검토 대기 ${improvements.filter(i => i.status === 'pending').length} · 승인 ${improvements.filter(i => i.status === 'approved').length}`}
+            : (() => {
+                const total = improvements.length;
+                const pending = improvements.filter(i => i.status === 'pending').length;
+                const approved = improvements.filter(i => i.status === 'approved').length;
+                return lang === 'en'
+                  ? `${total} ${t('improvement_summary_items')} · ${pending} ${t('improvement_summary_pending')} · ${approved} ${t('improvement_summary_approved')}`
+                  : `${total}${t('improvement_summary_items')} · ${t('improvement_summary_pending')} ${pending} · ${t('improvement_summary_approved')} ${approved}`;
+              })()}
         </div>
         {canPropose && (
           <button className="btn btn-accent btn-sm" onClick={() => setShowSubmit(true)}>
@@ -622,7 +629,7 @@ function ImprovementCard({ improvement, componentId, currentCode, currentUser, i
   };
 
   const handleWithdraw = async () => {
-    if (!confirm('제안을 취소하시겠습니까?')) return;
+    if (!confirm(t('improvement_withdraw_confirm'))) return;
     try {
       await api.components.withdrawImprovement(componentId, improvement.id);
       if (onAction) onAction();
@@ -657,7 +664,7 @@ function ImprovementCard({ improvement, componentId, currentCode, currentUser, i
 
           {improvement.review_comment && (
             <div style={{padding: 12, background: 'var(--bg-muted)', borderRadius: 6, fontSize: 13, marginBottom: 12}}>
-              <strong>검토 코멘트:</strong> {improvement.review_comment}
+              <strong>{t('improvement_review_comment_label')}</strong> {improvement.review_comment}
             </div>
           )}
 
@@ -721,15 +728,15 @@ function ImprovementSubmitModal({ component, currentCode, onClose, onSubmitted }
 
   const hasContent = mode === 'file' ? !!file : pastedCode.trim().length > 0;
   const safeClose = () => {
-    if ((title.trim() || description.trim() || hasContent) && !confirm('작성 중인 내용이 있습니다. 정말 닫으시겠습니까?')) return;
+    if ((title.trim() || description.trim() || hasContent) && !confirm(t('improvement_unsaved_confirm'))) return;
     onClose();
   };
 
   const handleFile = (f) => {
     if (!f) return;
     const ext = '.' + (f.name.split('.').pop() || '').toLowerCase();
-    if (ext !== '.py') { setFileError('.py 파일만 업로드 가능합니다'); setFile(null); return; }
-    if (f.size > 5 * 1024 * 1024) { setFileError('파일 크기 5MB 초과'); setFile(null); return; }
+    if (ext !== '.py') { setFileError(t('improvement_py_only_error')); setFile(null); return; }
+    if (f.size > 5 * 1024 * 1024) { setFileError(t('improvement_file_too_large')); setFile(null); return; }
     setFileError('');
     setFile(f);
   };
@@ -737,7 +744,7 @@ function ImprovementSubmitModal({ component, currentCode, onClose, onSubmitted }
   const handlePastedChange = (val) => {
     setPastedCode(val);
     const bytes = new Blob([val]).size;
-    if (bytes > 5 * 1024 * 1024) setFileError('코드 크기 5MB 초과');
+    if (bytes > 5 * 1024 * 1024) setFileError(t('improvement_code_too_large'));
     else setFileError('');
   };
 
@@ -760,7 +767,7 @@ function ImprovementSubmitModal({ component, currentCode, onClose, onSubmitted }
       await api.components.submitImprovement(component.id, fd);
       if (onSubmitted) onSubmitted();
     } catch (e) {
-      alert('제출 실패: ' + e.message);
+      alert(t('improvement_submit_failed') + ': ' + e.message);
     } finally {
       setSubmitting(false);
     }
@@ -784,7 +791,7 @@ function ImprovementSubmitModal({ component, currentCode, onClose, onSubmitted }
           <div className="field">
             <label className="field-label">{t('improvement_description')} <span className="req">*</span></label>
             <textarea className="input" rows={5} style={{resize: 'vertical', fontSize: 13.5}} placeholder={t('improvement_description_ph')} value={description} onChange={e => setDescription(e.target.value)}/>
-            <div className="field-hint">{description.trim().length} / 10+</div>
+            <div className="field-hint">{description.trim().length} / 10+ {t('improvement_description_hint_suffix')}</div>
           </div>
           <div className="field">
             <label className="field-label">{t('improvement_file')} <span className="req">*</span></label>
@@ -799,7 +806,7 @@ function ImprovementSubmitModal({ component, currentCode, onClose, onSubmitted }
 
             {mode === 'file' ? (
               <div className="dropzone" style={{padding: 16, cursor: 'pointer', textAlign: 'center'}} onClick={() => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.py'; inp.onchange = e => handleFile(e.target.files[0]); inp.click(); }}>
-                {file ? <span className="mono" style={{fontSize: 13, color: 'var(--ok-fg)'}}><Icons.Check size={11}/> {file.name} ({(file.size/1024).toFixed(1)} KB)</span> : <span className="muted-sm">클릭하여 .py 파일 선택</span>}
+                {file ? <span className="mono" style={{fontSize: 13, color: 'var(--ok-fg)'}}><Icons.Check size={11}/> {file.name} ({(file.size/1024).toFixed(1)} KB)</span> : <span className="muted-sm">{t('improvement_choose_py')}</span>}
               </div>
             ) : (
               <>
@@ -843,7 +850,7 @@ function ImprovementSubmitModal({ component, currentCode, onClose, onSubmitted }
           </div>
         </div>
         <div className="modal-footer">
-          <button className="btn btn-ghost btn-sm" onClick={safeClose}>취소</button>
+          <button className="btn btn-ghost btn-sm" onClick={safeClose}>{t('btn_cancel')}</button>
           <button className="btn btn-accent btn-sm" onClick={handleSubmit} disabled={!canSubmit || submitting} style={{opacity: (!canSubmit || submitting) ? 0.5 : 1}}>
             <Icons.Upload size={11}/> {submitting ? t('improvement_submitting') : t('improvement_submit')}
           </button>
