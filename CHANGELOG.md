@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.0.14 (2026-05-22)
+
+### Features
+- **Bulk approve**: checkbox selection + batch approval for pending submissions
+- **Bulk review API**: `POST /api/v1/admin/review/bulk` with Literal validation
+
+### Fixes
+- **Users pagination**: `api.get` was ignoring query params — same page repeated infinitely
+- **Page-based offset**: replaced stale closure offset with explicit page tracking
+
+---
+
 ## v1.0.13 (2026-05-22)
 
 ### Refactor
