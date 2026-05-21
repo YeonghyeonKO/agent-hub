@@ -73,6 +73,10 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
   };
   React.useEffect(loadPending, []);
 
+  const [selected, setSelected] = React.useState([]);
+  const toggleSelect = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleSelectAll = () => setSelected(prev => prev.length === pendingList.length ? [] : pendingList.map(s => s.id));
+
   const handleApprove = () => {
     if (!activeSubId) return;
     api.admin.review(activeSubId, { scores, comment, decision: 'approve' })
@@ -83,6 +87,13 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
     if (!activeSubId) return;
     api.admin.review(activeSubId, { scores, comment, decision: 'reject' })
       .then(() => { loadPending(); setComment(''); })
+      .catch(e => console.error(e));
+  };
+  const handleBulkApprove = () => {
+    if (selected.length === 0) return;
+    if (!confirm(`${selected.length}건을 일괄 승인하시겠습니까?`)) return;
+    api.admin.bulkReview({ component_ids: selected, scores, comment, decision: 'approve' })
+      .then(() => { loadPending(); setSelected([]); setComment(''); })
       .catch(e => console.error(e));
   };
 
@@ -123,11 +134,23 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
 
       {activeTab === 'pending' && (
         <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+          {submissions.length > 0 && (
+            <div style={{display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid var(--line)', background: 'var(--bg-elev)'}}>
+              <input type="checkbox" checked={selected.length === submissions.length && submissions.length > 0} onChange={toggleSelectAll} style={{cursor: 'pointer'}}/>
+              <span style={{fontSize: 12, color: 'var(--text-3)'}}>{selected.length > 0 ? `${selected.length}건 선택됨` : '전체 선택'}</span>
+              {selected.length > 0 && (
+                <button className="btn btn-sm" style={{background: 'var(--ok)', color: 'white', marginLeft: 'auto'}} onClick={handleBulkApprove}>
+                  <Icons.Check size={11}/> 일괄 승인 ({selected.length})
+                </button>
+              )}
+            </div>
+          )}
           {submissions.map(s => (
             <React.Fragment key={s.id}>
               <div className={`sub-row ${activeSubId === s.id ? 'active' : ''}`} onClick={() => setActiveSubId(activeSubId === s.id ? null : s.id)}>
                 <div className="sub-row-top">
                   <div className="row gap-8" style={{flex: 1}}>
+                    <input type="checkbox" checked={selected.includes(s.id)} onChange={(e) => { e.stopPropagation(); toggleSelect(s.id); }} onClick={(e) => e.stopPropagation()} style={{cursor: 'pointer'}}/>
                     <span className={`chip chip-${s.type}`}>{s.type === 'py' ? '.py' : '.json'}</span>
                     <span className="sub-row-title">{s.title}</span>
                   </div>
@@ -433,19 +456,20 @@ function UsersTab() {
   const [search, setSearch] = React.useState('');
   const [sortBy, setSortBy] = React.useState('role'); // 'role' | 'id'
   const [loadingMore, setLoadingMore] = React.useState(false);
+  const [page, setPage] = React.useState(0);
   const PAGE_SIZE = 50;
-  const loadUsers = (append = false) => {
-    const offset = append ? users.length : 0;
+  const loadUsers = (nextPage = 0) => {
+    const append = nextPage > 0;
     append ? setLoadingMore(true) : setUsersLoading(true);
-    api.get('/admin/users', { search: search || undefined, sort: sortBy, limit: PAGE_SIZE, offset })
-      .then(d => { setUsers(prev => append ? [...prev, ...(d.items || [])] : (d.items || [])); setUsersTotal(d.total || 0); })
+    api.admin.users({ search: search || undefined, sort: sortBy, limit: PAGE_SIZE, offset: nextPage * PAGE_SIZE })
+      .then(d => { setUsers(prev => append ? [...prev, ...(d.items || [])] : (d.items || [])); setUsersTotal(d.total || 0); setPage(nextPage); })
       .catch(() => {})
       .finally(() => { setUsersLoading(false); setLoadingMore(false); });
   };
-  React.useEffect(() => loadUsers(false), [sortBy]);
+  React.useEffect(() => loadUsers(0), [sortBy]);
 
   const changeRole = (empId, newRole) => {
-    api.admin.updateRole(empId, newRole).then(() => loadUsers(false)).catch(e => console.error(e));
+    api.admin.updateRole(empId, newRole).then(() => loadUsers(0)).catch(e => console.error(e));
   };
 
   const filtered = users;
@@ -459,12 +483,12 @@ function UsersTab() {
         </div>
         <div className="nav-search" style={{width: 240, height: 32}}>
           <Icons.Search size={13}/>
-          <input placeholder="Search name, ID, email..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') loadUsers(false); }}/>
+          <input placeholder="Search name, ID, email..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') loadUsers(0); }}/>
         </div>
       </div>
       <div style={{display: 'flex', flexDirection: 'column'}}>
         <div style={{display: 'grid', gridTemplateColumns: '80px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, color: 'var(--text-3)', background: 'var(--bg-elev)', borderBottom: '1px solid var(--line)'}}>
-          <div style={{cursor: 'pointer'}} onClick={() => { setSortBy('id'); if (sortBy === 'id') loadUsers(false); }}>ID {sortBy === 'id' ? '▲' : ''}</div><div>Name</div><div>Email</div><div style={{cursor: 'pointer'}} onClick={() => { setSortBy('role'); if (sortBy === 'role') loadUsers(false); }}>Role {sortBy === 'role' ? '▲' : ''}</div>
+          <div style={{cursor: 'pointer'}} onClick={() => { setSortBy('id'); if (sortBy === 'id') loadUsers(0); }}>ID {sortBy === 'id' ? '▲' : ''}</div><div>Name</div><div>Email</div><div style={{cursor: 'pointer'}} onClick={() => { setSortBy('role'); if (sortBy === 'role') loadUsers(0); }}>Role {sortBy === 'role' ? '▲' : ''}</div>
         </div>
         {filtered.map(u => (
           <div key={u.employee_id} style={{display: 'grid', gridTemplateColumns: '80px 2fr 1.5fr 110px', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--line)', alignItems: 'center', fontSize: 13}}>
@@ -492,7 +516,7 @@ function UsersTab() {
       </div>
       {users.length < usersTotal && !usersLoading && (
         <div style={{textAlign: 'center', padding: '14px 0'}}>
-          <button className="btn btn-ghost btn-sm" disabled={loadingMore} onClick={() => loadUsers(true)}>
+          <button className="btn btn-ghost btn-sm" disabled={loadingMore} onClick={() => loadUsers(page + 1)}>
             {loadingMore ? 'Loading...' : `${t('load_more') || 'Load More'} (${users.length} / ${usersTotal})`}
           </button>
         </div>

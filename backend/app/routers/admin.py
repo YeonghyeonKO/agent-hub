@@ -208,6 +208,41 @@ async def submit_review(
     )
 
 
+class BulkReviewCreate(BaseModel):
+    component_ids: list[uuid.UUID]
+    scores: dict | None = None
+    comment: str | None = None
+    decision: str  # 'approve' | 'reject'
+
+
+@router.post("/review/bulk")
+async def bulk_review(
+    body: BulkReviewCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(require_admin)],
+):
+    results = []
+    for cid in body.component_ids:
+        component = await db.get(Component, cid)
+        if not component:
+            continue
+        review = Review(
+            component_id=cid,
+            reviewer_id=user.employee_id,
+            scores=body.scores or {},
+            comment=body.comment or "",
+            decision=body.decision,
+        )
+        db.add(review)
+        if body.decision == "approve":
+            component.status = "approved"
+        elif body.decision == "reject":
+            component.status = "rejected"
+        results.append(str(cid))
+    await db.commit()
+    return {"reviewed": results, "count": len(results)}
+
+
 @router.get("/users")
 async def list_users(
     db: Annotated[AsyncSession, Depends(get_db)],

@@ -5,8 +5,14 @@
 const API_BASE = (window.location.port === '3000') ? 'http://localhost:8000/api/v1' : '/api/v1';
 
 const api = {
-  async get(path) {
-    const res = await fetch(API_BASE + path);
+  async get(path, params) {
+    let url = API_BASE + path;
+    if (params) {
+      const filtered = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+      const q = new URLSearchParams(filtered).toString();
+      if (q) url += (path.includes('?') ? '&' : '?') + q;
+    }
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`GET ${path}: ${res.status}`);
     return res.json();
   },
@@ -114,9 +120,10 @@ const api = {
     rejected: () => api.get('/admin/rejected'),
     issues: () => api.get('/admin/issues'),
     review: (id, body) => api.post(`/admin/review/${id}`, body),
+    bulkReview: (body) => api.post('/admin/review/bulk', body),
     settings: () => api.get('/admin/settings'),
     updateSettings: (body) => api.put('/admin/settings', body),
-    users: () => api.get('/admin/users'),
+    users: (params) => api.get('/admin/users', params),
     updateRole: (empId, role) => api.patch(`/admin/users/${empId}/role`, { role }),
     deleted: () => api.get('/admin/deleted'),
     deleteComponent: (id) => api.del(`/admin/components/${id}`),
