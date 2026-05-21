@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.13 (2026-05-22)
+
+### Refactor
+- **Upload templates**: extract hardcoded templates to external MD files (`frontend/templates/`)
+- **Dynamic fetch**: load templates via fetch with error handling and fallback
+- **Template content**: updated per issue #4 (Flow) and #5 (Component) format
+
+---
+
 ## v1.0.12 (2026-05-14)
 
 ### Fixes
