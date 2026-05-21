@@ -74,6 +74,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
   React.useEffect(loadPending, []);
 
   const [selected, setSelected] = React.useState([]);
+  React.useEffect(() => setSelected([]), [pendingList]);
   const toggleSelect = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleSelectAll = () => setSelected(prev => prev.length === pendingList.length ? [] : pendingList.map(s => s.id));
 

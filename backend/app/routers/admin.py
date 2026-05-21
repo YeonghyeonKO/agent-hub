@@ -1,5 +1,5 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -212,7 +212,7 @@ class BulkReviewCreate(BaseModel):
     component_ids: list[uuid.UUID]
     scores: dict | None = None
     comment: str | None = None
-    decision: str  # 'approve' | 'reject'
+    decision: Literal["approve", "reject"]
 
 
 @router.post("/review/bulk")
@@ -221,10 +221,12 @@ async def bulk_review(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_admin)],
 ):
-    results = []
+    reviewed = []
+    skipped = []
     for cid in body.component_ids:
         component = await db.get(Component, cid)
         if not component:
+            skipped.append(str(cid))
             continue
         review = Review(
             component_id=cid,
@@ -238,9 +240,9 @@ async def bulk_review(
             component.status = "approved"
         elif body.decision == "reject":
             component.status = "rejected"
-        results.append(str(cid))
+        reviewed.append(str(cid))
     await db.commit()
-    return {"reviewed": results, "count": len(results)}
+    return {"reviewed": reviewed, "skipped": skipped, "count": len(reviewed)}
 
 
 @router.get("/users")
