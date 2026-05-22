@@ -186,6 +186,47 @@ async def create_voc_post(
     )
 
 
+class VocPostUpdate(BaseModel):
+    title: str | None = None
+    content: str | None = None
+    category: str | None = Field(default=None, pattern=r"^(suggestion|bug|question|other)$")
+
+
+@router.put("/{post_id}", response_model=VocPostResponse)
+async def update_voc_post(
+    post_id: uuid.UUID,
+    body: VocPostUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+):
+    result = await db.execute(
+        select(VocPost).where(VocPost.id == post_id).options(selectinload(VocPost.author))
+    )
+    post = result.scalar_one_or_none()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.author_id != user.employee_id and user.role not in ("admin", "reviewer"):
+        raise HTTPException(status_code=403, detail="Permission denied")
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(post, field, value)
+    await db.commit()
+    await db.refresh(post)
+    upvote_count = (await db.execute(select(func.count()).where(VocUpvote.post_id == post.id))).scalar() or 0
+    comment_count = (await db.execute(select(func.count()).where(VocComment.post_id == post.id))).scalar() or 0
+    return VocPostResponse(
+        id=post.id,
+        title=post.title,
+        content=post.content,
+        category=post.category,
+        author=UserResponse.model_validate(post.author),
+        status=post.status,
+        upvote_count=upvote_count,
+        comment_count=comment_count,
+        created_at=post.created_at.isoformat(),
+        updated_at=post.updated_at.isoformat(),
+    )
+
+
 @router.post("/{post_id}/comments", response_model=VocCommentResponse, status_code=201)
 async def add_comment(
     post_id: uuid.UUID,

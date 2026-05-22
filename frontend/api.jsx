@@ -118,6 +118,7 @@ const api = {
     },
     get: (id) => api.get(`/voc/${id}`),
     create: (body) => api.post('/voc', body),
+    update: (id, body) => api.put(`/voc/${id}`, body),
     comment: (id, body) => api.post(`/voc/${id}/comments`, body),
     upvote: (id) => api.post(`/voc/${id}/upvote`),
     status: (id, status) => api.patch(`/voc/${id}/status`, { status }),
