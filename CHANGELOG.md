@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.16 (2026-05-22)
+
+### Fixes
+- **Bulk review 422**: move `/review/bulk` before `/review/{component_id}` to prevent UUID parse error
+- **Users pagination**: use `useRef` for page counter to avoid stale closure
+
+---
+
 ## v1.0.15 (2026-05-22)
 
 ### Features
