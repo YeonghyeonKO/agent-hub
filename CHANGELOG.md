@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.15 (2026-05-22)
+
+### Features
+- **403 permission alert**: show "권한이 없습니다. 관리자에게 권한을 요청하세요." on all forbidden API responses
+
+---
+
 ## v1.0.14 (2026-05-22)
 
 ### Features
