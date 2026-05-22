@@ -337,6 +337,17 @@ async def get_statistics(
     return items
 
 
+@router.get("/settings/public")
+async def get_public_settings(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(select(Season).where(Season.is_active == True))
+    season = result.scalar_one_or_none()
+    if not season:
+        return {"contact_channel": None, "criteria_weights": None}
+    return {"contact_channel": season.contact_channel, "criteria_weights": season.criteria_weights}
+
+
 @router.get("/settings", response_model=SeasonSettings | None)
 async def get_settings(
     db: Annotated[AsyncSession, Depends(get_db)],

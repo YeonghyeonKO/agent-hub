@@ -44,7 +44,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
 
   // Load criteria from settings API
   React.useEffect(() => {
-    api.admin.settings().then(d => {
+    api.get('/admin/settings/public').then(d => {
       if (d && d.criteria_weights) {
         const keys = Object.keys(d.criteria_weights);
         setCriteria(keys);
