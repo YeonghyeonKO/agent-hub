@@ -6,7 +6,9 @@ const API_BASE = (window.location.port === '3000') ? 'http://localhost:8000/api/
 
 function handleResponse(res, method, path) {
   if (res.status === 403) {
-    alert('권한이 없습니다. 관리자에게 권한을 요청하세요.');
+    if (method === 'POST' || method === 'PUT') {
+      alert('권한이 없습니다. 관리자에게 권한을 요청하세요.');
+    }
     throw new Error(`${method} ${path}: 403 Forbidden`);
   }
   if (!res.ok) throw new Error(`${method} ${path}: ${res.status}`);
@@ -60,10 +62,7 @@ const api = {
 
   async del(path) {
     const res = await fetch(API_BASE + path, { method: 'DELETE' });
-    if (res.status === 403) {
-      alert('권한이 없습니다. 관리자에게 권한을 요청하세요.');
-      throw new Error(`DELETE ${path}: 403 Forbidden`);
-    }
+    if (res.status === 403) throw new Error(`DELETE ${path}: 403 Forbidden`);
     if (!res.ok && res.status !== 204) throw new Error(`DELETE ${path}: ${res.status}`);
     return res.status === 204 ? null : res.json();
   },
