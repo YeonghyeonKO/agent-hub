@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.0.17 (2026-05-22)
+
+### Features
+- **Notice/VoC edit**: author and admin/reviewer can edit (previously admin-only)
+- **VoC PUT endpoint**: `PUT /api/v1/voc/{post_id}` for editing posts
+- **403 alert**: only on POST/PUT write operations, not GET/PATCH/DELETE
+- **Public settings**: `GET /admin/settings/public` for non-admin access
+
+### Fixes
+- **Bulk review 422**: route ordering fix
+- **Users pagination**: useRef for page counter
+- **Guide tab 403**: use public settings endpoint
+
+---
+
 ## v1.0.16 (2026-05-22)
 
 ### Fixes
