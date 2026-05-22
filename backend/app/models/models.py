@@ -213,6 +213,9 @@ class CodeImprovement(Base):
 
     component: Mapped["Component"] = relationship()
     contributor: Mapped["User"] = relationship()
+    notifications: Mapped[list["Notification"]] = relationship(
+        back_populates="improvement", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class Notification(Base):
@@ -227,6 +230,9 @@ class Notification(Base):
     improvement_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("code_improvements.id", ondelete="CASCADE"), nullable=True)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    component: Mapped["Component | None"] = relationship()
+    improvement: Mapped["CodeImprovement | None"] = relationship(back_populates="notifications")
 
 
 class Season(Base):

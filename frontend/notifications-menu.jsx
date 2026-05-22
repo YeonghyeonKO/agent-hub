@@ -2,6 +2,21 @@
 // NotificationsMenu — bell icon with unread badge + dropdown
 // ─────────────────────────────────────────────────────────────────────
 
+// Render a localized message from the notification's `kind` + related titles.
+// Falls back to the server-stored message for kinds the frontend doesn't know.
+function renderNotifMessage(n, t) {
+  const key = {
+    improvement_request: 'notif_msg_improvement_request',
+    improvement_approved: 'notif_msg_improvement_approved',
+    improvement_rejected: 'notif_msg_improvement_rejected',
+  }[n.kind];
+  if (!key) return n.message;
+  return t(key)
+    .replace('{component}', n.component_title || '')
+    .replace('{title}', n.improvement_title || '')
+    .replace('{version}', n.applied_version || '');
+}
+
 function NotificationsMenu() {
   const { t } = useI18n();
   const [open, setOpen] = React.useState(false);
@@ -82,7 +97,7 @@ function NotificationsMenu() {
             )}
             {items.map(n => (
               <div key={n.id} className={`notif-item ${n.is_read ? 'read' : 'unread'}`} onClick={() => handleOpen(n)}>
-                <div className="notif-item-msg">{n.message}</div>
+                <div className="notif-item-msg">{renderNotifMessage(n, t)}</div>
                 <div className="notif-item-meta">{fmtDate(n.created_at)}</div>
               </div>
             ))}

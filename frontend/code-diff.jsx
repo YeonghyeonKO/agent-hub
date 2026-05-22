@@ -9,9 +9,9 @@ function computeLineDiff(oldText, newText) {
   const newLines = (newText || '').split('\n');
   const n = oldLines.length, m = newLines.length;
 
-  // LCS table (O(n*m) memory). For typical code files this is fine.
-  // Cap to prevent runaway computation on huge files.
-  const MAX = 4000;
+  // LCS table is O(n*m) memory. Cap so the Uint32Array allocation stays modest
+  // (1500² × 4B ≈ 9MB) — safe on mobile. Beyond the cap we fall back below.
+  const MAX = 1500;
   if (n > MAX || m > MAX) {
     // Fallback: emit everything as remove + add
     const out = [];

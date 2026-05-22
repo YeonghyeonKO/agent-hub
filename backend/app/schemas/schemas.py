@@ -188,10 +188,13 @@ class ContributorEntry(BaseModel):
 class NotificationItem(BaseModel):
     id: uuid.UUID
     kind: str
-    message: str
+    message: str  # server-rendered fallback for unknown kinds
     link: str | None
     component_id: uuid.UUID | None
     improvement_id: uuid.UUID | None
+    component_title: str | None = None
+    improvement_title: str | None = None
+    applied_version: str | None = None
     is_read: bool
     created_at: datetime
 

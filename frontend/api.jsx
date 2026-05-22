@@ -77,7 +77,7 @@ const api = {
     improvements: (id) => api.get(`/components/${id}/improvements`),
     improvement: (id, impId) => api.get(`/components/${id}/improvements/${impId}`),
     submitImprovement: (id, formData) => api.postForm(`/components/${id}/improvements`, formData),
-    reviewImprovement: (id, impId, formData) => api.postForm(`/components/${id}/improvements/${impId}/review`, formData),
+    reviewImprovement: (id, impId, body) => api.post(`/components/${id}/improvements/${impId}/review`, body),
     withdrawImprovement: (id, impId) => api.del(`/components/${id}/improvements/${impId}`),
     contributors: (id) => api.get(`/components/${id}/contributors`),
   },

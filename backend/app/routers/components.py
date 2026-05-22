@@ -18,6 +18,7 @@ from app.schemas.schemas import (
     ComponentResponse,
     UserResponse,
 )
+from app.utils import bump_version
 
 router = APIRouter(prefix="/api/v1/components", tags=["components"])
 
@@ -240,17 +241,7 @@ async def update_component(
         raise HTTPException(status_code=403, detail="Only the author or admin can update")
 
     # Calculate next version
-    old_ver = component.version or "v1.0.0"
-    ver_str = old_ver.lstrip("v")
-    parts = ver_str.split(".")
-    major, minor, patch_v = int(parts[0]) if len(parts) > 0 else 1, int(parts[1]) if len(parts) > 1 else 0, int(parts[2]) if len(parts) > 2 else 0
-    if version_bump == "major":
-        major, minor, patch_v = major + 1, 0, 0
-    elif version_bump == "minor":
-        minor, patch_v = minor + 1, 0
-    else:
-        patch_v += 1
-    new_version = f"v{major}.{minor}.{patch_v}"
+    new_version = bump_version(component.version, version_bump)
 
     # Save old version snapshot to component_versions (preserve code so past versions remain viewable)
     version_record = ComponentVersion(
@@ -336,6 +327,7 @@ async def get_version_file(
     component_id: uuid.UUID,
     version_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
 ):
     result = await db.execute(
         select(ComponentVersion).where(
@@ -427,6 +419,7 @@ async def record_download(
 async def get_file_content(
     component_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
 ):
     component = await db.get(Component, component_id)
     if not component:

@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.auth import get_current_user
 from app.database import get_db
@@ -23,13 +24,17 @@ async def list_my_notifications(
     query = (
         select(Notification)
         .where(Notification.user_id == user.employee_id)
+        .options(
+            selectinload(Notification.component),
+            selectinload(Notification.improvement),
+        )
         .order_by(Notification.created_at.desc())
     )
     if unread_only:
         query = query.where(Notification.is_read.is_(False))
     query = query.limit(limit)
 
-    items = (await db.execute(query)).scalars().all()
+    rows = (await db.execute(query)).scalars().all()
 
     unread_count = (
         await db.execute(
@@ -39,10 +44,25 @@ async def list_my_notifications(
         )
     ).scalar() or 0
 
-    return NotificationListResponse(
-        items=[NotificationItem.model_validate(n) for n in items],
-        unread_count=unread_count,
-    )
+    # Surface related titles so the frontend can render localized messages by `kind`.
+    items = [
+        NotificationItem(
+            id=n.id,
+            kind=n.kind,
+            message=n.message,
+            link=n.link,
+            component_id=n.component_id,
+            improvement_id=n.improvement_id,
+            component_title=n.component.title if n.component else None,
+            improvement_title=n.improvement.title if n.improvement else None,
+            applied_version=n.improvement.applied_version if n.improvement else None,
+            is_read=n.is_read,
+            created_at=n.created_at,
+        )
+        for n in rows
+    ]
+
+    return NotificationListResponse(items=items, unread_count=unread_count)
 
 
 @router.get("/unread-count")

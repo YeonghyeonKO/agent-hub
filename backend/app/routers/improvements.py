@@ -15,9 +15,11 @@ from app.models.models import CodeImprovement, Component, ComponentVersion, Noti
 from app.schemas.schemas import (
     CodeImprovementDetail,
     CodeImprovementListItem,
+    CodeImprovementReview,
     ContributorEntry,
     UserResponse,
 )
+from app.utils import bump_version
 
 router = APIRouter(prefix="/api/v1/components", tags=["improvements"])
 
@@ -25,20 +27,13 @@ router = APIRouter(prefix="/api/v1/components", tags=["improvements"])
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
-def _next_patch(version: str | None) -> str:
-    ver = (version or "v1.0.0").lstrip("v")
-    parts = ver.split(".")
-    major = int(parts[0]) if len(parts) > 0 and parts[0].isdigit() else 1
-    minor = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
-    patch = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 0
-    return f"v{major}.{minor}.{patch + 1}"
-
-
 @router.get("/{component_id}/improvements", response_model=list[CodeImprovementListItem])
 async def list_improvements(
     component_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
     status: str | None = None,
+    limit: int = 30,
+    offset: int = 0,
 ):
     query = (
         select(CodeImprovement)
@@ -48,6 +43,8 @@ async def list_improvements(
     )
     if status:
         query = query.where(CodeImprovement.status == status)
+
+    query = query.limit(limit).offset(offset)
 
     result = await db.execute(query)
     items = result.scalars().all()
@@ -120,6 +117,8 @@ async def submit_improvement(
         raise HTTPException(status_code=400, detail="Cannot submit improvement to your own component")
     if component.type != "py":
         raise HTTPException(status_code=400, detail="Code improvement is only available for .py components")
+    if component.status != "approved":
+        raise HTTPException(status_code=400, detail="Improvements can only be submitted to approved components")
 
     # Validate file
     filename = file.filename or ""
@@ -186,13 +185,12 @@ async def submit_improvement(
 async def review_improvement(
     component_id: uuid.UUID,
     improvement_id: uuid.UUID,
+    body: CodeImprovementReview,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
-    decision: str = Form(...),
-    review_comment: str = Form(""),
 ):
-    if decision not in ("approve", "reject"):
-        raise HTTPException(status_code=400, detail="decision must be 'approve' or 'reject'")
+    decision = body.decision  # validated against ^(approve|reject)$ by the schema
+    review_comment = body.review_comment or ""
 
     result = await db.execute(
         select(CodeImprovement)
@@ -218,6 +216,17 @@ async def review_improvement(
     improvement.reviewed_at = datetime.now(timezone.utc)
 
     if decision == "approve":
+        # Optimistic concurrency: the improvement's diff is built against base_version.
+        # If the component moved on since submission, applying it would silently
+        # overwrite the newer code — make the reviewer ask for a rebase instead.
+        if improvement.base_version != component.version:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Component was updated from {improvement.base_version} "
+                    f"to {component.version}. Ask the contributor to rebase."
+                ),
+            )
         # 1) Snapshot the OLD code as a ComponentVersion (so it remains viewable)
         old_version = ComponentVersion(
             component_id=component.id,
@@ -229,7 +238,7 @@ async def review_improvement(
         db.add(old_version)
 
         # 2) Bump component to next patch version with the improved code
-        new_version = _next_patch(component.version)
+        new_version = bump_version(component.version)
         component.version = new_version
         component.file_content = improvement.file_content
 
@@ -343,9 +352,14 @@ async def list_contributors(
     )
     rows = (await db.execute(query)).all()
 
+    # Fetch all contributors in a single query (avoid N+1).
+    user_ids = [row[0] for row in rows]
+    users_result = await db.execute(select(User).where(User.employee_id.in_(user_ids)))
+    users_map = {u.employee_id: u for u in users_result.scalars().all()}
+
     result = []
     for contributor_id, count, first_at, last_at in rows:
-        user = await db.get(User, contributor_id)
+        user = users_map.get(contributor_id)
         if not user:
             continue
         result.append(ContributorEntry(

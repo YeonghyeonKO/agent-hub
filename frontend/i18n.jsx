@@ -215,6 +215,9 @@ const I18N = {
     notif_empty: '새로운 알림이 없습니다',
     notif_read_all: '모두 읽음',
     notif_open: '바로가기',
+    notif_msg_improvement_request: "'{component}'에 코드 개선 요청이 도착했습니다: {title}",
+    notif_msg_improvement_approved: "'{component}'에 대한 코드 개선이 승인되었습니다 ({version})",
+    notif_msg_improvement_rejected: "'{component}'에 대한 코드 개선이 반려되었습니다",
 
     // Versions
     versions_view_code: '해당 버전 코드 보기',
@@ -432,6 +435,9 @@ const I18N = {
     notif_empty: 'No new notifications',
     notif_read_all: 'Mark all read',
     notif_open: 'Open',
+    notif_msg_improvement_request: "New code improvement request for '{component}': {title}",
+    notif_msg_improvement_approved: "Your code improvement for '{component}' was approved ({version})",
+    notif_msg_improvement_rejected: "Your code improvement for '{component}' was rejected",
 
     // Versions
     versions_view_code: 'View code',

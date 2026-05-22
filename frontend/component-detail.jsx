@@ -616,10 +616,10 @@ function ImprovementCard({ improvement, componentId, currentCode, currentUser, i
     if (!confirm(confirmMsg)) return;
     setSubmitting(true);
     try {
-      const fd = new FormData();
-      fd.append('decision', decision);
-      fd.append('review_comment', reviewComment);
-      await api.components.reviewImprovement(componentId, improvement.id, fd);
+      await api.components.reviewImprovement(componentId, improvement.id, {
+        decision,
+        review_comment: reviewComment,
+      });
       if (onAction) onAction();
     } catch (e) {
       alert('Review failed: ' + e.message);
