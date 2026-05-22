@@ -457,13 +457,13 @@ function UsersTab() {
   const [search, setSearch] = React.useState('');
   const [sortBy, setSortBy] = React.useState('role'); // 'role' | 'id'
   const [loadingMore, setLoadingMore] = React.useState(false);
-  const [page, setPage] = React.useState(0);
+  const pageRef = React.useRef(0);
   const PAGE_SIZE = 50;
   const loadUsers = (nextPage = 0) => {
     const append = nextPage > 0;
     append ? setLoadingMore(true) : setUsersLoading(true);
     api.admin.users({ search: search || undefined, sort: sortBy, limit: PAGE_SIZE, offset: nextPage * PAGE_SIZE })
-      .then(d => { setUsers(prev => append ? [...prev, ...(d.items || [])] : (d.items || [])); setUsersTotal(d.total || 0); setPage(nextPage); })
+      .then(d => { setUsers(prev => append ? [...prev, ...(d.items || [])] : (d.items || [])); setUsersTotal(d.total || 0); pageRef.current = nextPage; })
       .catch(() => {})
       .finally(() => { setUsersLoading(false); setLoadingMore(false); });
   };
@@ -517,7 +517,7 @@ function UsersTab() {
       </div>
       {users.length < usersTotal && !usersLoading && (
         <div style={{textAlign: 'center', padding: '14px 0'}}>
-          <button className="btn btn-ghost btn-sm" disabled={loadingMore} onClick={() => loadUsers(page + 1)}>
+          <button className="btn btn-ghost btn-sm" disabled={loadingMore} onClick={() => loadUsers(pageRef.current + 1)}>
             {loadingMore ? 'Loading...' : `${t('load_more') || 'Load More'} (${users.length} / ${usersTotal})`}
           </button>
         </div>
