@@ -4,6 +4,15 @@
 
 const API_BASE = (window.location.port === '3000') ? 'http://localhost:8000/api/v1' : '/api/v1';
 
+function handleResponse(res, method, path) {
+  if (res.status === 403) {
+    alert('권한이 없습니다. 관리자에게 권한을 요청하세요.');
+    throw new Error(`${method} ${path}: 403 Forbidden`);
+  }
+  if (!res.ok) throw new Error(`${method} ${path}: ${res.status}`);
+  return res;
+}
+
 const api = {
   async get(path, params) {
     let url = API_BASE + path;
@@ -13,7 +22,7 @@ const api = {
       if (q) url += (path.includes('?') ? '&' : '?') + q;
     }
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`GET ${path}: ${res.status}`);
+    handleResponse(res, 'GET', path);
     return res.json();
   },
 
@@ -23,19 +32,19 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`POST ${path}: ${res.status}`);
+    handleResponse(res, 'POST', path);
     return res.json();
   },
 
   async postForm(path, formData) {
     const res = await fetch(API_BASE + path, { method: 'POST', body: formData });
-    if (!res.ok) throw new Error(`POST ${path}: ${res.status}`);
+    handleResponse(res, 'POST', path);
     return res.json();
   },
 
   async patchForm(path, formData) {
     const res = await fetch(API_BASE + path, { method: 'PATCH', body: formData });
-    if (!res.ok) throw new Error(`PATCH ${path}: ${res.status}`);
+    handleResponse(res, 'PATCH', path);
     return res.json();
   },
 
@@ -45,12 +54,16 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`PUT ${path}: ${res.status}`);
+    handleResponse(res, 'PUT', path);
     return res.json();
   },
 
   async del(path) {
     const res = await fetch(API_BASE + path, { method: 'DELETE' });
+    if (res.status === 403) {
+      alert('권한이 없습니다. 관리자에게 권한을 요청하세요.');
+      throw new Error(`DELETE ${path}: 403 Forbidden`);
+    }
     if (!res.ok && res.status !== 204) throw new Error(`DELETE ${path}: ${res.status}`);
     return res.status === 204 ? null : res.json();
   },
@@ -61,7 +74,7 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`PATCH ${path}: ${res.status}`);
+    handleResponse(res, 'PATCH', path);
     return res.json();
   },
 
