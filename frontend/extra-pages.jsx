@@ -291,7 +291,7 @@ function GuidePage() {
   const [active, setActive] = React.useState('quickstart');
   const [contactChannel, setContactChannel] = React.useState('#agenthub-help');
   React.useEffect(() => {
-    api.get('/admin/settings').then(d => { if (d && d.contact_channel) setContactChannel(d.contact_channel); }).catch(() => {});
+    api.get('/admin/settings/public').then(d => { if (d && d.contact_channel) setContactChannel(d.contact_channel); }).catch(() => {});
   }, []);
 
   const sections = [

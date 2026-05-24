@@ -120,7 +120,7 @@ async def update_notice(
     notice_id: uuid.UUID,
     body: NoticeUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    _: Annotated[User, Depends(require_admin)],
+    user: Annotated[User, Depends(get_current_user)],
 ):
     result = await db.execute(
         select(Notice).where(Notice.id == notice_id).options(selectinload(Notice.author))
@@ -128,6 +128,8 @@ async def update_notice(
     notice = result.scalar_one_or_none()
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
+    if notice.author_id != user.employee_id and user.role not in ("admin", "reviewer"):
+        raise HTTPException(status_code=403, detail="Permission denied")
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(notice, field, value)
     await db.commit()

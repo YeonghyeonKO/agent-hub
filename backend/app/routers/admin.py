@@ -1,5 +1,5 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -168,6 +168,43 @@ async def get_issues(
     ]
 
 
+class BulkReviewCreate(BaseModel):
+    component_ids: list[uuid.UUID]
+    scores: dict | None = None
+    comment: str | None = None
+    decision: Literal["approve", "reject"]
+
+
+@router.post("/review/bulk")
+async def bulk_review(
+    body: BulkReviewCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(require_admin)],
+):
+    reviewed = []
+    skipped = []
+    for cid in body.component_ids:
+        component = await db.get(Component, cid)
+        if not component:
+            skipped.append(str(cid))
+            continue
+        review = Review(
+            component_id=cid,
+            reviewer_id=user.employee_id,
+            scores=body.scores or {},
+            comment=body.comment or "",
+            decision=body.decision,
+        )
+        db.add(review)
+        if body.decision == "approve":
+            component.status = "approved"
+        elif body.decision == "reject":
+            component.status = "rejected"
+        reviewed.append(str(cid))
+    await db.commit()
+    return {"reviewed": reviewed, "skipped": skipped, "count": len(reviewed)}
+
+
 @router.post("/review/{component_id}", response_model=ReviewResponse)
 async def submit_review(
     component_id: uuid.UUID,
@@ -298,6 +335,17 @@ async def get_statistics(
             "deleted_at": c.deleted_at.isoformat() if c.deleted_at else None,
         })
     return items
+
+
+@router.get("/settings/public")
+async def get_public_settings(
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(select(Season).where(Season.is_active == True))
+    season = result.scalar_one_or_none()
+    if not season:
+        return {"contact_channel": None, "criteria_weights": None}
+    return {"contact_channel": season.contact_channel, "criteria_weights": season.criteria_weights}
 
 
 @router.get("/settings", response_model=SeasonSettings | None)

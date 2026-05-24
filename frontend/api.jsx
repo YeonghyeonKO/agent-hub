@@ -4,10 +4,27 @@
 
 const API_BASE = (window.location.port === '3000') ? 'http://localhost:8000/api/v1' : '/api/v1';
 
+function handleResponse(res, method, path) {
+  if (res.status === 403) {
+    if (method === 'POST' || method === 'PUT') {
+      alert('권한이 없습니다. 관리자에게 권한을 요청하세요.');
+    }
+    throw new Error(`${method} ${path}: 403 Forbidden`);
+  }
+  if (!res.ok) throw new Error(`${method} ${path}: ${res.status}`);
+  return res;
+}
+
 const api = {
-  async get(path) {
-    const res = await fetch(API_BASE + path);
-    if (!res.ok) throw new Error(`GET ${path}: ${res.status}`);
+  async get(path, params) {
+    let url = API_BASE + path;
+    if (params) {
+      const filtered = Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null));
+      const q = new URLSearchParams(filtered).toString();
+      if (q) url += (path.includes('?') ? '&' : '?') + q;
+    }
+    const res = await fetch(url);
+    handleResponse(res, 'GET', path);
     return res.json();
   },
 
@@ -17,19 +34,19 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`POST ${path}: ${res.status}`);
+    handleResponse(res, 'POST', path);
     return res.json();
   },
 
   async postForm(path, formData) {
     const res = await fetch(API_BASE + path, { method: 'POST', body: formData });
-    if (!res.ok) throw new Error(`POST ${path}: ${res.status}`);
+    handleResponse(res, 'POST', path);
     return res.json();
   },
 
   async patchForm(path, formData) {
     const res = await fetch(API_BASE + path, { method: 'PATCH', body: formData });
-    if (!res.ok) throw new Error(`PATCH ${path}: ${res.status}`);
+    handleResponse(res, 'PATCH', path);
     return res.json();
   },
 
@@ -39,12 +56,13 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`PUT ${path}: ${res.status}`);
+    handleResponse(res, 'PUT', path);
     return res.json();
   },
 
   async del(path) {
     const res = await fetch(API_BASE + path, { method: 'DELETE' });
+    if (res.status === 403) throw new Error(`DELETE ${path}: 403 Forbidden`);
     if (!res.ok && res.status !== 204) throw new Error(`DELETE ${path}: ${res.status}`);
     return res.status === 204 ? null : res.json();
   },
@@ -55,7 +73,7 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`PATCH ${path}: ${res.status}`);
+    handleResponse(res, 'PATCH', path);
     return res.json();
   },
 
@@ -113,6 +131,7 @@ const api = {
     },
     get: (id) => api.get(`/voc/${id}`),
     create: (body) => api.post('/voc', body),
+    update: (id, body) => api.put(`/voc/${id}`, body),
     comment: (id, body) => api.post(`/voc/${id}/comments`, body),
     upvote: (id) => api.post(`/voc/${id}/upvote`),
     status: (id, status) => api.patch(`/voc/${id}/status`, { status }),
@@ -127,9 +146,10 @@ const api = {
     rejected: () => api.get('/admin/rejected'),
     issues: () => api.get('/admin/issues'),
     review: (id, body) => api.post(`/admin/review/${id}`, body),
+    bulkReview: (body) => api.post('/admin/review/bulk', body),
     settings: () => api.get('/admin/settings'),
     updateSettings: (body) => api.put('/admin/settings', body),
-    users: () => api.get('/admin/users'),
+    users: (params) => api.get('/admin/users', params),
     updateRole: (empId, role) => api.patch(`/admin/users/${empId}/role`, { role }),
     deleted: () => api.get('/admin/deleted'),
     deleteComponent: (id) => api.del(`/admin/components/${id}`),

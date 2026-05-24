@@ -1,5 +1,56 @@
 # Changelog
 
+## v1.0.17 (2026-05-22)
+
+### Features
+- **Notice/VoC edit**: author and admin/reviewer can edit (previously admin-only)
+- **VoC PUT endpoint**: `PUT /api/v1/voc/{post_id}` for editing posts
+- **403 alert**: only on POST/PUT write operations, not GET/PATCH/DELETE
+- **Public settings**: `GET /admin/settings/public` for non-admin access
+
+### Fixes
+- **Bulk review 422**: route ordering fix
+- **Users pagination**: useRef for page counter
+- **Guide tab 403**: use public settings endpoint
+
+---
+
+## v1.0.16 (2026-05-22)
+
+### Fixes
+- **Bulk review 422**: move `/review/bulk` before `/review/{component_id}` to prevent UUID parse error
+- **Users pagination**: use `useRef` for page counter to avoid stale closure
+
+---
+
+## v1.0.15 (2026-05-22)
+
+### Features
+- **403 permission alert**: show "권한이 없습니다. 관리자에게 권한을 요청하세요." on all forbidden API responses
+
+---
+
+## v1.0.14 (2026-05-22)
+
+### Features
+- **Bulk approve**: checkbox selection + batch approval for pending submissions
+- **Bulk review API**: `POST /api/v1/admin/review/bulk` with Literal validation
+
+### Fixes
+- **Users pagination**: `api.get` was ignoring query params — same page repeated infinitely
+- **Page-based offset**: replaced stale closure offset with explicit page tracking
+
+---
+
+## v1.0.13 (2026-05-22)
+
+### Refactor
+- **Upload templates**: extract hardcoded templates to external MD files (`frontend/templates/`)
+- **Dynamic fetch**: load templates via fetch with error handling and fallback
+- **Template content**: updated per issue #4 (Flow) and #5 (Component) format
+
+---
+
 ## v1.0.12 (2026-05-14)
 
 ### Fixes
