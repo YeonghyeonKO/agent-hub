@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.1.0 (2026-05-25)
+
+### Features
+- **Code improvement request**: users can propose code improvements to .py components
+- **Notifications**: bell icon with unread badge, auto-notify on propose/review
+- **Git-style diff**: LCS-based line diff with hunk folding (no external deps)
+- **Contributor credit**: version history shows contributor chips
+- **Version file content**: DB-backed code storage for serverless environments
+
+### Improvements
+- **Self-blocked message**: guide users to Update feature instead
+
+---
+
 ## v1.0.17 (2026-05-22)
 
 ### Features
