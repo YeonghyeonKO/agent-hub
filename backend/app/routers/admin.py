@@ -267,8 +267,9 @@ async def list_users(
     if sort == "role":
         role_order = case(
             (User.role == "admin", 0),
-            (User.role == "reviewer", 1),
-            else_=2,
+            (User.role == "manager", 1),
+            (User.role == "reviewer", 2),
+            else_=3,
         )
         query = query.order_by(role_order, User.employee_id)
     elif sort == "id":
