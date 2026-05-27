@@ -125,7 +125,7 @@ function AdminDashboard({ onBack, userRole, onOpenComponent }) {
           ['pending', t('admin_pending'), pendingList.length],
           ['approved', t('admin_approved'), null],
           ['rejected', t('tab_deleted'), null],
-          ...(['admin', 'senior_reviewer'].includes(userRole) ? [['statistics', t('admin_statistics') || 'Statistics', null]] : []),
+          ...(['admin', 'manager'].includes(userRole) ? [['statistics', t('admin_statistics') || 'Statistics', null]] : []),
           ...(userRole === 'admin' ? [['users', t('admin_users'), null], ['settings', t('admin_settings'), null]] : []),
         ].map(([id, label, count]) => (
           <button key={id} className={`tab ${activeTab===id?'active':''}`} onClick={() => setActiveTab(id)}>
@@ -504,7 +504,7 @@ function UsersTab() {
               <select className="select" style={{fontSize: 12, padding: '4px 8px', height: 30}} value={u.role} onChange={e => changeRole(u.employee_id, e.target.value)}>
                 <option value="user">{t('role_user')}</option>
                 <option value="admin">{t('role_admin')}</option>
-                <option value="senior_reviewer">{t('role_senior_reviewer')}</option>
+                <option value="manager">{t('role_manager')}</option>
                 <option value="reviewer">{t('role_reviewer')}</option>
               </select>
             </div>

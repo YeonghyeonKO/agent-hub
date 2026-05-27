@@ -292,8 +292,8 @@ async def update_user_role(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[User, Depends(require_admin)],
 ):
-    if body.role not in ("user", "admin", "senior_reviewer", "reviewer"):
-        raise HTTPException(status_code=400, detail="Invalid role. Must be: user, admin, senior_reviewer, reviewer")
+    if body.role not in ("user", "admin", "manager", "reviewer"):
+        raise HTTPException(status_code=400, detail="Invalid role. Must be: user, admin, manager, reviewer")
     result = await db.execute(select(User).where(User.employee_id == employee_id))
     user = result.scalar_one_or_none()
     if not user:
