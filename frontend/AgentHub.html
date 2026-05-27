@@ -305,7 +305,7 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
         <a className={`nav-link ${route.name === 'notice' ? 'active' : ''}`} onClick={() => navClick(onGoNotice)}>{t('nav_notice')}</a>
         <a className={`nav-link ${route.name === 'voc' ? 'active' : ''}`} onClick={() => navClick(onGoVoc)}>{t('nav_voc')}</a>
         <a className={`nav-link ${route.name === 'guide' ? 'active' : ''}`} onClick={() => navClick(onGoGuide)}>{t('nav_guide')}</a>
-        {(role === 'admin' || role === 'reviewer') && <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={() => navClick(onGoAdmin)}>{t('nav_admin')}</a>}
+        {['admin', 'manager', 'reviewer'].includes(role) && <a className={`nav-link ${route.name === 'admin' ? 'active' : ''}`} onClick={() => navClick(onGoAdmin)}>{t('nav_admin')}</a>}
       </div>
       <div className="nav-spacer"/>
       <div className="nav-search">

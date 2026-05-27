@@ -267,8 +267,9 @@ async def list_users(
     if sort == "role":
         role_order = case(
             (User.role == "admin", 0),
-            (User.role == "reviewer", 1),
-            else_=2,
+            (User.role == "manager", 1),
+            (User.role == "reviewer", 2),
+            else_=3,
         )
         query = query.order_by(role_order, User.employee_id)
     elif sort == "id":
@@ -292,8 +293,8 @@ async def update_user_role(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[User, Depends(require_admin)],
 ):
-    if body.role not in ("user", "admin", "reviewer"):
-        raise HTTPException(status_code=400, detail="Invalid role. Must be: user, admin, reviewer")
+    if body.role not in ("user", "admin", "manager", "reviewer"):
+        raise HTTPException(status_code=400, detail="Invalid role. Must be: user, admin, manager, reviewer")
     result = await db.execute(select(User).where(User.employee_id == employee_id))
     user = result.scalar_one_or_none()
     if not user:
