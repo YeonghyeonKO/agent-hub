@@ -373,7 +373,7 @@ function UpdateModal({ component, onClose, onUpdated }) {
   const [desc, setDesc] = React.useState(c.desc || c.description || '');
   const [newFile, setNewFile] = React.useState(null);
   const [fileError, setFileError] = React.useState('');
-  const [tags, setTags] = React.useState(c.tags || []);
+  const [tags, setTags] = React.useState([...new Set(c.tags || [])]);
   const [tagInput, setTagInput] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
 

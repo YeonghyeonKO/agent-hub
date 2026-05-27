@@ -273,7 +273,8 @@ async def update_component(
     if readme is not None:
         component.readme = readme
     if tags is not None:
-        component.tags = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+        tag_list = [t.strip()[:30] for t in tags.split(",") if t.strip()][:5] if tags else []
+        component.tags = tag_list
 
     await db.commit()
 
