@@ -67,6 +67,9 @@ function ComponentDetail({ component, onBack }) {
     if (c.id && String(c.id).includes('-')) {
       api.components.get(c.id).then(full => setC(apiToCard(full))).catch(() => {});
       api.components.versions(c.id).then(setVersionHistory).catch(() => {});
+      api.components.file(c.id)
+        .then(d => { setFileContent(d.content); setFileName(d.filename); })
+        .catch(() => {});
     }
   }, [c.id]);
 
