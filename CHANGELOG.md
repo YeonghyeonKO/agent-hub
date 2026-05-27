@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.2.0 (2026-05-27)
+
+### Features
+- **Manager role**: new role between admin and reviewer with statistics tab access (#9)
+- **Tag editing**: add/remove tags when updating components/flows (#10)
+- **Tag validation**: server-side max 5 tags, 30 chars per tag
+
+### Fixes
+- **Code preview refresh**: reload file content after improvement approval (#11)
+- **Nav bar**: manager role can access admin dashboard
+- **Role sort**: admin > manager > reviewer > user ordering
+
+---
+
 ## v1.1.0 (2026-05-25)
 
 ### Features
