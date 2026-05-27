@@ -376,6 +376,8 @@ function UpdateModal({ component, onClose, onUpdated }) {
   const [desc, setDesc] = React.useState(c.desc || c.description || '');
   const [newFile, setNewFile] = React.useState(null);
   const [fileError, setFileError] = React.useState('');
+  const [tags, setTags] = React.useState([...new Set(c.tags || [])]);
+  const [tagInput, setTagInput] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
 
   const safeClose = () => {
@@ -405,6 +407,7 @@ function UpdateModal({ component, onClose, onUpdated }) {
       fd.append('changelog', changelog.trim() || 'Updated');
       fd.append('description', desc.trim());
       fd.append('readme', readme.trim());
+      fd.append('tags', tags.join(','));
       if (newFile) fd.append('file', newFile);
       const result = await api.components.update(c.id, fd);
       onUpdated(result);
@@ -451,6 +454,21 @@ function UpdateModal({ component, onClose, onUpdated }) {
           <div className="field">
             <label className="field-label">한줄설명</label>
             <input className="input" value={desc} onChange={e => setDesc(e.target.value)}/>
+          </div>
+          <div className="field">
+            <label className="field-label">태그</label>
+            <div className="row gap-8" style={{flexWrap: 'wrap'}}>
+              {tags.map(t => (
+                <span key={t} className="tag" style={{cursor: 'pointer'}} onClick={() => setTags(tags.filter(x => x !== t))}>#{t} <Icons.X size={10}/></span>
+              ))}
+              {tags.length < 5 && (
+                <div className="row gap-8">
+                  <input className="input" style={{width: 120, height: 28, fontSize: 12}} placeholder="태그 입력" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (tagInput.trim() && !tags.includes(tagInput.trim())) { setTags([...tags, tagInput.trim()]); setTagInput(''); } } }}/>
+                  <button className="tag" style={{cursor: 'pointer', borderStyle: 'dashed'}} onClick={() => { if (tagInput.trim() && !tags.includes(tagInput.trim()) && tags.length < 5) { setTags([...tags, tagInput.trim()]); setTagInput(''); } }}><Icons.Plus size={10}/> 추가</button>
+                </div>
+              )}
+              {tags.length >= 5 && <span className="muted-sm" style={{fontSize: 11}}>max 5</span>}
+            </div>
           </div>
           <div className="field">
             <label className="field-label">개요 / 사용법</label>
