@@ -155,6 +155,6 @@ async def get_current_user(
 async def require_admin(
     user: Annotated[User, Depends(get_current_user)],
 ) -> User:
-    if user.role not in ("admin", "reviewer"):
+    if user.role not in ("admin", "senior_reviewer", "reviewer"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return user
