@@ -230,6 +230,7 @@ async def update_component(
     readme: str = Form(None),
     changelog: str = Form(""),
     version_bump: str = Form("patch"),  # patch / minor / major
+    tags: str = Form(None),
 ):
     result = await db.execute(
         select(Component).where(Component.id == component_id).options(selectinload(Component.author))
@@ -271,6 +272,8 @@ async def update_component(
         component.description = description
     if readme is not None:
         component.readme = readme
+    if tags is not None:
+        component.tags = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
 
     await db.commit()
 
