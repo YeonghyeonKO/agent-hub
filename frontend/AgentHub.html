@@ -191,7 +191,7 @@ function App() {
   };
   const closeDetail = () => {
     setDetailModal(null);
-    window.history.pushState(null, '', `#/${route.name}`);
+    window.history.back();
     window.dispatchEvent(new Event('agenthub:reload'));
   };
   const goAdmin = () => setRoute({ name: 'admin' });
