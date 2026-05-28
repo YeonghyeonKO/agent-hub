@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.2.1 (2026-05-29)
+
+### Fixes
+- **Back navigation**: closing component/flow detail returns to the exact previous page instead of resetting to home (#14)
+
+---
+
 ## v1.2.0 (2026-05-27)
 
 ### Features
