@@ -28,6 +28,7 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
   const [starred, setStarred] = React.useState(false);
   const [flowData, setFlowData] = React.useState(null);
   const [showUpdate, setShowUpdate] = React.useState(false);
+  const [showDeploy, setShowDeploy] = React.useState(false);
   const [copyToast, setCopyToast] = React.useState('');
   const [currentUser, setCurrentUser] = React.useState(null);
   const [versionHistory, setVersionHistory] = React.useState([]);
@@ -93,6 +94,7 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
           </div>
         </div>
         <div className="detail-actions">
+          <button className="btn btn-accent" onClick={() => setShowDeploy(true)}><Icons.Zap size={13}/> 배포</button>
           <button className="btn btn-secondary" style={{color: starred ? '#f59e0b' : undefined, borderColor: starred ? '#f59e0b' : undefined}} onClick={() => { const id = c.id; if (id && String(id).includes('-')) api.components.star(id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } else { setStarCount(s => Math.max(0, s - 1)); setStarred(false); } }).catch(() => {}); }}><Icons.Star size={13}/> {starCount}</button>
           <button className="btn btn-secondary" onClick={() => {
             navigator.clipboard?.writeText(JSON.stringify(flowData || {name: c.title}, null, 2));
@@ -192,6 +194,7 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
       </div>
 
       {showUpdate && <UpdateModal component={c} onClose={() => setShowUpdate(false)} onUpdated={(updated) => { setC(apiToCard(updated)); setShowUpdate(false); }}/>}
+      {showDeploy && <DeployModal component={c} onClose={() => setShowDeploy(false)}/>}
     </div>
   );
 }

@@ -99,6 +99,16 @@ const api = {
     withdrawImprovement: (id, impId) => api.del(`/components/${id}/improvements/${impId}`),
     contributors: (id) => api.get(`/components/${id}/contributors`),
   },
+  deploy: {
+    endpoints: () => api.get('/deploy/endpoints'),
+    addEndpoint: (body) => api.post('/deploy/endpoints', body),
+    delEndpoint: (id) => api.del(`/deploy/endpoints/${id}`),
+    test: (body) => api.post('/deploy/test', body),
+    testEndpoint: (id) => api.post(`/deploy/endpoints/${id}/test`),
+    projects: (id) => api.get(`/deploy/endpoints/${id}/projects`),
+    flows: (id, projectId) => api.get(`/deploy/endpoints/${id}/projects/${projectId}/flows`),
+    deployAsset: (componentId, body) => api.post(`/deploy/components/${componentId}`, body),
+  },
   notifications: {
     list: (unreadOnly = false) => api.get('/notifications' + (unreadOnly ? '?unread_only=true' : '')),
     unreadCount: () => api.get('/notifications/unread-count'),

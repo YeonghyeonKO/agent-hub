@@ -57,6 +57,7 @@ function ComponentDetail({ component, onBack }) {
   const [starCount, setStarCount] = React.useState(c.stars_count ?? c.stars ?? 0);
   const [starred, setStarred] = React.useState(false);
   const [showUpdate, setShowUpdate] = React.useState(false);
+  const [showDeploy, setShowDeploy] = React.useState(false);
   const [copyToast, setCopyToast] = React.useState('');
   const [currentUser, setCurrentUser] = React.useState(null);
   const [versionHistory, setVersionHistory] = React.useState([]);
@@ -147,6 +148,7 @@ function ComponentDetail({ component, onBack }) {
           </div>
         </div>
         <div className="detail-actions">
+          <button className="btn btn-accent" onClick={() => setShowDeploy(true)}><Icons.Zap size={13}/> 배포</button>
           <button className="btn btn-secondary" style={{color: starred ? '#f59e0b' : undefined, borderColor: starred ? '#f59e0b' : undefined}} onClick={() => { const id = c.id; if (id && String(id).includes('-')) api.components.star(id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } else { setStarCount(s => Math.max(0, s - 1)); setStarred(false); } }).catch(() => {}); }}><Icons.Star size={13}/> {starCount}</button>
           <button className="btn btn-secondary" onClick={() => {
             navigator.clipboard?.writeText(fileContent || '');
@@ -273,6 +275,7 @@ function ComponentDetail({ component, onBack }) {
       {versionCode && <VersionCodeModal info={versionCode} onClose={() => setVersionCode(null)}/>}
 
       {showUpdate && <UpdateModal component={c} onClose={() => setShowUpdate(false)} onUpdated={(updated) => { setC(apiToCard(updated)); setShowUpdate(false); }}/>}
+      {showDeploy && <DeployModal component={c} onClose={() => setShowDeploy(false)}/>}
     </div>
   );
 }
