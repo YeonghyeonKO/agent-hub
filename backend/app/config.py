@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:8080,http://localhost:3000,https://agent-hub.internal"
     UPLOAD_DIR: str = "/data/uploads"
     DEV_MODE: bool = True  # Skip Keycloak auth, use dev user
+    LANGFLOW_URL_PATTERN: str = ""  # e.g. http://agentbuilder-{empno}.abs01.skhynix.com
 
     @property
     def keycloak_issuer(self) -> str:

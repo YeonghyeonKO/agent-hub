@@ -108,6 +108,7 @@ const api = {
     projects: (id) => api.get(`/deploy/endpoints/${id}/projects`),
     flows: (id, projectId) => api.get(`/deploy/endpoints/${id}/projects/${projectId}/flows`),
     deployAsset: (componentId, body) => api.post(`/deploy/components/${componentId}`, body),
+    suggestedUrl: () => api.get('/deploy/suggested-url'),
   },
   notifications: {
     list: (unreadOnly = false) => api.get('/notifications' + (unreadOnly ? '?unread_only=true' : '')),
