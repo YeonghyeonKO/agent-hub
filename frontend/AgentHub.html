@@ -228,6 +228,7 @@ function App() {
         lang={lang}
         role={userRole}
         userName={userName}
+        authReady={authReady}
       />
 
       {route.name === 'home' && (
@@ -282,7 +283,7 @@ function App() {
   );
 }
 
-function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, onToggleLang, onSearch, lang, role, userName }) {
+function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, onGoNotice, onGoVoc, onOpenUpload, onToggleLang, onSearch, lang, role, userName, authReady }) {
   const { t } = useI18n();
   const [mobileMenu, setMobileMenu] = React.useState(false);
   const [searchVal, setSearchVal] = React.useState('');
@@ -318,7 +319,7 @@ function Topbar({ route, onGoHome, onGoAdmin, onGoMine, onGoRanking, onGoGuide, 
       <button className="btn btn-ghost topbar-lang" onClick={onToggleLang} title="한국어/English" style={{fontSize: 15, padding: '4px 8px'}}>
         {lang === 'en' ? '🇺🇸' : '🇰🇷'}
       </button>
-      <NotificationsMenu/>
+      {authReady && <NotificationsMenu/>}
       <div className="topbar-right">
         <button className="mobile-search-btn" onClick={() => { const q = prompt(t('search_placeholder')); if (q && onSearch) onSearch(q); }}>
           <Icons.Search size={16}/>

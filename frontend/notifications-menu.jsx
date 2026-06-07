@@ -24,16 +24,22 @@ function NotificationsMenu() {
   const [unread, setUnread] = React.useState(0);
   const ref = React.useRef(null);
 
-  const refreshCount = React.useCallback(() => {
-    api.notifications.unreadCount().then(r => setUnread(r.unread_count || 0)).catch(() => {});
+  const handleAuthError = React.useCallback((e) => {
+    if (e?.message?.includes('401') && !AUTH_CONFIG.devMode && !auth.isLoggedIn()) {
+      auth.login();
+    }
   }, []);
+
+  const refreshCount = React.useCallback(() => {
+    api.notifications.unreadCount().then(r => setUnread(r.unread_count || 0)).catch(handleAuthError);
+  }, [handleAuthError]);
 
   const loadList = React.useCallback(() => {
     api.notifications.list().then(r => {
       setItems(r.items || []);
       setUnread(r.unread_count || 0);
-    }).catch(() => {});
-  }, []);
+    }).catch(handleAuthError);
+  }, [handleAuthError]);
 
   React.useEffect(() => {
     refreshCount();
