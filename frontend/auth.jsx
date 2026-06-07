@@ -132,6 +132,10 @@ auth.refreshIfNeeded = async function() {
           const data = await res.json();
           localStorage.setItem('agenthub_token', data.access_token);
           if (data.refresh_token) localStorage.setItem('agenthub_refresh', data.refresh_token);
+        } else {
+          localStorage.removeItem('agenthub_token');
+          localStorage.removeItem('agenthub_refresh');
+          auth.login();
         }
       }
     }
