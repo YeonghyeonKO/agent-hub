@@ -130,7 +130,7 @@ function ComponentDetail({ component, onBack }) {
             <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}><Icons.Users size={10}/></div>
             <span style={{color: 'var(--text-2)', fontWeight: 500}}>{c.author.name}</span>
             <span className="breadcrumb-sep">·</span>
-            <span>{fmtDate(c.created_at)} 등록</span>
+            <span>{fmtDate(c.created_at)} {t('detail_registered')}</span>
             {contributors.length > 0 && (
               <>
                 <span className="breadcrumb-sep">·</span>
@@ -148,15 +148,15 @@ function ComponentDetail({ component, onBack }) {
           </div>
         </div>
         <div className="detail-actions">
-          <button className="btn btn-accent" onClick={() => setShowDeploy(true)}><Icons.Zap size={13}/> 배포</button>
+          <button className="btn btn-accent" onClick={() => setShowDeploy(true)}><Icons.Zap size={13}/> {t('deploy_btn')}</button>
           <button className="btn btn-secondary" style={{color: starred ? '#f59e0b' : undefined, borderColor: starred ? '#f59e0b' : undefined}} onClick={() => { const id = c.id; if (id && String(id).includes('-')) api.components.star(id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } else { setStarCount(s => Math.max(0, s - 1)); setStarred(false); } }).catch(() => {}); }}><Icons.Star size={13}/> {starCount}</button>
           <button className="btn btn-secondary" onClick={() => {
             navigator.clipboard?.writeText(fileContent || '');
             if (c.id && String(c.id).includes('-') && !starred) {
               api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
             }
-            setCopyToast('코드를 복사했어요! 개발자에게 star도 같이 전달할게요 ⭐️'); setTimeout(() => setCopyToast(''), 3000);
-          }}><Icons.Copy size={13}/> 코드 복사</button>
+            setCopyToast(t('toast_copy_code')); setTimeout(() => setCopyToast(''), 3000);
+          }}><Icons.Copy size={13}/> {t('detail_copy_code')}</button>
           <button className="btn btn-primary" onClick={() => {
             if (c.id && String(c.id).includes('-')) {
               api.components.file(c.id).then(d => {
@@ -166,22 +166,22 @@ function ComponentDetail({ component, onBack }) {
                 const a = document.createElement('a'); a.href = url; a.download = (c.title || 'file').replace(/\s+/g, '_') + ext; a.click();
                 URL.revokeObjectURL(url);
                 api.components.download(c.id).catch(() => {});
-              }).catch(() => alert('Download failed'));
+              }).catch(() => alert(t('detail_download_failed')));
             } else {
               const blob = new Blob([fileContent || ''], {type: 'text/plain'});
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a'); a.href = url; a.download = fileName || 'file'; a.click();
               URL.revokeObjectURL(url);
             }
-          }}><Icons.Download size={13}/> 다운로드</button>
+          }}><Icons.Download size={13}/> {t('detail_download')}</button>
           <button className="btn btn-secondary" onClick={() => {
             const type = c.type === 'json' ? 'flow' : 'component';
             const url = window.location.origin + window.location.pathname + '#/' + type + '/' + c.id;
             navigator.clipboard?.writeText(url);
-            setCopyToast('링크를 복사했어요!'); setTimeout(() => setCopyToast(''), 2000);
-          }}><Icons.Link size={13}/> 링크 복사</button>
+            setCopyToast(t('toast_copy_link')); setTimeout(() => setCopyToast(''), 2000);
+          }}><Icons.Link size={13}/> {t('detail_copy_link')}</button>
           {currentUser && (currentUser.role === 'admin' || currentUser.employee_id === (c.author?.id || c.author_id)) && (
-            <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> 업데이트</button>
+            <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> {t('detail_update')}</button>
           )}
         </div>
       </div>

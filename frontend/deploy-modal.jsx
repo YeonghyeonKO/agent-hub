@@ -4,15 +4,16 @@
 const MAX_ENDPOINTS = 5;
 
 function StatusDot({ status }) {
+  const { t } = useI18n();
   // ok=초록, error=빨강, testing=주황(점멸), unknown/null=회색
   const color = status === 'ok' ? '#10b981'
     : status === 'error' ? '#ef4444'
     : status === 'testing' ? '#f59e0b'
     : 'var(--text-3)';
-  const label = status === 'ok' ? '정상'
-    : status === 'error' ? '실패'
-    : status === 'testing' ? '확인 중'
-    : '미확인';
+  const label = status === 'ok' ? t('deploy_status_ok')
+    : status === 'error' ? t('deploy_status_error')
+    : status === 'testing' ? t('deploy_status_testing')
+    : t('deploy_status_unknown');
   return (
     <span className="row gap-8" style={{fontSize: 11, color: 'var(--text-3)'}}>
       <span style={{
@@ -26,6 +27,7 @@ function StatusDot({ status }) {
 }
 
 function AddEndpointForm({ onAdded, onCancel }) {
+  const { t } = useI18n();
   const [name, setName] = React.useState('');
   const [baseUrl, setBaseUrl] = React.useState('');
   const [apiKey, setApiKey] = React.useState('');
@@ -39,43 +41,43 @@ function AddEndpointForm({ onAdded, onCancel }) {
   const handleTest = () => {
     setTestState('testing'); setTestMsg('');
     api.deploy.test({ base_url: baseUrl.trim(), api_key: apiKey.trim() || null })
-      .then(r => { setTestState(r.ok ? 'ok' : 'error'); setTestMsg(r.ok ? (r.version ? `Langflow ${r.version}` : '연결 성공') : (r.message || '연결 실패')); })
-      .catch(() => { setTestState('error'); setTestMsg('연결 실패'); });
+      .then(r => { setTestState(r.ok ? 'ok' : 'error'); setTestMsg(r.ok ? (r.version ? `Langflow ${r.version}` : t('deploy_test_ok')) : (r.message || t('deploy_test_fail'))); })
+      .catch(() => { setTestState('error'); setTestMsg(t('deploy_test_fail')); });
   };
 
   const handleSave = () => {
     setSaving(true);
     api.deploy.addEndpoint({ name: name.trim(), base_url: baseUrl.trim(), api_key: apiKey.trim() || null })
       .then(ep => onAdded(ep))
-      .catch(e => { alert('엔드포인트 추가 실패: ' + (e.message || '')); setSaving(false); });
+      .catch(e => { alert(t('deploy_ep_add_fail') + (e.message || '')); setSaving(false); });
   };
 
   return (
     <div className="card card-pad" style={{padding: 16, background: 'var(--bg-muted)', marginTop: 12}}>
       <div className="field" style={{marginBottom: 12}}>
-        <label className="field-label">별칭 <span className="req">*</span></label>
-        <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="예: 내 로컬 Langflow"/>
+        <label className="field-label">{t('deploy_ep_name')} <span className="req">*</span></label>
+        <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder={t('deploy_ep_name_ph')}/>
       </div>
       <div className="field" style={{marginBottom: 12}}>
-        <label className="field-label">Langflow 주소 (Base URL) <span className="req">*</span></label>
-        <input className="input" value={baseUrl} onChange={e => { setBaseUrl(e.target.value); setTestState(null); }} placeholder="https://langflow.mycorp 또는 http://localhost:7860"/>
+        <label className="field-label">{t('deploy_ep_url')} <span className="req">*</span></label>
+        <input className="input" value={baseUrl} onChange={e => { setBaseUrl(e.target.value); setTestState(null); }} placeholder={t('deploy_ep_url_ph')}/>
       </div>
       <div className="field" style={{marginBottom: 12}}>
-        <label className="field-label">API Key <span className="muted-sm" style={{fontWeight: 400}}>(선택)</span></label>
-        <input className="input" type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); setTestState(null); }} placeholder="x-api-key (인증이 필요한 경우)"/>
+        <label className="field-label">API Key <span className="muted-sm" style={{fontWeight: 400}}>{t('deploy_ep_apikey_opt')}</span></label>
+        <input className="input" type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); setTestState(null); }} placeholder={t('deploy_ep_apikey_ph')}/>
       </div>
       <div className="row gap-8" style={{justifyContent: 'space-between', alignItems: 'center'}}>
         <div className="row gap-8">
           <button className="btn btn-secondary btn-sm" onClick={handleTest} disabled={!canTest || testState === 'testing'}>
-            <Icons.Plug size={12}/> 연결 테스트
+            <Icons.Plug size={12}/> {t('deploy_test')}
           </button>
           {testState && <StatusDot status={testState}/>}
           {testMsg && <span style={{fontSize: 11, color: testState === 'ok' ? 'var(--ok-fg)' : 'var(--err-fg)'}}>{testMsg}</span>}
         </div>
         <div className="row gap-8">
-          <button className="btn btn-ghost btn-sm" onClick={onCancel}>취소</button>
+          <button className="btn btn-ghost btn-sm" onClick={onCancel}>{t('btn_cancel')}</button>
           <button className="btn btn-accent btn-sm" onClick={handleSave} disabled={!canSave} style={{opacity: canSave ? 1 : 0.5}}>
-            {saving ? '저장 중…' : '저장'}
+            {saving ? t('deploy_saving') : t('deploy_save')}
           </button>
         </div>
       </div>
@@ -84,6 +86,7 @@ function AddEndpointForm({ onAdded, onCancel }) {
 }
 
 function DeployModal({ component, onClose }) {
+  const { t } = useI18n();
   const c = component;
   const isFlow = c.type === 'json';
 
@@ -118,7 +121,7 @@ function DeployModal({ component, onClose }) {
     setProjects(null); setProjErr(''); setSelectedProject(''); setFlows(null); setSelectedFlow('');
     api.deploy.projects(selectedEp)
       .then(setProjects)
-      .catch(e => setProjErr(e.message ? '프로젝트를 불러오지 못했습니다. 연결 상태를 확인하세요.' : '프로젝트 조회 실패'));
+      .catch(e => setProjErr(e.message ? t('deploy_project_err') : t('deploy_project_err2')));
   }, [selectedEp]);
 
   // (component 한정) 프로젝트 선택 시 Flow 목록 로드
@@ -139,11 +142,11 @@ function DeployModal({ component, onClose }) {
   };
 
   const handleDelete = (id) => {
-    if (!confirm('이 엔드포인트를 삭제할까요?')) return;
+    if (!confirm(t('deploy_ep_del_confirm'))) return;
     api.deploy.delEndpoint(id).then(() => {
       setEndpoints(eps => eps.filter(ep => ep.id !== id));
       if (selectedEp === id) setSelectedEp(null);
-    }).catch(() => alert('삭제 실패'));
+    }).catch(() => alert(t('deploy_ep_del_fail')));
   };
 
   const handleDeploy = () => {
@@ -155,10 +158,10 @@ function DeployModal({ component, onClose }) {
     })
       .then(r => { setResult(r); setDeploying(false); })
       .catch(async (e) => {
-        let msg = '배포에 실패했습니다.';
+        let msg = t('deploy_err_generic');
         try { msg = (await e.response?.json())?.detail || msg; } catch {}
         // api 헬퍼는 message만 throw하므로 기본 메시지 사용
-        setError(e.message && e.message.includes('502') ? '배포 대상 Langflow에서 오류가 발생했습니다.' : msg);
+        setError(e.message && e.message.includes('502') ? t('deploy_err_502') : msg);
         setDeploying(false);
       });
   };
@@ -172,7 +175,7 @@ function DeployModal({ component, onClose }) {
           <div>
             <div className="row gap-8" style={{marginBottom: 4}}>
               <Icons.Zap size={16}/>
-              <span style={{fontWeight: 700, fontSize: 16}}>Langflow에 배포</span>
+              <span style={{fontWeight: 700, fontSize: 16}}>{t('deploy_title')}</span>
             </div>
             <div className="muted-sm">
               <span className={`chip ${isFlow ? 'chip-json' : 'chip-py'}`} style={{fontSize: 10, marginRight: 6}}>{isFlow ? '.json' : '.py'}</span>
@@ -186,21 +189,21 @@ function DeployModal({ component, onClose }) {
           {result ? (
             <div style={{textAlign: 'center', padding: '20px 8px'}}>
               <div style={{fontSize: 36, marginBottom: 12}}>🚀</div>
-              <div style={{fontWeight: 600, marginBottom: 6}}>배포 완료!</div>
-              <div className="muted-sm" style={{marginBottom: 16}}>"{result.name}" Flow가 생성/업데이트되었습니다.</div>
+              <div style={{fontWeight: 600, marginBottom: 6}}>{t('deploy_done')}</div>
+              <div className="muted-sm" style={{marginBottom: 16}}>{t('deploy_done_desc').replace('{name}', result.name)}</div>
               <a className="btn btn-accent btn-sm" href={result.flow_url} target="_blank" rel="noopener">
-                <Icons.ArrowRight size={12}/> Langflow에서 열기
+                <Icons.ArrowRight size={12}/> {t('deploy_open_langflow')}
               </a>
             </div>
           ) : (
             <>
               {/* ── 엔드포인트 선택 ── */}
-              <div className="field-label" style={{marginBottom: 8}}>배포 대상 엔드포인트</div>
+              <div className="field-label" style={{marginBottom: 8}}>{t('deploy_target_ep')}</div>
               {loadingEp ? (
-                <div className="muted-sm" style={{padding: 12}}>불러오는 중…</div>
+                <div className="muted-sm" style={{padding: 12}}>{t('deploy_loading')}</div>
               ) : endpoints.length === 0 && !showAdd ? (
                 <div className="card card-pad" style={{padding: 16, textAlign: 'center', color: 'var(--text-3)'}}>
-                  <div style={{fontSize: 13, marginBottom: 8}}>등록된 Langflow 엔드포인트가 없습니다.</div>
+                  <div style={{fontSize: 13, marginBottom: 8}}>{t('deploy_no_ep')}</div>
                 </div>
               ) : (
                 <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
@@ -219,8 +222,8 @@ function DeployModal({ component, onClose }) {
                         <div className="mono" style={{fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{ep.base_url}</div>
                       </div>
                       <StatusDot status={testing[ep.id] || ep.last_status}/>
-                      <button className="btn btn-ghost btn-sm" title="연결 테스트" onClick={(e) => { e.stopPropagation(); handleTestEndpoint(ep.id); }}><Icons.Plug size={12}/></button>
-                      <button className="btn btn-ghost btn-sm" title="삭제" onClick={(e) => { e.stopPropagation(); handleDelete(ep.id); }} style={{color: 'var(--err-fg)'}}><Icons.X size={12}/></button>
+                      <button className="btn btn-ghost btn-sm" title={t('deploy_test')} onClick={(e) => { e.stopPropagation(); handleTestEndpoint(ep.id); }}><Icons.Plug size={12}/></button>
+                      <button className="btn btn-ghost btn-sm" title={t('btn_delete')} onClick={(e) => { e.stopPropagation(); handleDelete(ep.id); }} style={{color: 'var(--err-fg)'}}><Icons.X size={12}/></button>
                     </div>
                   ))}
                 </div>
@@ -234,7 +237,7 @@ function DeployModal({ component, onClose }) {
               ) : (
                 <button className="btn btn-secondary btn-sm" style={{marginTop: 10}}
                   onClick={() => setShowAdd(true)} disabled={endpoints.length >= MAX_ENDPOINTS}>
-                  <Icons.Plus size={12}/> 엔드포인트 추가 ({endpoints.length}/{MAX_ENDPOINTS})
+                  <Icons.Plus size={12}/> {t('deploy_add_ep')} ({endpoints.length}/{MAX_ENDPOINTS})
                 </button>
               )}
 
@@ -242,14 +245,14 @@ function DeployModal({ component, onClose }) {
               {selectedEp && (
                 <div style={{marginTop: 22, borderTop: '1px solid var(--line)', paddingTop: 18}}>
                   <div className="field">
-                    <label className="field-label">프로젝트</label>
+                    <label className="field-label">{t('deploy_project')}</label>
                     {projErr ? (
-                      <div style={{fontSize: 12, color: 'var(--err-fg)'}}>{projErr} 연결 테스트(<Icons.Plug size={10}/>) 후 다시 시도하세요.</div>
+                      <div style={{fontSize: 12, color: 'var(--err-fg)'}}>{projErr} {t('deploy_retry_before')}(<Icons.Plug size={10}/>){t('deploy_retry_after')}</div>
                     ) : projects === null ? (
-                      <div className="muted-sm">프로젝트 불러오는 중…</div>
+                      <div className="muted-sm">{t('deploy_project_loading')}</div>
                     ) : (
                       <select className="select" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
-                        <option value="">기본 프로젝트 (자동 선택)</option>
+                        <option value="">{t('deploy_project_default')}</option>
                         {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
                     )}
@@ -257,18 +260,18 @@ function DeployModal({ component, onClose }) {
 
                   {!isFlow && (
                     <div className="field">
-                      <label className="field-label">대상 Flow</label>
+                      <label className="field-label">{t('deploy_flow_target')}</label>
                       <select className="select" value={selectedFlow} onChange={e => setSelectedFlow(e.target.value)} disabled={!selectedProject}>
-                        <option value="">새 Flow 생성 (컴포넌트 단독)</option>
+                        <option value="">{t('deploy_flow_new')}</option>
                         {(flows || []).map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                       </select>
                       <div className="field-hint">
-                        {selectedProject ? '선택한 Flow에 컴포넌트 노드를 추가합니다. 미선택 시 새 Flow를 만듭니다.' : '프로젝트를 먼저 선택하면 기존 Flow를 고를 수 있습니다.'}
+                        {selectedProject ? t('deploy_flow_hint_sel') : t('deploy_flow_hint_nosel')}
                       </div>
                     </div>
                   )}
                   {isFlow && (
-                    <div className="field-hint" style={{marginTop: -6}}>이 Flow(.json)는 선택한 프로젝트에 새 Flow로 생성됩니다.</div>
+                    <div className="field-hint" style={{marginTop: -6}}>{t('deploy_flow_json_hint')}</div>
                   )}
                 </div>
               )}
@@ -284,11 +287,11 @@ function DeployModal({ component, onClose }) {
 
         {!result && (
           <div className="modal-footer">
-            <span className="muted-sm">{isFlow ? 'Flow를 새로 생성합니다' : '컴포넌트를 Flow에 배포합니다'}</span>
+            <span className="muted-sm">{isFlow ? t('deploy_footer_flow') : t('deploy_footer_comp')}</span>
             <div className="row gap-8">
-              <button className="btn btn-ghost btn-sm" onClick={onClose}>취소</button>
+              <button className="btn btn-ghost btn-sm" onClick={onClose}>{t('btn_cancel')}</button>
               <button className="btn btn-accent btn-sm" onClick={handleDeploy} disabled={!canDeploy} style={{opacity: canDeploy ? 1 : 0.5}}>
-                {deploying ? '배포 중…' : <><Icons.Zap size={12}/> 배포</>}
+                {deploying ? t('deploy_deploying') : <><Icons.Zap size={12}/> {t('deploy_btn')}</>}
               </button>
             </div>
           </div>

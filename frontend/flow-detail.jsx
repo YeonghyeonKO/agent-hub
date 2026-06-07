@@ -21,6 +21,7 @@ const FLOW_EDGES = [
 ];
 
 function FlowDetail({ component, onBack, onOpenComponent }) {
+  const { t } = useI18n();
   const [c, setC] = React.useState(component);
   const [tab, setTab] = React.useState('readme');
   const [hoverNode, setHoverNode] = React.useState(null);
@@ -59,9 +60,9 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
   return (
     <div className="page-narrow fade-in">
       <div className="breadcrumb">
-        <a onClick={onBack} style={{cursor: 'pointer'}}>홈</a>
+        <a onClick={onBack} style={{cursor: 'pointer'}}>{t('nav_home')}</a>
         <span className="breadcrumb-sep">/</span>
-        <span>Flow</span>
+        <span>{t('type_flow')}</span>
         <span className="breadcrumb-sep">/</span>
         <span>RAG</span>
         <span className="breadcrumb-sep">/</span>
@@ -75,7 +76,7 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
         <div className="detail-title-block">
           <div className="detail-eyebrow">
             <span className="chip chip-json">.json</span>
-            <span>JSON Flow</span>
+            <span>{t('flow_subtitle')}</span>
             <span className="breadcrumb-sep">·</span>
             <span>{c.version}</span>
           </div>
@@ -90,19 +91,19 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
             <div className="avatar sm" style={{background: 'var(--bg-muted)', color: 'var(--text-2)'}}><Icons.Users size={10}/></div>
             <span style={{color: 'var(--text-2)', fontWeight: 500}}>{c.author.name}</span>
             <span className="breadcrumb-sep">·</span>
-            <span>{fmtDate(c.created_at)} 등록</span>
+            <span>{fmtDate(c.created_at)} {t('detail_registered')}</span>
           </div>
         </div>
         <div className="detail-actions">
-          <button className="btn btn-accent" onClick={() => setShowDeploy(true)}><Icons.Zap size={13}/> 배포</button>
+          <button className="btn btn-accent" onClick={() => setShowDeploy(true)}><Icons.Zap size={13}/> {t('deploy_btn')}</button>
           <button className="btn btn-secondary" style={{color: starred ? '#f59e0b' : undefined, borderColor: starred ? '#f59e0b' : undefined}} onClick={() => { const id = c.id; if (id && String(id).includes('-')) api.components.star(id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } else { setStarCount(s => Math.max(0, s - 1)); setStarred(false); } }).catch(() => {}); }}><Icons.Star size={13}/> {starCount}</button>
           <button className="btn btn-secondary" onClick={() => {
             navigator.clipboard?.writeText(JSON.stringify(flowData || {name: c.title}, null, 2));
             if (c.id && String(c.id).includes('-') && !starred) {
               api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
             }
-            setCopyToast('JSON을 복사했어요! 개발자에게 star도 같이 전달할게요 ⭐️'); setTimeout(() => setCopyToast(''), 3000);
-          }}><Icons.Code size={13}/> JSON 복사</button>
+            setCopyToast(t('toast_copy_json')); setTimeout(() => setCopyToast(''), 3000);
+          }}><Icons.Code size={13}/> {t('detail_copy_json')}</button>
           <button className="btn btn-primary" onClick={() => {
             if (c.id && String(c.id).includes('-')) {
               api.components.file(c.id).then(d => {
@@ -111,16 +112,16 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
                 const a = document.createElement('a'); a.href = url; a.download = (c.title || 'flow').replace(/\s+/g, '_') + '.json'; a.click();
                 URL.revokeObjectURL(url);
                 api.components.download(c.id).catch(() => {});
-              }).catch(() => alert('Download failed'));
+              }).catch(() => alert(t('detail_download_failed')));
             }
-          }}><Icons.Download size={13}/> 다운로드</button>
+          }}><Icons.Download size={13}/> {t('detail_download')}</button>
           <button className="btn btn-secondary" onClick={() => {
             const url = window.location.origin + window.location.pathname + '#/flow/' + c.id;
             navigator.clipboard?.writeText(url);
-            setCopyToast('링크를 복사했어요!'); setTimeout(() => setCopyToast(''), 2000);
-          }}><Icons.Link size={13}/> 링크 복사</button>
+            setCopyToast(t('toast_copy_link')); setTimeout(() => setCopyToast(''), 2000);
+          }}><Icons.Link size={13}/> {t('detail_copy_link')}</button>
           {currentUser && (currentUser.role === 'admin' || currentUser.employee_id === (c.author?.id || c.author_id)) && (
-            <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> 업데이트</button>
+            <button className="btn btn-secondary" onClick={() => setShowUpdate(true)}><Icons.Upload size={13}/> {t('detail_update')}</button>
           )}
         </div>
       </div>
@@ -132,28 +133,28 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
       )}
 
       <div className="version-row">
-        <span className="version-row-label">Langflow 호환</span>
+        <span className="version-row-label">{t('flow_compat')}</span>
         <span className="mono" style={{fontSize: 12, color: 'var(--text-2)'}}>{c.minLF} ~ {c.maxLF}</span>
-        <span className="version-row-tag">동작 확인:</span>
+        <span className="version-row-tag">{t('flow_tested')}</span>
         {c.testedVersions.map(v => (
           <span key={v} className="version-pill tested"><Icons.Check size={10}/> {v}</span>
         ))}
         <div className="version-row-sep"/>
-        <span className="chip chip-ok"><Icons.Check size={10}/> 사내 표준(1.9.0) 호환</span>
+        <span className="chip chip-ok"><Icons.Check size={10}/> {t('flow_std_compat')}</span>
       </div>
 
       <div className="grid-4" style={{marginTop: 24}}>
         <Stat label="Star" value={starCount} icon={<Icons.Star size={12}/>}/>
-        <Stat label="다운로드" value={c.downloads_count ?? c.downloads ?? 0} icon={<Icons.Download size={12}/>}/>
-        <Stat label="노드 수" value={flowData ? (flowData.nodes?.length || 0) : (c.nodes ?? '—')} icon={<Icons.Workflow size={12}/>}/>
+        <Stat label={t('detail_download')} value={c.downloads_count ?? c.downloads ?? 0} icon={<Icons.Download size={12}/>}/>
+        <Stat label={t('flow_stat_nodes')} value={flowData ? (flowData.nodes?.length || 0) : (c.nodes ?? '—')} icon={<Icons.Workflow size={12}/>}/>
       </div>
 
       <div className="tabs" style={{marginTop: 32}}>
         {[
-          ['readme', '개요 / 사용법'],
-          ['graph', 'Flow 그래프'],
-          ['json', 'JSON 보기'],
-          ['versions', '버전 이력'],
+          ['readme', t('upload_field_readme')],
+          ['graph', t('flow_tab_graph')],
+          ['json', t('flow_tab_json')],
+          ['versions', t('flow_tab_versions')],
         ].map(([id, label]) => (
           <button key={id} className={`tab ${tab===id?'active':''}`} onClick={() => { setTab(id); if (id === 'versions' && versionHistory.length === 0 && c.id) api.components.versions(c.id).then(setVersionHistory).catch(() => {}); }}>
             {label}
@@ -172,14 +173,14 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
           if (c.id && String(c.id).includes('-') && !starred) {
             api.components.star(c.id).then(r => { if (r.starred) { setStarCount(s => s + 1); setStarred(true); } }).catch(() => {});
           }
-          setCopyToast('JSON을 복사했어요! 개발자에게 star도 같이 전달할게요 ⭐️'); setTimeout(() => setCopyToast(''), 3000);
+          setCopyToast(t('toast_copy_json')); setTimeout(() => setCopyToast(''), 3000);
         }}/>}
         {tab === 'versions' && (
           <div className="card" style={{padding: 0, overflow: 'hidden'}}>
             <div style={{padding: '14px 18px', background: 'var(--bg-muted)', borderBottom: '1px solid var(--line)', fontWeight: 600, fontSize: 13}}>
-              현재: {c.version}
+              {t('flow_current')} {c.version}
             </div>
-            {versionHistory.length === 0 && <div className="muted-sm" style={{padding: 24, textAlign: 'center'}}>이전 버전이 없습니다</div>}
+            {versionHistory.length === 0 && <div className="muted-sm" style={{padding: 24, textAlign: 'center'}}>{t('flow_no_versions')}</div>}
             {versionHistory.map((v, i) => (
               <div key={v.id} style={{padding: '12px 18px', borderBottom: i < versionHistory.length - 1 ? '1px solid var(--line)' : 'none'}}>
                 <div className="row gap-8" style={{marginBottom: 4}}>
@@ -200,12 +201,13 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
 }
 
 function FlowReadme({ c }) {
+  const { t } = useI18n();
   if (!c.readme) {
     return (
       <div className="card card-pad" style={{padding: 28, textAlign: 'center', color: 'var(--text-3)', marginBottom: 24}}>
         <div style={{fontSize: 36, marginBottom: 12, opacity: 0.4}}>📄</div>
-        <div style={{fontWeight: 500, marginBottom: 6}}>개요 / 사용법이 없습니다</div>
-        <div style={{fontSize: 13}}>업로드 시 작성한 내용이 여기에 표시됩니다.</div>
+        <div style={{fontWeight: 500, marginBottom: 6}}>{t('flow_readme_empty')}</div>
+        <div style={{fontSize: 13}}>{t('flow_readme_empty_desc')}</div>
       </div>
     );
   }
@@ -218,6 +220,7 @@ function FlowReadme({ c }) {
 }
 
 function FlowGraph({ hoverNode, setHoverNode, flowData }) {
+  const { t } = useI18n();
   // Extract real node/edge counts from flowData
   const nodeCount = flowData ? (flowData.nodes?.length || 0) : FLOW_NODES.length;
   const edgeCount = flowData ? (flowData.edges?.length || 0) : FLOW_EDGES.length;
@@ -227,13 +230,13 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
     return (
       <div className="flow-graph-card">
         <div className="flow-graph-toolbar">
-          <span className="h3">Flow 그래프</span>
+          <span className="h3">{t('flow_tab_graph')}</span>
         </div>
         <div style={{padding: 40, textAlign: 'center', color: 'var(--text-3)'}}>
           <div style={{fontSize: 28, marginBottom: 10, opacity: 0.4}}>⚠</div>
-          <div style={{fontWeight: 500, marginBottom: 6}}>그래프를 표시할 수 없습니다</div>
-          <div style={{fontSize: 13}}>Flow JSON에 nodes/edges 구조가 없거나 형식이 다릅니다.</div>
-          <div style={{fontSize: 12, marginTop: 8, color: 'var(--text-4)'}}>JSON 보기 탭에서 원본을 확인하세요.</div>
+          <div style={{fontWeight: 500, marginBottom: 6}}>{t('flow_graph_err')}</div>
+          <div style={{fontSize: 13}}>{t('flow_graph_err_desc')}</div>
+          <div style={{fontSize: 12, marginTop: 8, color: 'var(--text-4)'}}>{t('flow_graph_err_hint')}</div>
         </div>
       </div>
     );
@@ -310,8 +313,8 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
     <div className="flow-graph-card">
       <div className="flow-graph-toolbar">
         <div className="row gap-8">
-          <span className="h3">Flow 그래프</span>
-          <span className="muted-sm">· {nodeCount} 노드 · {edgeCount} 연결</span>
+          <span className="h3">{t('flow_tab_graph')}</span>
+          <span className="muted-sm">· {nodeCount} {t('flow_nodes_unit')} · {edgeCount} {t('flow_edges_unit')}</span>
         </div>
       </div>
       <div className="flow-graph-canvas" style={{height: Math.max(canvasH, 300)}}>
@@ -360,7 +363,8 @@ function FlowGraph({ hoverNode, setHoverNode, flowData }) {
 }
 
 function FlowJsonView({ flowData, onCopy }) {
-  const json = flowData ? JSON.stringify(flowData, null, 2) : '(JSON 데이터를 불러올 수 없습니다)';
+  const { t } = useI18n();
+  const json = flowData ? JSON.stringify(flowData, null, 2) : t('flow_json_empty');
   const sizeKB = (new Blob([json]).size / 1024).toFixed(1);
   const [copied, setCopied] = React.useState(false);
   const handleCopy = () => { navigator.clipboard?.writeText(json); setCopied(true); setTimeout(() => setCopied(false), 1500); if (onCopy) onCopy(); };
@@ -373,7 +377,7 @@ function FlowJsonView({ flowData, onCopy }) {
           <span style={{color: '#6b7d6b'}}>· {sizeKB} KB</span>
         </div>
         <button className="btn btn-sm btn-ghost" style={{color: '#b6b3ab'}} onClick={handleCopy}>
-          {copied ? <><Icons.Check size={11}/> 복사됨</> : <><Icons.Copy size={11}/> 복사</>}
+          {copied ? <><Icons.Check size={11}/> {t('detail_copied')}</> : <><Icons.Copy size={11}/> {t('detail_copy')}</>}
         </button>
       </div>
       <div className="codeblock-body">
