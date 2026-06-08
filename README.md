@@ -197,6 +197,13 @@ kubectl exec -it deploy/agent-hub-backend -n agent-hub -- alembic upgrade head
 | `GET` | `/api/v1/components/{id}/versions` | - | 버전 이력 |
 | `GET` | `/api/v1/components/{id}/starred` | user | Star 여부 확인 |
 | `DELETE` | `/api/v1/admin/components/{id}` | admin | Soft delete |
+| `GET/POST` | `/api/v1/deploy/endpoints` | user | 개인 Langflow 엔드포인트 목록/추가 (최대 5개) |
+| `DELETE` | `/api/v1/deploy/endpoints/{id}` | user | 엔드포인트 삭제 |
+| `POST` | `/api/v1/deploy/test` | user | 미저장 URL/Key 연결 테스트 |
+| `POST` | `/api/v1/deploy/endpoints/{id}/test` | user | 저장된 엔드포인트 연결 테스트 |
+| `GET` | `/api/v1/deploy/endpoints/{id}/projects` | user | 대상 Langflow 프로젝트 목록 |
+| `GET` | `/api/v1/deploy/endpoints/{id}/projects/{pid}/flows` | user | 프로젝트 내 Flow 목록 |
+| `POST` | `/api/v1/deploy/components/{id}` | user | Component/Flow를 Langflow에 배포 |
 | `POST` | `/api/v1/seed` | dev | 시드 데이터 투입 (DEV_MODE only) |
 
 ---

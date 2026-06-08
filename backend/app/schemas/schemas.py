@@ -237,3 +237,60 @@ class IssueResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ─── Langflow Deploy ────────────────────────────────────────────────────
+class LangflowEndpointCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    base_url: str = Field(min_length=1)
+    api_key: str | None = None
+
+
+class LangflowEndpointResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    base_url: str
+    has_api_key: bool
+    last_status: str
+    last_checked_at: datetime | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ConnectionTestRequest(BaseModel):
+    """저장 전 임시 연결 테스트(아직 endpoint id가 없는 경우)."""
+
+    base_url: str = Field(min_length=1)
+    api_key: str | None = None
+
+
+class ConnectionTestResponse(BaseModel):
+    ok: bool
+    status: str  # ok / error
+    version: str | None = None
+    message: str | None = None
+
+
+class LangflowProject(BaseModel):
+    id: str
+    name: str
+
+
+class LangflowFlow(BaseModel):
+    id: str
+    name: str
+
+
+class DeployRequest(BaseModel):
+    endpoint_id: uuid.UUID
+    project_id: str | None = None  # 미지정 시 기본 프로젝트
+    flow_id: str | None = None     # component 한정, 미지정 시 새 Flow 생성
+
+
+class DeployResponse(BaseModel):
+    ok: bool
+    flow_id: str
+    flow_url: str
+    name: str
+    message: str | None = None

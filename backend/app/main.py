@@ -8,6 +8,7 @@ from app.routers import (
     admin,
     auth_callback,
     components,
+    deploy,
     images,
     improvements,
     notices,
@@ -27,7 +28,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AgentHub API",
     description="Internal Langflow Component & Flow Registry",
-    version="1.2.1",
+    version="1.3.0",
     lifespan=lifespan,
 )
 
@@ -40,6 +41,7 @@ app.add_middleware(
 )
 
 app.include_router(components.router)
+app.include_router(deploy.router)
 app.include_router(improvements.router)
 app.include_router(notifications.router)
 app.include_router(users.router)

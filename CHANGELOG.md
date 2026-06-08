@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.3.0 (2026-06-06)
+
+### Features
+- **개인 Langflow 배포**: Component(.py)/Flow(.json) 상세 화면에서 "배포" 버튼으로 개인 Langflow 인스턴스에 즉시 배포
+  - 사용자별 Langflow 엔드포인트를 **최대 5개**까지 등록 (별칭 + Base URL + 선택적 API Key)
+  - 등록/배포 시 **연결 테스트**로 정상(초록)/실패(빨강) 상태 표시
+  - **Component**: 대상 프로젝트 + Flow 선택(미선택 시 기본 프로젝트에 새 Flow 생성)
+  - **Flow**: 대상 프로젝트 선택(미선택 시 기본 프로젝트에 새 Flow 생성)
+  - 신규 테이블 `langflow_endpoints` (alembic `010`), 신규 라우터 `/api/v1/deploy/*`
+
+---
+
 ## v1.2.1 (2026-05-29)
 
 ### Fixes

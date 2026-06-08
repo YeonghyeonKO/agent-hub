@@ -235,6 +235,23 @@ class Notification(Base):
     improvement: Mapped["CodeImprovement | None"] = relationship(back_populates="notifications")
 
 
+class LangflowEndpoint(Base):
+    """개인 Langflow 인스턴스 접속 정보 — 사용자별 최대 5개 (라우터에서 제한)."""
+
+    __tablename__ = "langflow_endpoints"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(100))  # 표시용 별칭
+    base_url: Mapped[str] = mapped_column(Text)  # 예: https://langflow.mycorp/, 끝 슬래시 정규화
+    api_key: Mapped[str | None] = mapped_column(Text, nullable=True)  # Langflow x-api-key (선택)
+    last_status: Mapped[str] = mapped_column(String(10), default="unknown")  # ok / error / unknown
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped["User"] = relationship()
+
+
 class Season(Base):
     __tablename__ = "seasons"
 
