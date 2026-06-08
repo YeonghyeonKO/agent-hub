@@ -26,10 +26,10 @@ function StatusDot({ status }) {
   );
 }
 
-function AddEndpointForm({ onAdded, onCancel }) {
+function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
   const { t } = useI18n();
   const [name, setName] = React.useState('');
-  const [baseUrl, setBaseUrl] = React.useState('');
+  const [baseUrl, setBaseUrl] = React.useState(suggestedUrl);
   const [apiKey, setApiKey] = React.useState('');
   const [testState, setTestState] = React.useState(null); // null/testing/ok/error
   const [testMsg, setTestMsg] = React.useState('');
@@ -105,6 +105,11 @@ function DeployModal({ component, onClose }) {
   const [deploying, setDeploying] = React.useState(false);
   const [result, setResult] = React.useState(null); // {flow_url, name}
   const [error, setError] = React.useState('');
+  const [suggestedUrl, setSuggestedUrl] = React.useState('');
+
+  React.useEffect(() => {
+    api.deploy.suggestedUrl().then(r => setSuggestedUrl(r.suggested_url || '')).catch(() => {});
+  }, []);
 
   const loadEndpoints = React.useCallback(() => {
     setLoadingEp(true);
@@ -233,6 +238,7 @@ function DeployModal({ component, onClose }) {
                 <AddEndpointForm
                   onAdded={(ep) => { setShowAdd(false); setEndpoints(eps => [...eps, ep]); setSelectedEp(ep.id); }}
                   onCancel={() => setShowAdd(false)}
+                  suggestedUrl={suggestedUrl}
                 />
               ) : (
                 <button className="btn btn-secondary btn-sm" style={{marginTop: 10}}
