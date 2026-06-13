@@ -26,22 +26,22 @@ function StatusDot({ status }) {
   );
 }
 
-function AddEndpointForm({ onAdded, onCancel }) {
+function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
   const { t } = useI18n();
   const [name, setName] = React.useState('');
-  const [baseUrl, setBaseUrl] = React.useState('');
+  const [baseUrl, setBaseUrl] = React.useState(suggestedUrl);
   const [apiKey, setApiKey] = React.useState('');
   const [testState, setTestState] = React.useState(null); // null/testing/ok/error
   const [testMsg, setTestMsg] = React.useState('');
   const [saving, setSaving] = React.useState(false);
 
-  const canTest = baseUrl.trim().length > 0;
+  const canTest = name.trim().length > 0 && baseUrl.trim().length > 0;
   const canSave = name.trim().length > 0 && baseUrl.trim().length > 0 && !saving;
 
   const handleTest = () => {
     setTestState('testing'); setTestMsg('');
     api.deploy.test({ base_url: baseUrl.trim(), api_key: apiKey.trim() || null })
-      .then(r => { setTestState(r.ok ? 'ok' : 'error'); setTestMsg(r.ok ? (r.version ? `Langflow ${r.version}` : t('deploy_test_ok')) : (r.message || t('deploy_test_fail'))); })
+      .then(r => { setTestState(r.ok ? 'ok' : 'error'); setTestMsg(r.ok ? (r.version ? `Agent Builder ${r.version}` : t('deploy_test_ok')) : (r.message || t('deploy_test_fail'))); })
       .catch(() => { setTestState('error'); setTestMsg(t('deploy_test_fail')); });
   };
 
@@ -49,7 +49,12 @@ function AddEndpointForm({ onAdded, onCancel }) {
     setSaving(true);
     api.deploy.addEndpoint({ name: name.trim(), base_url: baseUrl.trim(), api_key: apiKey.trim() || null })
       .then(ep => onAdded(ep))
-      .catch(e => { alert(t('deploy_ep_add_fail') + (e.message || '')); setSaving(false); });
+      .catch(async (e) => {
+        let detail = '';
+        try { detail = (await e.response?.json())?.detail || ''; } catch {}
+        alert(t('deploy_ep_add_fail') + (detail || e.message || ''));
+        setSaving(false);
+      });
   };
 
   return (
@@ -60,11 +65,11 @@ function AddEndpointForm({ onAdded, onCancel }) {
       </div>
       <div className="field" style={{marginBottom: 12}}>
         <label className="field-label">{t('deploy_ep_url')} <span className="req">*</span></label>
-        <input className="input" value={baseUrl} onChange={e => { setBaseUrl(e.target.value); setTestState(null); }} placeholder={t('deploy_ep_url_ph')}/>
+        <input className="input" value={baseUrl} onChange={e => { setBaseUrl(e.target.value); setTestState(null); setTestMsg(''); }} placeholder={t('deploy_ep_url_ph')}/>
       </div>
       <div className="field" style={{marginBottom: 12}}>
         <label className="field-label">API Key <span className="muted-sm" style={{fontWeight: 400}}>{t('deploy_ep_apikey_opt')}</span></label>
-        <input className="input" type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); setTestState(null); }} placeholder={t('deploy_ep_apikey_ph')}/>
+        <input className="input" type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); setTestState(null); setTestMsg(''); }} placeholder={t('deploy_ep_apikey_ph')}/>
       </div>
       <div className="row gap-8" style={{justifyContent: 'space-between', alignItems: 'center'}}>
         <div className="row gap-8">
@@ -81,6 +86,9 @@ function AddEndpointForm({ onAdded, onCancel }) {
           </button>
         </div>
       </div>
+      {!canSave && !saving && (
+        <div className="field-hint" style={{marginTop: 8, color: 'var(--text-3)'}}>{t('deploy_ep_required_hint')}</div>
+      )}
     </div>
   );
 }
@@ -105,6 +113,11 @@ function DeployModal({ component, onClose }) {
   const [deploying, setDeploying] = React.useState(false);
   const [result, setResult] = React.useState(null); // {flow_url, name}
   const [error, setError] = React.useState('');
+  const [suggestedUrl, setSuggestedUrl] = React.useState('');
+
+  React.useEffect(() => {
+    api.deploy.suggestedUrl().then(r => setSuggestedUrl(r.suggested_url || '')).catch(() => {});
+  }, []);
 
   const loadEndpoints = React.useCallback(() => {
     setLoadingEp(true);
@@ -158,10 +171,10 @@ function DeployModal({ component, onClose }) {
     })
       .then(r => { setResult(r); setDeploying(false); })
       .catch(async (e) => {
-        let msg = t('deploy_err_generic');
-        try { msg = (await e.response?.json())?.detail || msg; } catch {}
-        // api 헬퍼는 message만 throw하므로 기본 메시지 사용
-        setError(e.message && e.message.includes('502') ? t('deploy_err_502') : msg);
+        // 백엔드가 보낸 detail(예: "인증 실패: API Key를 확인하세요.")을 그대로 노출한다.
+        let detail = '';
+        try { detail = (await e.response?.json())?.detail || ''; } catch {}
+        setError(detail || (e.status === 502 ? t('deploy_err_502') : t('deploy_err_generic')));
         setDeploying(false);
       });
   };
@@ -169,8 +182,8 @@ function DeployModal({ component, onClose }) {
   const canDeploy = selectedEp && !deploying && (projects !== null);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{width: 560}}>
+    <div className="modal-backdrop">
+      <div className="modal" style={{width: 560}}>
         <div className="modal-header">
           <div>
             <div className="row gap-8" style={{marginBottom: 4}}>
@@ -233,12 +246,20 @@ function DeployModal({ component, onClose }) {
                 <AddEndpointForm
                   onAdded={(ep) => { setShowAdd(false); setEndpoints(eps => [...eps, ep]); setSelectedEp(ep.id); }}
                   onCancel={() => setShowAdd(false)}
+                  suggestedUrl={suggestedUrl}
                 />
               ) : (
-                <button className="btn btn-secondary btn-sm" style={{marginTop: 10}}
-                  onClick={() => setShowAdd(true)} disabled={endpoints.length >= MAX_ENDPOINTS}>
-                  <Icons.Plus size={12}/> {t('deploy_add_ep')} ({endpoints.length}/{MAX_ENDPOINTS})
-                </button>
+                <div style={{marginTop: 10}}>
+                  <button className="btn btn-secondary btn-sm"
+                    onClick={() => setShowAdd(true)} disabled={endpoints.length >= MAX_ENDPOINTS}>
+                    <Icons.Plus size={12}/> {t('deploy_add_ep')} ({endpoints.length}/{MAX_ENDPOINTS})
+                  </button>
+                  {endpoints.length >= MAX_ENDPOINTS && (
+                    <div className="field-hint" style={{marginTop: 6, color: 'var(--text-3)'}}>
+                      {t('deploy_ep_max').replace('{max}', MAX_ENDPOINTS)}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* ── 배포 위치 선택 ── */}
