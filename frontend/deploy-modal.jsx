@@ -35,7 +35,7 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
   const [testMsg, setTestMsg] = React.useState('');
   const [saving, setSaving] = React.useState(false);
 
-  const canTest = baseUrl.trim().length > 0;
+  const canTest = name.trim().length > 0 && baseUrl.trim().length > 0;
   const canSave = name.trim().length > 0 && baseUrl.trim().length > 0 && !saving;
 
   const handleTest = () => {

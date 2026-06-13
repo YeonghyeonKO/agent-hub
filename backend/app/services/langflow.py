@@ -80,7 +80,7 @@ async def test_connection(base_url: str, api_key: str | None) -> dict[str, Any]:
             if r.status_code >= 500:
                 raise LangflowError(f"Agent Builder 서버 오류 (HTTP {r.status_code})", status=r.status_code)
         except httpx.RequestError as e:
-            raise LangflowError("연결할 수 없습니다. 주소와 네트워크 상태를 확인하세요.") from e
+            raise LangflowError("연결할 수 없습니다. 주소를 확인하세요.") from e
 
         # 2) 버전 조회 (표시용)
         version = None
@@ -115,7 +115,7 @@ async def list_projects(base_url: str, api_key: str | None) -> list[dict[str, An
             try:
                 r = await client.get(path)
             except httpx.RequestError as e:
-                raise LangflowError("연결할 수 없습니다. 주소와 네트워크 상태를 확인하세요.") from e
+                raise LangflowError("연결할 수 없습니다. 주소를 확인하세요.") from e
             if r.status_code in (401, 403):
                 raise LangflowError("인증 실패: API Key를 확인하세요.", status=r.status_code)
             if r.status_code == 404:
@@ -136,7 +136,7 @@ async def list_flows(base_url: str, api_key: str | None, project_id: str) -> lis
             try:
                 r = await client.get("/api/v1/flows/", params={**params, "header_flows": "true"})
             except httpx.RequestError as e:
-                raise LangflowError("연결할 수 없습니다. 주소와 네트워크 상태를 확인하세요.") from e
+                raise LangflowError("연결할 수 없습니다. 주소를 확인하세요.") from e
             if r.status_code in (401, 403):
                 raise LangflowError("인증 실패: API Key를 확인하세요.", status=r.status_code)
             if r.status_code != 200:
