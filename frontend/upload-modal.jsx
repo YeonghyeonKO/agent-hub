@@ -197,7 +197,7 @@ function UploadModal({ onClose, prefill }) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={safeClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div>

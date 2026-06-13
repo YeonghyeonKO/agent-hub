@@ -422,7 +422,7 @@ function UpdateModal({ component, onClose, onUpdated }) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={safeClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: 540}}>
         <div className="modal-header">
           <div>
@@ -798,7 +798,7 @@ function ImprovementSubmitModal({ component, currentCode, onClose, onSubmitted }
   };
 
   return (
-    <div className="modal-backdrop" onClick={safeClose}>
+    <div className="modal-backdrop">
       <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: 640}}>
         <div className="modal-header">
           <div>
