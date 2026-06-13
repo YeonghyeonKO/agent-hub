@@ -42,17 +42,31 @@ async def test_connection_ok_returns_version(respx_mock):
     respx_mock.get(f"{BASE}/api/v1/version").mock(
         return_value=httpx.Response(200, json={"version": "1.2.3"})
     )
+    respx_mock.get(f"{BASE}/api/v1/projects/").mock(return_value=httpx.Response(200, json=[]))
     result = await langflow.test_connection(BASE, None)
     assert result == {"ok": True, "version": "1.2.3"}
 
 
-async def test_connection_auth_failure_mentions_api_key(respx_mock):
+async def test_connection_auth_failure_at_version(respx_mock):
     respx_mock.get(f"{BASE}/health").mock(return_value=httpx.Response(200))
     respx_mock.get(f"{BASE}/api/v1/version").mock(return_value=httpx.Response(401))
     with pytest.raises(langflow.LangflowError) as ei:
         await langflow.test_connection(BASE, None)
     assert "API Key" in ei.value.message
     assert ei.value.status == 401
+
+
+async def test_connection_validates_api_key_via_projects(respx_mock):
+    """version 이 공개여도 projects 가 401 이면 키 문제로 잡아야 한다."""
+    respx_mock.get(f"{BASE}/health").mock(return_value=httpx.Response(200))
+    respx_mock.get(f"{BASE}/api/v1/version").mock(
+        return_value=httpx.Response(200, json={"version": "1.2.3"})
+    )
+    respx_mock.get(f"{BASE}/api/v1/projects/").mock(return_value=httpx.Response(403))
+    with pytest.raises(langflow.LangflowError) as ei:
+        await langflow.test_connection(BASE, None)
+    assert "API Key" in ei.value.message
+    assert ei.value.status == 403
 
 
 async def test_connection_server_error(respx_mock):

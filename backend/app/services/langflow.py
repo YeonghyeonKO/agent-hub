@@ -80,9 +80,9 @@ async def test_connection(base_url: str, api_key: str | None) -> dict[str, Any]:
             if r.status_code >= 500:
                 raise LangflowError(f"Agent Builder 서버 오류 (HTTP {r.status_code})", status=r.status_code)
         except httpx.RequestError as e:
-            raise LangflowError(f"연결할 수 없습니다: {e}") from e
+            raise LangflowError("연결할 수 없습니다. 주소와 네트워크 상태를 확인하세요.") from e
 
-        # 2) 버전 조회 (인증 헤더가 유효한지도 간접 확인)
+        # 2) 버전 조회 (표시용)
         version = None
         try:
             rv = await client.get("/api/v1/version")
@@ -91,7 +91,18 @@ async def test_connection(base_url: str, api_key: str | None) -> dict[str, Any]:
             elif rv.status_code in (401, 403):
                 raise LangflowError("인증 실패: API Key를 확인하세요.", status=rv.status_code)
         except httpx.RequestError:
-            pass  # version 엔드포인트가 없어도 health 가 통과했으면 OK 로 본다
+            pass  # version 엔드포인트가 없어도 health 가 통과했으면 계속
+
+        # 3) API Key 검증 — 인증이 켜진 서버에서 키가 없거나 틀리면 여기서 잡는다.
+        #    version 이 공개돼 있어 2)에서 못 거르는 경우 대비. 인증이 꺼진 서버라면 200 이라 통과.
+        try:
+            rp = await client.get("/api/v1/projects/")
+            if rp.status_code == 404:
+                rp = await client.get("/api/v1/folders/")
+            if rp.status_code in (401, 403):
+                raise LangflowError("인증 실패: API Key를 확인하세요.", status=rp.status_code)
+        except httpx.RequestError:
+            pass
 
     return {"ok": True, "version": version}
 
@@ -104,7 +115,7 @@ async def list_projects(base_url: str, api_key: str | None) -> list[dict[str, An
             try:
                 r = await client.get(path)
             except httpx.RequestError as e:
-                raise LangflowError(f"연결할 수 없습니다: {e}") from e
+                raise LangflowError("연결할 수 없습니다. 주소와 네트워크 상태를 확인하세요.") from e
             if r.status_code in (401, 403):
                 raise LangflowError("인증 실패: API Key를 확인하세요.", status=r.status_code)
             if r.status_code == 404:
@@ -125,7 +136,7 @@ async def list_flows(base_url: str, api_key: str | None, project_id: str) -> lis
             try:
                 r = await client.get("/api/v1/flows/", params={**params, "header_flows": "true"})
             except httpx.RequestError as e:
-                raise LangflowError(f"연결할 수 없습니다: {e}") from e
+                raise LangflowError("연결할 수 없습니다. 주소와 네트워크 상태를 확인하세요.") from e
             if r.status_code in (401, 403):
                 raise LangflowError("인증 실패: API Key를 확인하세요.", status=r.status_code)
             if r.status_code != 200:
