@@ -11,7 +11,13 @@ function handleResponse(res, method, path) {
     }
     throw new Error(`${method} ${path}: 403 Forbidden`);
   }
-  if (!res.ok) throw new Error(`${method} ${path}: ${res.status}`);
+  if (!res.ok) {
+    // 백엔드의 detail 메시지를 호출 측에서 읽을 수 있도록 응답/상태를 에러에 첨부한다.
+    const err = new Error(`${method} ${path}: ${res.status}`);
+    err.status = res.status;
+    err.response = res;
+    throw err;
+  }
   return res;
 }
 

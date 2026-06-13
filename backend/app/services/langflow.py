@@ -9,13 +9,29 @@
 """
 from __future__ import annotations
 
+import os
+import ssl
 import uuid
 from typing import Any
 
 import httpx
 
-# Langflow가 자체 서명 인증서를 쓰는 사내 환경이 많아 검증을 끈다(사내 망 한정).
+from app.config import settings
+
 _TIMEOUT = httpx.Timeout(15.0, connect=8.0)
+_CORPORATE_CA = "/etc/ssl/certs/corporate-ca.crt"
+
+
+def _ssl_verify() -> ssl.SSLContext | bool:
+    """배포 대상 HTTPS 검증 정책.
+
+    사내 CA가 마운트돼 있으면 그것으로 검증하고(가장 안전),
+    없으면 설정값 LANGFLOW_VERIFY_SSL을 따른다(기본 False: 자체 서명 허용).
+    auth.py 의 JWKS 호출과 동일한 전략을 공유한다.
+    """
+    if os.path.exists(_CORPORATE_CA):
+        return ssl.create_default_context(cafile=_CORPORATE_CA)
+    return settings.LANGFLOW_VERIFY_SSL
 
 
 class LangflowError(Exception):
@@ -49,7 +65,7 @@ def _client(base_url: str, api_key: str | None) -> httpx.AsyncClient:
         base_url=base_url,
         headers=_headers(api_key),
         timeout=_TIMEOUT,
-        verify=False,  # 사내 자체 서명 인증서 허용
+        verify=_ssl_verify(),
         follow_redirects=True,
     )
 
@@ -62,7 +78,7 @@ async def test_connection(base_url: str, api_key: str | None) -> dict[str, Any]:
         try:
             r = await client.get("/health")
             if r.status_code >= 500:
-                raise LangflowError(f"Langflow 서버 오류 (HTTP {r.status_code})", status=r.status_code)
+                raise LangflowError(f"Agent Builder 서버 오류 (HTTP {r.status_code})", status=r.status_code)
         except httpx.RequestError as e:
             raise LangflowError(f"연결할 수 없습니다: {e}") from e
 
@@ -155,7 +171,7 @@ async def _build_component_node(client: httpx.AsyncClient, code: str) -> dict[st
     if r.status_code != 200:
         raise LangflowError(
             f"Component 코드를 빌드하지 못했습니다 (HTTP {r.status_code}). "
-            "Langflow 버전 호환성을 확인하세요.",
+            "Agent Builder 버전 호환성을 확인하세요.",
             status=r.status_code,
         )
     body = r.json()

@@ -41,7 +41,7 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
   const handleTest = () => {
     setTestState('testing'); setTestMsg('');
     api.deploy.test({ base_url: baseUrl.trim(), api_key: apiKey.trim() || null })
-      .then(r => { setTestState(r.ok ? 'ok' : 'error'); setTestMsg(r.ok ? (r.version ? `Langflow ${r.version}` : t('deploy_test_ok')) : (r.message || t('deploy_test_fail'))); })
+      .then(r => { setTestState(r.ok ? 'ok' : 'error'); setTestMsg(r.ok ? (r.version ? `Agent Builder ${r.version}` : t('deploy_test_ok')) : (r.message || t('deploy_test_fail'))); })
       .catch(() => { setTestState('error'); setTestMsg(t('deploy_test_fail')); });
   };
 
@@ -49,7 +49,12 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
     setSaving(true);
     api.deploy.addEndpoint({ name: name.trim(), base_url: baseUrl.trim(), api_key: apiKey.trim() || null })
       .then(ep => onAdded(ep))
-      .catch(e => { alert(t('deploy_ep_add_fail') + (e.message || '')); setSaving(false); });
+      .catch(async (e) => {
+        let detail = '';
+        try { detail = (await e.response?.json())?.detail || ''; } catch {}
+        alert(t('deploy_ep_add_fail') + (detail || e.message || ''));
+        setSaving(false);
+      });
   };
 
   return (
@@ -81,6 +86,9 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
           </button>
         </div>
       </div>
+      {!canSave && !saving && (
+        <div className="field-hint" style={{marginTop: 8, color: 'var(--text-3)'}}>{t('deploy_ep_required_hint')}</div>
+      )}
     </div>
   );
 }
@@ -163,10 +171,10 @@ function DeployModal({ component, onClose }) {
     })
       .then(r => { setResult(r); setDeploying(false); })
       .catch(async (e) => {
-        let msg = t('deploy_err_generic');
-        try { msg = (await e.response?.json())?.detail || msg; } catch {}
-        // api 헬퍼는 message만 throw하므로 기본 메시지 사용
-        setError(e.message && e.message.includes('502') ? t('deploy_err_502') : msg);
+        // 백엔드가 보낸 detail(예: "인증 실패: API Key를 확인하세요.")을 그대로 노출한다.
+        let detail = '';
+        try { detail = (await e.response?.json())?.detail || ''; } catch {}
+        setError(detail || (e.status === 502 ? t('deploy_err_502') : t('deploy_err_generic')));
         setDeploying(false);
       });
   };
@@ -241,10 +249,17 @@ function DeployModal({ component, onClose }) {
                   suggestedUrl={suggestedUrl}
                 />
               ) : (
-                <button className="btn btn-secondary btn-sm" style={{marginTop: 10}}
-                  onClick={() => setShowAdd(true)} disabled={endpoints.length >= MAX_ENDPOINTS}>
-                  <Icons.Plus size={12}/> {t('deploy_add_ep')} ({endpoints.length}/{MAX_ENDPOINTS})
-                </button>
+                <div style={{marginTop: 10}}>
+                  <button className="btn btn-secondary btn-sm"
+                    onClick={() => setShowAdd(true)} disabled={endpoints.length >= MAX_ENDPOINTS}>
+                    <Icons.Plus size={12}/> {t('deploy_add_ep')} ({endpoints.length}/{MAX_ENDPOINTS})
+                  </button>
+                  {endpoints.length >= MAX_ENDPOINTS && (
+                    <div className="field-hint" style={{marginTop: 6, color: 'var(--text-3)'}}>
+                      {t('deploy_ep_max').replace('{max}', MAX_ENDPOINTS)}
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* ── 배포 위치 선택 ── */}
