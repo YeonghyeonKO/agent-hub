@@ -65,11 +65,11 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
       </div>
       <div className="field" style={{marginBottom: 12}}>
         <label className="field-label">{t('deploy_ep_url')} <span className="req">*</span></label>
-        <input className="input" value={baseUrl} onChange={e => { setBaseUrl(e.target.value); setTestState(null); }} placeholder={t('deploy_ep_url_ph')}/>
+        <input className="input" value={baseUrl} onChange={e => { setBaseUrl(e.target.value); setTestState(null); setTestMsg(''); }} placeholder={t('deploy_ep_url_ph')}/>
       </div>
       <div className="field" style={{marginBottom: 12}}>
         <label className="field-label">API Key <span className="muted-sm" style={{fontWeight: 400}}>{t('deploy_ep_apikey_opt')}</span></label>
-        <input className="input" type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); setTestState(null); }} placeholder={t('deploy_ep_apikey_ph')}/>
+        <input className="input" type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); setTestState(null); setTestMsg(''); }} placeholder={t('deploy_ep_apikey_ph')}/>
       </div>
       <div className="row gap-8" style={{justifyContent: 'space-between', alignItems: 'center'}}>
         <div className="row gap-8">
