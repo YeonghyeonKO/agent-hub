@@ -182,8 +182,8 @@ function DeployModal({ component, onClose }) {
   const canDeploy = selectedEp && !deploying && (projects !== null);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{width: 560}}>
+    <div className="modal-backdrop">
+      <div className="modal" style={{width: 560}}>
         <div className="modal-header">
           <div>
             <div className="row gap-8" style={{marginBottom: 4}}>
