@@ -101,7 +101,7 @@ app:
   corsOrigins: ""          # auto-derived from ingress if empty
   storage: 5Gi
   storageClass: ""
-  langflowUrlPattern: ""   # e.g. http://agentbuilder-{empno}.abs01.skhynix.com — pre-fills Add Endpoint form
+  langflowUrlPattern: ""   # e.g. http://agentbuilder-{empno}.example.com — pre-fills Add Endpoint form
   langflowVerifySsl: false # verify TLS on deploy targets; corporate CA (if mounted) always takes precedence
 
 # -- Autoscaling for backend
