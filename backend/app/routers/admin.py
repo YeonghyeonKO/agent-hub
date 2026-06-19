@@ -332,6 +332,8 @@ async def get_statistics(
             "author_name": c.author.name if c.author else "",
             "stars_count": sc,
             "downloads_count": dc,
+            "description": c.description or "",
+            "readme": c.readme or "",
             "created_at": c.created_at.isoformat() if c.created_at else None,
             "deleted_at": c.deleted_at.isoformat() if c.deleted_at else None,
         })
