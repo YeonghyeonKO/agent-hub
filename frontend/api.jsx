@@ -11,7 +11,13 @@ function handleResponse(res, method, path) {
     }
     throw new Error(`${method} ${path}: 403 Forbidden`);
   }
-  if (!res.ok) throw new Error(`${method} ${path}: ${res.status}`);
+  if (!res.ok) {
+    // 백엔드의 detail 메시지를 호출 측에서 읽을 수 있도록 응답/상태를 에러에 첨부한다.
+    const err = new Error(`${method} ${path}: ${res.status}`);
+    err.status = res.status;
+    err.response = res;
+    throw err;
+  }
   return res;
 }
 
@@ -108,6 +114,7 @@ const api = {
     projects: (id) => api.get(`/deploy/endpoints/${id}/projects`),
     flows: (id, projectId) => api.get(`/deploy/endpoints/${id}/projects/${projectId}/flows`),
     deployAsset: (componentId, body) => api.post(`/deploy/components/${componentId}`, body),
+    suggestedUrl: () => api.get('/deploy/suggested-url'),
   },
   notifications: {
     list: (unreadOnly = false) => api.get('/notifications' + (unreadOnly ? '?unread_only=true' : '')),

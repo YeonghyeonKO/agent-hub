@@ -71,7 +71,7 @@ async def _get_or_create_dev_user(db: AsyncSession) -> User:
         user = User(
             employee_id="2074795",
             name="고영현",
-            email="yeonghyeon.ko@skhynix.com",
+            email="yeonghyeon.ko@example.com",
             team="AI플랫폼팀",
             org="AI/Data Platform",
             role="admin",

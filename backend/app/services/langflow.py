@@ -9,13 +9,29 @@
 """
 from __future__ import annotations
 
+import os
+import ssl
 import uuid
 from typing import Any
 
 import httpx
 
-# Langflow가 자체 서명 인증서를 쓰는 사내 환경이 많아 검증을 끈다(사내 망 한정).
+from app.config import settings
+
 _TIMEOUT = httpx.Timeout(15.0, connect=8.0)
+_CORPORATE_CA = "/etc/ssl/certs/corporate-ca.crt"
+
+
+def _ssl_verify() -> ssl.SSLContext | bool:
+    """배포 대상 HTTPS 검증 정책.
+
+    사내 CA가 마운트돼 있으면 그것으로 검증하고(가장 안전),
+    없으면 설정값 LANGFLOW_VERIFY_SSL을 따른다(기본 False: 자체 서명 허용).
+    auth.py 의 JWKS 호출과 동일한 전략을 공유한다.
+    """
+    if os.path.exists(_CORPORATE_CA):
+        return ssl.create_default_context(cafile=_CORPORATE_CA)
+    return settings.LANGFLOW_VERIFY_SSL
 
 
 class LangflowError(Exception):
@@ -49,7 +65,7 @@ def _client(base_url: str, api_key: str | None) -> httpx.AsyncClient:
         base_url=base_url,
         headers=_headers(api_key),
         timeout=_TIMEOUT,
-        verify=False,  # 사내 자체 서명 인증서 허용
+        verify=_ssl_verify(),
         follow_redirects=True,
     )
 
@@ -62,11 +78,11 @@ async def test_connection(base_url: str, api_key: str | None) -> dict[str, Any]:
         try:
             r = await client.get("/health")
             if r.status_code >= 500:
-                raise LangflowError(f"Langflow 서버 오류 (HTTP {r.status_code})", status=r.status_code)
+                raise LangflowError(f"Agent Builder 서버 오류 (HTTP {r.status_code})", status=r.status_code)
         except httpx.RequestError as e:
-            raise LangflowError(f"연결할 수 없습니다: {e}") from e
+            raise LangflowError("연결할 수 없습니다. 주소를 확인하세요.") from e
 
-        # 2) 버전 조회 (인증 헤더가 유효한지도 간접 확인)
+        # 2) 버전 조회 (표시용)
         version = None
         try:
             rv = await client.get("/api/v1/version")
@@ -75,7 +91,18 @@ async def test_connection(base_url: str, api_key: str | None) -> dict[str, Any]:
             elif rv.status_code in (401, 403):
                 raise LangflowError("인증 실패: API Key를 확인하세요.", status=rv.status_code)
         except httpx.RequestError:
-            pass  # version 엔드포인트가 없어도 health 가 통과했으면 OK 로 본다
+            pass  # version 엔드포인트가 없어도 health 가 통과했으면 계속
+
+        # 3) API Key 검증 — 인증이 켜진 서버에서 키가 없거나 틀리면 여기서 잡는다.
+        #    version 이 공개돼 있어 2)에서 못 거르는 경우 대비. 인증이 꺼진 서버라면 200 이라 통과.
+        try:
+            rp = await client.get("/api/v1/projects/")
+            if rp.status_code == 404:
+                rp = await client.get("/api/v1/folders/")
+            if rp.status_code in (401, 403):
+                raise LangflowError("인증 실패: API Key를 확인하세요.", status=rp.status_code)
+        except httpx.RequestError:
+            pass
 
     return {"ok": True, "version": version}
 
@@ -88,7 +115,7 @@ async def list_projects(base_url: str, api_key: str | None) -> list[dict[str, An
             try:
                 r = await client.get(path)
             except httpx.RequestError as e:
-                raise LangflowError(f"연결할 수 없습니다: {e}") from e
+                raise LangflowError("연결할 수 없습니다. 주소를 확인하세요.") from e
             if r.status_code in (401, 403):
                 raise LangflowError("인증 실패: API Key를 확인하세요.", status=r.status_code)
             if r.status_code == 404:
@@ -109,7 +136,7 @@ async def list_flows(base_url: str, api_key: str | None, project_id: str) -> lis
             try:
                 r = await client.get("/api/v1/flows/", params={**params, "header_flows": "true"})
             except httpx.RequestError as e:
-                raise LangflowError(f"연결할 수 없습니다: {e}") from e
+                raise LangflowError("연결할 수 없습니다. 주소를 확인하세요.") from e
             if r.status_code in (401, 403):
                 raise LangflowError("인증 실패: API Key를 확인하세요.", status=r.status_code)
             if r.status_code != 200:
@@ -155,7 +182,7 @@ async def _build_component_node(client: httpx.AsyncClient, code: str) -> dict[st
     if r.status_code != 200:
         raise LangflowError(
             f"Component 코드를 빌드하지 못했습니다 (HTTP {r.status_code}). "
-            "Langflow 버전 호환성을 확인하세요.",
+            "Agent Builder 버전 호환성을 확인하세요.",
             status=r.status_code,
         )
     body = r.json()

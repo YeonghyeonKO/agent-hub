@@ -23,3 +23,6 @@ CLAUDE.md
 
 # Local docker overrides
 docker-compose.override.yml
+
+# Test artifacts
+.pytest_cache/

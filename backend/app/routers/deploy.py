@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user
+from app.config import settings
 from app.database import get_db
 from app.models.models import Component, LangflowEndpoint, User
 from app.schemas.schemas import (
@@ -30,6 +31,14 @@ from app.services import langflow
 router = APIRouter(prefix="/api/v1/deploy", tags=["deploy"])
 
 MAX_ENDPOINTS = 5
+
+
+@router.get("/suggested-url")
+async def suggested_url(user: Annotated[User, Depends(get_current_user)]):
+    """Return a pre-filled Langflow URL based on the configured pattern and user's empno."""
+    pattern = settings.LANGFLOW_URL_PATTERN
+    url = pattern.replace("{empno}", user.employee_id) if pattern else ""
+    return {"suggested_url": url}
 
 
 def _to_response(ep: LangflowEndpoint) -> LangflowEndpointResponse:

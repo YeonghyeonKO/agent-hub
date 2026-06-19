@@ -8,6 +8,8 @@ data:
   DEV_MODE: {{ .Values.app.devMode | quote }}
   UPLOAD_DIR: {{ .Values.app.uploadDir | quote }}
   CORS_ORIGINS: {{ .Values.app.corsOrigins | default (printf "https://%s" (include "agent-hub.host" .)) | quote }}
+  LANGFLOW_URL_PATTERN: {{ .Values.app.langflowUrlPattern | default "" | quote }}
+  LANGFLOW_VERIFY_SSL: {{ .Values.app.langflowVerifySsl | default false | quote }}
   {{- if .Values.keycloak.enabled }}
   KEYCLOAK_URL: {{ .Values.keycloak.serverUrl | quote }}
   KEYCLOAK_REALM: {{ .Values.keycloak.realm | quote }}

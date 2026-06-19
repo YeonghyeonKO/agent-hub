@@ -1,0 +1,5 @@
+# QA / 테스트 전용 의존성 (운영 이미지에는 포함하지 않음)
+-r requirements.txt
+pytest==8.*
+pytest-asyncio==0.24.*
+respx==0.22.*          # httpx 요청 모킹 (Agent Builder 통신 단위 테스트). 0.22+ 가 httpx 0.28 지원
