@@ -355,7 +355,7 @@ function StatisticsTab() {
   };
 
   const downloadCsv = () => {
-    const header = ['author_id', 'author_name', 'title', 'type', 'tags', 'status', 'stars', 'downloads', 'id', 'url', 'created_at'];
+    const header = ['author_id', 'author_name', 'title', 'type', 'tags', 'status', 'stars', 'downloads', 'description', 'readme', 'id', 'url', 'created_at'];
     const rows = filtered.map(item => [
       item.author_id,
       item.author_name,
@@ -365,6 +365,8 @@ function StatisticsTab() {
       item.deleted_at ? 'deleted' : item.status,
       item.stars_count,
       item.downloads_count,
+      item.description || '',
+      item.readme || '',
       item.id,
       getUrl(item),
       item.created_at ? item.created_at.slice(0, 19).replace('T', ' ') : '',
