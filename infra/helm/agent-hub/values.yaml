@@ -44,7 +44,7 @@ frontend:
 ingress:
   enabled: true
   host: ""                   # full hostname override (e.g. agent-hub.company.com) — takes priority over domain
-  domain: aipp02.skhynix.com # used as {fullname}.{domain} when host is empty
+  domain: example.com        # used as {fullname}.{domain} when host is empty
   tlsDisable: false          # set true to disable TLS (e.g. SSL terminated at L7 LB)
   tlsSecretName: ""          # TLS secret name (leave empty for default cert)
   annotations:
@@ -54,7 +54,7 @@ ingress:
 # -- Keycloak SSO configuration
 keycloak:
   enabled: false
-  serverUrl: ""            # e.g. https://keycloak.skhynix.com
+  serverUrl: ""            # e.g. https://keycloak.example.com
   realm: ""                # e.g. hynix
   clientId: ""             # e.g. agent-hub
   clientSecret: ""         # ignored if existingSecret is set
@@ -101,7 +101,7 @@ app:
   corsOrigins: ""          # auto-derived from ingress if empty
   storage: 5Gi
   storageClass: ""
-  langflowUrlPattern: ""   # e.g. http://agentbuilder-{empno}.abs01.skhynix.com — pre-fills Add Endpoint form
+  langflowUrlPattern: ""   # e.g. http://agentbuilder-{empno}.example.com — pre-fills Add Endpoint form
   langflowVerifySsl: false # verify TLS on deploy targets; corporate CA (if mounted) always takes precedence
 
 # -- Autoscaling for backend

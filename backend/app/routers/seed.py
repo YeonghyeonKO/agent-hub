@@ -89,11 +89,11 @@ from app.models.models import Component, Download, Notice, Season, Star, User, V
 router = APIRouter(prefix="/api/v1/seed", tags=["seed"])
 
 USERS = [
-    {"employee_id": "2074795", "name": "고영현", "email": "yeonghyeon.ko@skhynix.com", "team": "AI플랫폼팀", "org": "AI/Data Platform", "role": "admin", "keycloak_sub": "dev-user"},
-    {"employee_id": "2074814", "name": "김정호", "email": "jungho.kim@skhynix.com", "team": "제조DX팀", "org": "Manufacturing DX", "role": "user", "keycloak_sub": "dev-2"},
-    {"employee_id": "2068420", "name": "이창수", "email": "changsu.lee@skhynix.com", "team": "ERP운영팀", "org": "ERP Ops", "role": "user", "keycloak_sub": "dev-3"},
-    {"employee_id": "2074821", "name": "박지원", "email": "jiwon.park@skhynix.com", "team": "협업툴팀", "org": "Collaboration", "role": "user", "keycloak_sub": "dev-4"},
-    {"employee_id": "2074803", "name": "최서연", "email": "seoyeon.choi@skhynix.com", "team": "AI플랫폼팀", "org": "AI/Data Platform", "role": "reviewer", "keycloak_sub": "dev-5"},
+    {"employee_id": "2074795", "name": "고영현", "email": "yeonghyeon.ko@example.com", "team": "AI플랫폼팀", "org": "AI/Data Platform", "role": "admin", "keycloak_sub": "dev-user"},
+    {"employee_id": "2074814", "name": "김정호", "email": "jungho.kim@example.com", "team": "제조DX팀", "org": "Manufacturing DX", "role": "user", "keycloak_sub": "dev-2"},
+    {"employee_id": "2068420", "name": "이창수", "email": "changsu.lee@example.com", "team": "ERP운영팀", "org": "ERP Ops", "role": "user", "keycloak_sub": "dev-3"},
+    {"employee_id": "2074821", "name": "박지원", "email": "jiwon.park@example.com", "team": "협업툴팀", "org": "Collaboration", "role": "user", "keycloak_sub": "dev-4"},
+    {"employee_id": "2074803", "name": "최서연", "email": "seoyeon.choi@example.com", "team": "AI플랫폼팀", "org": "AI/Data Platform", "role": "reviewer", "keycloak_sub": "dev-5"},
 ]
 
 COMPONENTS = [
