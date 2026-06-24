@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.1 (2026-06-24)
+
+### Fixes
+- **Home pagination preserved across detail modal close**: opening then closing a component/flow detail no longer resets the "더보기" pagination back to the first page. Also fixes the same behavior on window focus (tab switching).
+
+---
+
 ## v1.3.0 (2026-06-06)
 
 ### Features

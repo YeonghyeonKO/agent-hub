@@ -59,10 +59,30 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
       .catch(e => { console.error('Failed to load components:', e); setLoading(false); setLoadingMore(false); });
   };
 
+  // Refs so reload/focus handlers always see the latest paginated state
+  const componentsCountRef = React.useRef(0);
+  const queryRef = React.useRef('');
+  const sortByRef = React.useRef(sortBy);
+  React.useEffect(() => { componentsCountRef.current = components.length; }, [components.length]);
+  React.useEffect(() => { queryRef.current = query; }, [query]);
+  React.useEffect(() => { sortByRef.current = sortBy; }, [sortBy]);
+
+  // Re-fetch the same number of items already on screen, preserving pagination
+  const refreshLoaded = () => {
+    const n = Math.max(componentsCountRef.current, PAGE_SIZE);
+    api.components.list({ sort: sortByRef.current, search: queryRef.current || undefined, limit: n, offset: 0 })
+      .then(d => {
+        const items = (d.items || []).map(item => { try { return apiToCard(item); } catch(e) { console.error('apiToCard error:', e, item); return null; } }).filter(Boolean);
+        setComponents(items);
+        setTotal(d.total || 0);
+      })
+      .catch(e => console.error('Failed to refresh components:', e));
+  };
+
   // Load on mount, sort change, and when page gets focus (e.g. after admin approval)
   React.useEffect(() => loadComponents(false), [sortBy]);
   React.useEffect(() => {
-    const onReload = () => loadComponents(false);
+    const onReload = () => refreshLoaded();
     const onSearch = () => {
       const q = window.__agenthub_search_query || '';
       window.__agenthub_search_query = '';
@@ -74,7 +94,7 @@ function Home({ onOpenComponent, onOpenUpload, onGoAdmin, onGoNotice }) {
     window.addEventListener('agenthub:search', onSearch);
     if (window.__agenthub_search_query) { onSearch(); }
     return () => { window.removeEventListener('focus', onReload); window.removeEventListener('agenthub:reload', onReload); window.removeEventListener('agenthub:search', onSearch); };
-  }, [sortBy]);
+  }, []);
   React.useEffect(() => {
     api.notices.list().then(d => { if (d) setNotices(d); }).catch(() => {});
     api.get('/admin/settings').then(d => { if (d) setSeason(d); }).catch(() => {});
