@@ -23,6 +23,7 @@ from app.schemas.schemas import (
     DeployResponse,
     LangflowEndpointCreate,
     LangflowEndpointResponse,
+    LangflowEndpointUpdate,
     LangflowFlow,
     LangflowProject,
 )
@@ -115,6 +116,35 @@ async def create_endpoint(
     ep.last_checked_at = datetime.now(timezone.utc)
 
     db.add(ep)
+    await db.commit()
+    await db.refresh(ep)
+    return _to_response(ep)
+
+
+@router.patch("/endpoints/{endpoint_id}", response_model=LangflowEndpointResponse)
+async def update_endpoint(
+    endpoint_id: uuid.UUID,
+    payload: LangflowEndpointUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+):
+    """엔드포인트 수정. 지정한 필드만 갱신하고 연결 상태를 다시 확인한다."""
+    ep = await _get_owned_endpoint(db, user, endpoint_id)
+    if payload.name is not None:
+        ep.name = payload.name.strip()
+    if payload.base_url is not None:
+        ep.base_url = langflow.normalize_base_url(payload.base_url)
+    # api_key 는 값이 들어온 경우에만 교체(빈 값/미지정이면 기존 키 유지).
+    if payload.api_key:
+        ep.api_key = payload.api_key
+
+    try:
+        await langflow.test_connection(ep.base_url, ep.api_key)
+        ep.last_status = "ok"
+    except langflow.LangflowError:
+        ep.last_status = "error"
+    ep.last_checked_at = datetime.now(timezone.utc)
+
     await db.commit()
     await db.refresh(ep)
     return _to_response(ep)
@@ -219,13 +249,20 @@ async def deploy_asset(
         raise HTTPException(status_code=400, detail="배포할 파일 내용이 없습니다.")
 
     try:
+        # 새 프로젝트 이름이 지정되면 먼저 만들고 그 안에 배포한다.
+        project_id = payload.project_id
+        if payload.new_project_name and payload.new_project_name.strip():
+            project_id = (
+                await langflow.create_project(ep.base_url, ep.api_key, payload.new_project_name.strip())
+            )["id"]
+
         if comp.type == "json":
             result = await langflow.deploy_flow(
                 ep.base_url,
                 ep.api_key,
                 flow_json=comp.file_content,
                 name=comp.title,
-                project_id=payload.project_id,
+                project_id=project_id,
             )
         else:  # py component
             result = await langflow.deploy_component(
@@ -233,7 +270,7 @@ async def deploy_asset(
                 ep.api_key,
                 code=comp.file_content,
                 name=comp.title,
-                project_id=payload.project_id,
+                project_id=project_id,
                 flow_id=payload.flow_id,
             )
     except langflow.LangflowError as e:

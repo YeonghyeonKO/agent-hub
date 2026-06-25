@@ -45,16 +45,6 @@ class LangflowError(Exception):
         self.status = status
 
 
-# Langflow 웹 UI / API 의 라우트 첫 세그먼트들. 사용자가 브라우저 주소창 URL을
-# 통째로 붙여 넣는 경우(예: .../flow/<uuid>, .../login, .../api/v1/...)가 잦으므로
-# 이 세그먼트가 처음 나타나는 지점부터는 잘라내 host(+선택적 base path)만 남긴다.
-# 리버스 프록시로 서브패스(.../langflow/flow/..)에 띄운 경우에도 앞부분은 보존된다.
-_LANGFLOW_ROUTE_SEGMENTS = {
-    "flow", "flows", "login", "logout", "signup", "settings", "store",
-    "playground", "admin", "all", "components", "component", "dashboard",
-    "account", "profile", "view", "files", "mcp", "health", "api",
-}
-
 # http/https 는 슬래시 오타까지 허용해 명시적으로 잡고, 그 외 scheme 은 ``://`` 가
 # 있을 때만 scheme 으로 인정한다 (``host:port`` 를 scheme 으로 오인하지 않도록).
 _HTTP_SCHEME_RE = re.compile(r"^(https?):/{0,2}", re.IGNORECASE)
@@ -80,9 +70,10 @@ def normalize_base_url(url: str) -> str:
     - 앞뒤 공백/따옴표/꺾쇠 제거
     - scheme 누락(``agentbuilder.corp``) → 기본 scheme 부착
     - scheme 슬래시 오타(``http:/host``, ``https:host``) 교정
-    - host 는 소문자화(경로/포트는 보존)
-    - 끝의 불필요한 경로/쿼리/프래그먼트 및 Langflow UI·API 경로(``/flow/<id>``,
-      ``/login``, ``/api/v1`` 등) 제거 → scheme://host[:port][/base-path] 만 남김
+    - host 는 소문자화(포트는 보존)
+    - 사용자가 브라우저 주소창 URL을 통째로 붙여 넣어 따라오는 경로/쿼리/프래그먼트
+      (``/flow/<id>``, ``/login``, ``/test``, ``/api/v1`` 등)는 전부 제거하고
+      ``scheme://host[:port]`` 만 남긴다.
     """
     raw = (url or "").strip().strip("<>\"'").strip()
     if not raw:
@@ -102,16 +93,7 @@ def normalize_base_url(url: str) -> str:
     host = parts.netloc.lower()
     if not host:
         return ""
-
-    # 경로에서 Langflow 라우트 세그먼트가 처음 등장하는 지점부터 잘라낸다.
-    kept: list[str] = []
-    for seg in (s for s in parts.path.split("/") if s):
-        if seg.lower() in _LANGFLOW_ROUTE_SEGMENTS:
-            break
-        kept.append(seg)
-    path = ("/" + "/".join(kept)) if kept else ""
-
-    return f"{parts.scheme}://{host}{path}".rstrip("/")
+    return f"{parts.scheme}://{host}"
 
 
 def _headers(api_key: str | None) -> dict[str, str]:
@@ -214,6 +196,30 @@ async def list_flows(base_url: str, api_key: str | None, project_id: str) -> lis
         raise LangflowError("Flow 목록을 가져오지 못했습니다.")
 
 
+async def _create_project(client: httpx.AsyncClient, name: str) -> dict[str, Any]:
+    """주어진 client 로 새 프로젝트(폴더)를 만들고 {id, name} 반환."""
+    for path in ("/api/v1/projects/", "/api/v1/folders/"):
+        try:
+            r = await client.post(path, json={"name": name})
+        except httpx.RequestError as e:
+            raise LangflowError("연결할 수 없습니다. 주소를 확인하세요.") from e
+        if r.status_code in (401, 403):
+            raise LangflowError("인증 실패: API Key를 확인하세요.", status=r.status_code)
+        if r.status_code == 404:
+            continue  # 다른 명칭으로 재시도
+        if r.status_code in (200, 201):
+            body = r.json()
+            return {"id": str(body.get("id")), "name": body.get("name") or name}
+    raise LangflowError("프로젝트를 만들 수 없습니다.")
+
+
+async def create_project(base_url: str, api_key: str | None, name: str) -> dict[str, Any]:
+    """새 프로젝트(폴더)를 만들고 {id, name} 반환."""
+    base_url = normalize_base_url(base_url)
+    async with _client(base_url, api_key) as client:
+        return await _create_project(client, name)
+
+
 async def _resolve_default_project(client: httpx.AsyncClient, base_url: str, api_key: str | None) -> str:
     """project_id 미지정 시 사용할 기본 프로젝트 id. 없으면 새로 만든다."""
     projects = await list_projects(base_url, api_key)
@@ -224,11 +230,7 @@ async def _resolve_default_project(client: httpx.AsyncClient, base_url: str, api
                 return p["id"]
         return projects[0]["id"]
     # 프로젝트가 하나도 없으면 생성
-    for path in ("/api/v1/projects/", "/api/v1/folders/"):
-        r = await client.post(path, json={"name": "AgentHub"})
-        if r.status_code in (200, 201):
-            return str(r.json().get("id"))
-    raise LangflowError("기본 프로젝트를 만들 수 없습니다.")
+    return (await _create_project(client, "AgentHub"))["id"]
 
 
 async def _build_component_node(client: httpx.AsyncClient, code: str) -> dict[str, Any]:

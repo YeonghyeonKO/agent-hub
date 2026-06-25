@@ -3,16 +3,9 @@
 
 const MAX_ENDPOINTS = 5;
 
-// Langflow 웹 UI / API 라우트의 첫 세그먼트. backend의 normalize_base_url 과 동일 규칙.
-const LANGFLOW_ROUTE_SEGMENTS = new Set([
-  'flow', 'flows', 'login', 'logout', 'signup', 'settings', 'store',
-  'playground', 'admin', 'all', 'components', 'component', 'dashboard',
-  'account', 'profile', 'view', 'files', 'mcp', 'health', 'api',
-]);
-
-// 사용자가 대충 입력한 주소를 일관된 base_url 로 보정한다(backend와 동일 규칙의 즉시 피드백용).
-// backend가 저장·테스트 시 재정규화하므로 여기선 흔한 실수(scheme 누락, 주소창 통째 붙여넣기)만
-// 잡아 입력란을 즉시 교정하면 충분하다.
+// 사용자가 대충 입력한 주소를 일관된 base_url(scheme://host[:port])로 보정한다.
+// backend의 normalize_base_url 과 동일 규칙의 즉시 피드백용. scheme 누락 보정과
+// 주소창 통째 붙여넣기 시 따라오는 경로/쿼리/프래그먼트 제거를 처리한다.
 function normalizeBaseUrl(url, defaultScheme = 'https') {
   let raw = (url || '').trim().replace(/^[<"']+|[>"']+$/g, '').trim();
   if (!raw) return '';
@@ -25,13 +18,26 @@ function normalizeBaseUrl(url, defaultScheme = 'https') {
   try { u = new URL(raw); } catch { return raw.replace(/\/+$/, ''); }
   const host = u.host.toLowerCase();
   if (!host) return '';
-  const kept = [];
-  for (const seg of u.pathname.split('/').filter(Boolean)) {
-    if (LANGFLOW_ROUTE_SEGMENTS.has(seg.toLowerCase())) break;
-    kept.push(seg);
-  }
-  const path = kept.length ? '/' + kept.join('/') : '';
-  return (u.protocol + '//' + host + path).replace(/\/+$/, '');
+  return u.protocol + '//' + host;
+}
+
+// 값이 있을 때 우측에 X(지우기) 버튼을 띄우는 input. URL/별칭/API Key 공용.
+function ClearableInput({ value, onClear, clearTitle, ...props }) {
+  const ref = React.useRef(null);
+  return (
+    <div style={{position: 'relative'}}>
+      <input ref={ref} className="input" value={value} {...props}
+        style={value ? {paddingRight: 32} : undefined}/>
+      {value && (
+        <button type="button" className="btn btn-icon btn-ghost" title={clearTitle}
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => { onClear(); ref.current?.focus(); }}
+          style={{position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', width: 24, height: 24, minWidth: 0, padding: 0, color: 'var(--text-3)'}}>
+          <Icons.X size={12}/>
+        </button>
+      )}
+    </div>
+  );
 }
 
 function StatusDot({ status }) {
@@ -57,28 +63,35 @@ function StatusDot({ status }) {
   );
 }
 
-function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
+function EndpointForm({ endpoint = null, onSaved, onCancel, suggestedUrl = '' }) {
   const { t } = useI18n();
-  const [name, setName] = React.useState('');
-  const [baseUrl, setBaseUrl] = React.useState(suggestedUrl);
-  const [apiKey, setApiKey] = React.useState('');
+  const isEdit = !!endpoint;
+  const [name, setName] = React.useState(endpoint ? endpoint.name : '');
+  const [baseUrl, setBaseUrl] = React.useState(endpoint ? endpoint.base_url : suggestedUrl);
+  const [apiKey, setApiKey] = React.useState(''); // 편집 시에도 빈 칸(평문 노출 안 함)
   const [urlFixed, setUrlFixed] = React.useState(false); // 입력 보정이 적용됐는지
+  const [autoFix, setAutoFix] = React.useState(true); // URL 자동 보정 on/off
   const [testState, setTestState] = React.useState(null); // null/testing/ok/error
   const [testMsg, setTestMsg] = React.useState('');
   const [saving, setSaving] = React.useState(false);
 
-  // 제안 URL의 scheme을 환경 기본 scheme으로 사용(사내가 http면 http로 보정).
-  const defaultScheme = (suggestedUrl || '').toLowerCase().startsWith('http://') ? 'http' : 'https';
+  // 환경 기본 scheme. 편집 중이면 기존 주소의 scheme을, 아니면 제안 URL의 scheme을 따른다.
+  const schemeSource = (endpoint && endpoint.base_url) || suggestedUrl || '';
+  const defaultScheme = schemeSource.toLowerCase().startsWith('http://') ? 'http' : 'https';
 
   const canTest = name.trim().length > 0 && baseUrl.trim().length > 0;
   const canSave = name.trim().length > 0 && baseUrl.trim().length > 0 && !saving;
 
-  // 입력란을 떠날 때 주소를 즉시 보정해 보여준다. 바뀌었으면 안내 힌트를 노출.
-  const applyUrlFix = () => {
+  // 주소를 정규화해 입력란에 즉시 반영한다(autoFix 가드와 무관하게 실행).
+  // 바뀌었으면 안내 힌트를 노출. 스위치를 켜는 순간에도 그대로 호출해 보정한다.
+  const runUrlFix = () => {
     const fixed = normalizeBaseUrl(baseUrl, defaultScheme);
     if (fixed && fixed !== baseUrl) { setBaseUrl(fixed); setUrlFixed(true); }
     return fixed || baseUrl.trim();
   };
+
+  // 입력란을 떠날 때 보정. 자동 보정이 꺼져 있으면 입력값을 그대로 두고 백엔드 정규화에 맡긴다.
+  const applyUrlFix = () => autoFix ? runUrlFix() : baseUrl.trim();
 
   const handleTest = () => {
     const clean = applyUrlFix();
@@ -91,8 +104,11 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
   const handleSave = () => {
     const clean = applyUrlFix();
     setSaving(true);
-    api.deploy.addEndpoint({ name: name.trim(), base_url: clean, api_key: apiKey.trim() || null })
-      .then(ep => onAdded(ep))
+    // api_key: 값이 있으면 전송, 비었으면 null(편집 시 백엔드가 기존 키 유지).
+    const body = { name: name.trim(), base_url: clean, api_key: apiKey.trim() || null };
+    const req = isEdit ? api.deploy.updateEndpoint(endpoint.id, body) : api.deploy.addEndpoint(body);
+    req
+      .then(ep => onSaved(ep))
       .catch(async (e) => {
         let detail = '';
         try { detail = (await e.response?.json())?.detail || ''; } catch {}
@@ -105,13 +121,27 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
     <div className="card card-pad" style={{padding: 16, background: 'var(--bg-muted)', marginTop: 12}}>
       <div className="field" style={{marginBottom: 12}}>
         <label className="field-label">{t('deploy_ep_name')} <span className="req">*</span></label>
-        <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder={t('deploy_ep_name_ph')}/>
+        <ClearableInput value={name} clearTitle={t('deploy_ep_url_clear')}
+          onChange={e => setName(e.target.value)}
+          onClear={() => setName('')}
+          placeholder={t('deploy_ep_name_ph')}/>
       </div>
       <div className="field" style={{marginBottom: 12}}>
-        <label className="field-label">{t('deploy_ep_url')} <span className="req">*</span></label>
-        <input className="input" value={baseUrl}
+        <div className="row" style={{justifyContent: 'space-between', alignItems: 'center', marginBottom: 4}}>
+          <label className="field-label" style={{margin: 0}}>{t('deploy_ep_url')} <span className="req">*</span></label>
+          <label className="row gap-8" style={{fontSize: 11, color: 'var(--text-3)', cursor: 'pointer', margin: 0}}>
+            {t('deploy_ep_url_autofix')}
+            <span className="switch">
+              <input type="checkbox" checked={autoFix}
+                onChange={e => { const on = e.target.checked; setAutoFix(on); if (on) runUrlFix(); else setUrlFixed(false); }}/>
+              <span className="track"/>
+            </span>
+          </label>
+        </div>
+        <ClearableInput value={baseUrl} clearTitle={t('deploy_ep_url_clear')}
           onChange={e => { setBaseUrl(e.target.value); setUrlFixed(false); setTestState(null); setTestMsg(''); }}
           onBlur={applyUrlFix}
+          onClear={() => { setBaseUrl(''); setUrlFixed(false); setTestState(null); setTestMsg(''); }}
           placeholder={t('deploy_ep_url_ph')}/>
         {urlFixed && (
           <div className="field-hint row gap-8" style={{marginTop: 6, color: 'var(--ok-fg)'}}>
@@ -121,7 +151,10 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
       </div>
       <div className="field" style={{marginBottom: 12}}>
         <label className="field-label">API Key <span className="muted-sm" style={{fontWeight: 400}}>{t('deploy_ep_apikey_opt')}</span></label>
-        <input className="input" type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); setTestState(null); setTestMsg(''); }} placeholder={t('deploy_ep_apikey_ph')}/>
+        <ClearableInput value={apiKey} type="password" clearTitle={t('deploy_ep_url_clear')}
+          onChange={e => { setApiKey(e.target.value); setTestState(null); setTestMsg(''); }}
+          onClear={() => { setApiKey(''); setTestState(null); setTestMsg(''); }}
+          placeholder={isEdit && endpoint.has_api_key ? t('deploy_ep_apikey_keep') : t('deploy_ep_apikey_ph')}/>
       </div>
       <div className="row gap-8" style={{justifyContent: 'space-between', alignItems: 'center'}}>
         <div className="row gap-8">
@@ -154,13 +187,19 @@ function DeployModal({ component, onClose }) {
   const [loadingEp, setLoadingEp] = React.useState(true);
   const [selectedEp, setSelectedEp] = React.useState(null);
   const [showAdd, setShowAdd] = React.useState(false);
+  const [editingEp, setEditingEp] = React.useState(null); // 편집 중인 endpoint id
   const [testing, setTesting] = React.useState({}); // {epId: 'testing'} 일시 상태
 
   const [projects, setProjects] = React.useState(null);
   const [projErr, setProjErr] = React.useState('');
-  const [selectedProject, setSelectedProject] = React.useState('');
+  const [selectedProject, setSelectedProject] = React.useState(''); // 프로젝트 id 또는 '__new__'
+  const [newProjectName, setNewProjectName] = React.useState('');
   const [flows, setFlows] = React.useState(null);
   const [selectedFlow, setSelectedFlow] = React.useState('');
+
+  const NEW_PROJECT = '__new__';
+  // 새 프로젝트 만들기 모드: 사용자가 직접 선택했거나, 프로젝트가 하나도 없을 때.
+  const creatingProject = selectedProject === NEW_PROJECT || (projects !== null && projects.length === 0);
 
   const [deploying, setDeploying] = React.useState(false);
   const [result, setResult] = React.useState(null); // {flow_url, name}
@@ -183,15 +222,19 @@ function DeployModal({ component, onClose }) {
   // 엔드포인트 선택 시 프로젝트 목록 로드
   React.useEffect(() => {
     if (!selectedEp) { setProjects(null); return; }
-    setProjects(null); setProjErr(''); setSelectedProject(''); setFlows(null); setSelectedFlow('');
+    setProjects(null); setProjErr(''); setSelectedProject(''); setNewProjectName(''); setFlows(null); setSelectedFlow('');
     api.deploy.projects(selectedEp)
-      .then(setProjects)
+      .then(list => {
+        setProjects(list);
+        // 목록 최상단을 자동 선택, 비어 있으면 새 프로젝트 만들기 모드로.
+        setSelectedProject(list.length ? list[0].id : NEW_PROJECT);
+      })
       .catch(e => setProjErr(e.message ? t('deploy_project_err') : t('deploy_project_err2')));
   }, [selectedEp]);
 
-  // (component 한정) 프로젝트 선택 시 Flow 목록 로드
+  // (component 한정) 프로젝트 선택 시 Flow 목록 로드. 새 프로젝트 모드면 기존 Flow가 없으므로 건너뛴다.
   React.useEffect(() => {
-    if (isFlow || !selectedEp || !selectedProject) { setFlows(null); return; }
+    if (isFlow || !selectedEp || !selectedProject || selectedProject === NEW_PROJECT) { setFlows(null); return; }
     setFlows(null); setSelectedFlow('');
     api.deploy.flows(selectedEp, selectedProject).then(setFlows).catch(() => setFlows([]));
   }, [selectedEp, selectedProject, isFlow]);
@@ -218,8 +261,9 @@ function DeployModal({ component, onClose }) {
     setDeploying(true); setError('');
     api.deploy.deployAsset(c.id, {
       endpoint_id: selectedEp,
-      project_id: selectedProject || null,
-      flow_id: (!isFlow && selectedFlow) ? selectedFlow : null,
+      project_id: creatingProject ? null : (selectedProject || null),
+      new_project_name: creatingProject ? newProjectName.trim() : null,
+      flow_id: (!isFlow && !creatingProject && selectedFlow) ? selectedFlow : null,
     })
       .then(r => { setResult(r); setDeploying(false); })
       .catch(async (e) => {
@@ -231,7 +275,8 @@ function DeployModal({ component, onClose }) {
       });
   };
 
-  const canDeploy = selectedEp && !deploying && (projects !== null);
+  // 새 프로젝트 모드면 이름이 있어야 배포 가능.
+  const canDeploy = selectedEp && !deploying && projects !== null && (!creatingProject || newProjectName.trim().length > 0);
 
   return (
     <div className="modal-backdrop">
@@ -273,6 +318,12 @@ function DeployModal({ component, onClose }) {
               ) : (
                 <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
                   {endpoints.map(ep => (
+                    editingEp === ep.id ? (
+                      <EndpointForm key={ep.id}
+                        endpoint={ep}
+                        onSaved={(updated) => { setEditingEp(null); setEndpoints(eps => eps.map(e => e.id === updated.id ? updated : e)); }}
+                        onCancel={() => setEditingEp(null)}/>
+                    ) : (
                     <div key={ep.id}
                       onClick={() => setSelectedEp(ep.id)}
                       style={{
@@ -287,23 +338,27 @@ function DeployModal({ component, onClose }) {
                         <div className="mono" style={{fontSize: 11, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{ep.base_url}</div>
                       </div>
                       <StatusDot status={testing[ep.id] || ep.last_status}/>
-                      <button className="btn btn-ghost btn-sm" title={t('deploy_test')} onClick={(e) => { e.stopPropagation(); handleTestEndpoint(ep.id); }}><Icons.Plug size={12}/></button>
-                      <button className="btn btn-ghost btn-sm" title={t('btn_delete')} onClick={(e) => { e.stopPropagation(); handleDelete(ep.id); }} style={{color: 'var(--err-fg)'}}><Icons.X size={12}/></button>
+                      <div style={{display: 'flex', alignItems: 'center', gap: 2}}>
+                        <button className="btn btn-ghost btn-sm" title={t('deploy_test')} onClick={(e) => { e.stopPropagation(); handleTestEndpoint(ep.id); }}><Icons.Plug size={12}/></button>
+                        <button className="btn btn-ghost btn-sm" title={t('deploy_ep_edit')} onClick={(e) => { e.stopPropagation(); setShowAdd(false); setEditingEp(ep.id); }}><Icons.Edit size={12}/></button>
+                        <button className="btn btn-ghost btn-sm" title={t('btn_delete')} onClick={(e) => { e.stopPropagation(); handleDelete(ep.id); }} style={{color: 'var(--err-fg)'}}><Icons.X size={12}/></button>
+                      </div>
                     </div>
+                    )
                   ))}
                 </div>
               )}
 
               {showAdd ? (
-                <AddEndpointForm
-                  onAdded={(ep) => { setShowAdd(false); setEndpoints(eps => [...eps, ep]); setSelectedEp(ep.id); }}
+                <EndpointForm
+                  onSaved={(ep) => { setShowAdd(false); setEndpoints(eps => [...eps, ep]); setSelectedEp(ep.id); }}
                   onCancel={() => setShowAdd(false)}
                   suggestedUrl={suggestedUrl}
                 />
               ) : (
                 <div style={{marginTop: 10}}>
                   <button className="btn btn-secondary btn-sm"
-                    onClick={() => setShowAdd(true)} disabled={endpoints.length >= MAX_ENDPOINTS}>
+                    onClick={() => { setEditingEp(null); setShowAdd(true); }} disabled={endpoints.length >= MAX_ENDPOINTS}>
                     <Icons.Plus size={12}/> {t('deploy_add_ep')} ({endpoints.length}/{MAX_ENDPOINTS})
                   </button>
                   {endpoints.length >= MAX_ENDPOINTS && (
@@ -323,11 +378,30 @@ function DeployModal({ component, onClose }) {
                       <div style={{fontSize: 12, color: 'var(--err-fg)'}}>{projErr} {t('deploy_retry_before')}(<Icons.Plug size={10}/>){t('deploy_retry_after')}</div>
                     ) : projects === null ? (
                       <div className="muted-sm">{t('deploy_project_loading')}</div>
+                    ) : projects.length === 0 ? (
+                      // 프로젝트가 하나도 없음 → 새 프로젝트 이름만 입력받아 생성
+                      <>
+                        <ClearableInput value={newProjectName} clearTitle={t('deploy_ep_url_clear')}
+                          onChange={e => setNewProjectName(e.target.value)}
+                          onClear={() => setNewProjectName('')}
+                          placeholder={t('deploy_project_new_ph')}/>
+                        <div className="field-hint" style={{color: 'var(--text-3)'}}>{t('deploy_project_none_hint')}</div>
+                      </>
                     ) : (
-                      <select className="select" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
-                        <option value="">{t('deploy_project_default')}</option>
-                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
+                      <>
+                        <select className="select" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
+                          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                          <option value={NEW_PROJECT}>{t('deploy_project_new_opt')}</option>
+                        </select>
+                        {selectedProject === NEW_PROJECT && (
+                          <div style={{marginTop: 8}}>
+                            <ClearableInput value={newProjectName} clearTitle={t('deploy_ep_url_clear')}
+                              onChange={e => setNewProjectName(e.target.value)}
+                              onClear={() => setNewProjectName('')}
+                              placeholder={t('deploy_project_new_ph')}/>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 

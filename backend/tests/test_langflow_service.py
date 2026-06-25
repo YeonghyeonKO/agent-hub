@@ -29,12 +29,13 @@ BASE = "https://agentbuilder.corp"
         # scheme 슬래시 오타 교정
         ("http:/localhost:7860", "http://localhost:7860"),
         ("https:agentbuilder.corp", "https://agentbuilder.corp"),
-        # 브라우저 주소창 URL 통째로 붙여넣기 → host 만 남김
+        # 브라우저 주소창 URL 통째로 붙여넣기 → 경로/쿼리/프래그먼트 전부 제거, host 만 남김
         ("https://agentbuilder.corp/flow/abc-123", "https://agentbuilder.corp"),
         ("https://agentbuilder.corp/login", "https://agentbuilder.corp"),
         ("agentbuilder.corp/flow/abc-123/?x=1#frag", "https://agentbuilder.corp"),
-        # 리버스 프록시 서브패스는 보존하되 그 뒤 라우트만 제거
-        ("https://corp.example.com/langflow/flow/x", "https://corp.example.com/langflow"),
+        # 임의 경로(/test 등)도 모두 제거한다
+        ("https://agentbuilder.corp/test", "https://agentbuilder.corp"),
+        ("http://localhost:7860/some/random/path", "http://localhost:7860"),
         # host:port 를 scheme 으로 오인하지 않는다
         ("localhost:7860", "https://localhost:7860"),
         # http/https 아닌 scheme 오타는 기본 scheme 으로 치환
