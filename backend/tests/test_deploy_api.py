@@ -126,3 +126,34 @@ async def test_deploy_success_returns_flow_url(client, db, monkeypatch):
     body = resp.json()
     assert body["ok"] is True
     assert body["flow_url"].endswith("/flow/flow-123")
+
+
+async def test_deploy_with_new_project_name_creates_and_uses_it(client, db, monkeypatch):
+    """new_project_name 지정 시 프로젝트를 먼저 만들고 그 id 로 배포한다."""
+    monkeypatch.setattr(langflow_mod, "test_connection", _ok_connection)
+
+    created = {}
+
+    async def _create_project(base_url, api_key, name):
+        created["name"] = name
+        return {"id": "proj-new-9", "name": name}
+
+    captured = {}
+
+    async def _deploy_ok(*args, **kwargs):
+        captured["project_id"] = kwargs.get("project_id")
+        return {"flow_id": "f1", "flow_url": "https://agentbuilder.corp/flow/f1", "name": "My Component"}
+
+    monkeypatch.setattr(langflow_mod, "create_project", _create_project)
+    monkeypatch.setattr(langflow_mod, "deploy_component", _deploy_ok)
+
+    cid = await _seed_component(db)
+    ep = (await _add_endpoint(client)).json()
+
+    resp = await client.post(
+        f"/api/v1/deploy/components/{cid}",
+        json={"endpoint_id": ep["id"], "new_project_name": "  My New Project  "},
+    )
+    assert resp.status_code == 200, resp.text
+    assert created["name"] == "My New Project"  # 공백 제거 후 생성
+    assert captured["project_id"] == "proj-new-9"  # 만든 프로젝트 id 로 배포
