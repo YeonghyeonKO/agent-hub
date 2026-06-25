@@ -3,6 +3,37 @@
 
 const MAX_ENDPOINTS = 5;
 
+// Langflow 웹 UI / API 라우트의 첫 세그먼트. backend의 normalize_base_url 과 동일 규칙.
+const LANGFLOW_ROUTE_SEGMENTS = new Set([
+  'flow', 'flows', 'login', 'logout', 'signup', 'settings', 'store',
+  'playground', 'admin', 'all', 'components', 'component', 'dashboard',
+  'account', 'profile', 'view', 'files', 'mcp', 'health', 'api',
+]);
+
+// 사용자가 대충 입력한 주소를 일관된 base_url 로 보정한다(backend와 동일 규칙의 즉시 피드백용).
+// backend가 저장·테스트 시 재정규화하므로 여기선 흔한 실수(scheme 누락, 주소창 통째 붙여넣기)만
+// 잡아 입력란을 즉시 교정하면 충분하다.
+function normalizeBaseUrl(url, defaultScheme = 'https') {
+  let raw = (url || '').trim().replace(/^[<"']+|[>"']+$/g, '').trim();
+  if (!raw) return '';
+  const httpM = raw.match(/^(https?):\/{0,2}/i);
+  const otherM = raw.match(/^[a-zA-Z][a-zA-Z0-9+.\-]*:\/\//);
+  if (httpM) raw = httpM[1].toLowerCase() + '://' + raw.slice(httpM[0].length);
+  else if (otherM) raw = defaultScheme + '://' + raw.slice(otherM[0].length);
+  else raw = defaultScheme + '://' + raw;
+  let u;
+  try { u = new URL(raw); } catch { return raw.replace(/\/+$/, ''); }
+  const host = u.host.toLowerCase();
+  if (!host) return '';
+  const kept = [];
+  for (const seg of u.pathname.split('/').filter(Boolean)) {
+    if (LANGFLOW_ROUTE_SEGMENTS.has(seg.toLowerCase())) break;
+    kept.push(seg);
+  }
+  const path = kept.length ? '/' + kept.join('/') : '';
+  return (u.protocol + '//' + host + path).replace(/\/+$/, '');
+}
+
 function StatusDot({ status }) {
   const { t } = useI18n();
   // ok=초록, error=빨강, testing=주황(점멸), unknown/null=회색
@@ -31,23 +62,36 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
   const [name, setName] = React.useState('');
   const [baseUrl, setBaseUrl] = React.useState(suggestedUrl);
   const [apiKey, setApiKey] = React.useState('');
+  const [urlFixed, setUrlFixed] = React.useState(false); // 입력 보정이 적용됐는지
   const [testState, setTestState] = React.useState(null); // null/testing/ok/error
   const [testMsg, setTestMsg] = React.useState('');
   const [saving, setSaving] = React.useState(false);
 
+  // 제안 URL의 scheme을 환경 기본 scheme으로 사용(사내가 http면 http로 보정).
+  const defaultScheme = (suggestedUrl || '').toLowerCase().startsWith('http://') ? 'http' : 'https';
+
   const canTest = name.trim().length > 0 && baseUrl.trim().length > 0;
   const canSave = name.trim().length > 0 && baseUrl.trim().length > 0 && !saving;
 
+  // 입력란을 떠날 때 주소를 즉시 보정해 보여준다. 바뀌었으면 안내 힌트를 노출.
+  const applyUrlFix = () => {
+    const fixed = normalizeBaseUrl(baseUrl, defaultScheme);
+    if (fixed && fixed !== baseUrl) { setBaseUrl(fixed); setUrlFixed(true); }
+    return fixed || baseUrl.trim();
+  };
+
   const handleTest = () => {
+    const clean = applyUrlFix();
     setTestState('testing'); setTestMsg('');
-    api.deploy.test({ base_url: baseUrl.trim(), api_key: apiKey.trim() || null })
+    api.deploy.test({ base_url: clean, api_key: apiKey.trim() || null })
       .then(r => { setTestState(r.ok ? 'ok' : 'error'); setTestMsg(r.ok ? (r.version ? `Agent Builder ${r.version}` : t('deploy_test_ok')) : (r.message || t('deploy_test_fail'))); })
       .catch(() => { setTestState('error'); setTestMsg(t('deploy_test_fail')); });
   };
 
   const handleSave = () => {
+    const clean = applyUrlFix();
     setSaving(true);
-    api.deploy.addEndpoint({ name: name.trim(), base_url: baseUrl.trim(), api_key: apiKey.trim() || null })
+    api.deploy.addEndpoint({ name: name.trim(), base_url: clean, api_key: apiKey.trim() || null })
       .then(ep => onAdded(ep))
       .catch(async (e) => {
         let detail = '';
@@ -65,7 +109,15 @@ function AddEndpointForm({ onAdded, onCancel, suggestedUrl = '' }) {
       </div>
       <div className="field" style={{marginBottom: 12}}>
         <label className="field-label">{t('deploy_ep_url')} <span className="req">*</span></label>
-        <input className="input" value={baseUrl} onChange={e => { setBaseUrl(e.target.value); setTestState(null); setTestMsg(''); }} placeholder={t('deploy_ep_url_ph')}/>
+        <input className="input" value={baseUrl}
+          onChange={e => { setBaseUrl(e.target.value); setUrlFixed(false); setTestState(null); setTestMsg(''); }}
+          onBlur={applyUrlFix}
+          placeholder={t('deploy_ep_url_ph')}/>
+        {urlFixed && (
+          <div className="field-hint row gap-8" style={{marginTop: 6, color: 'var(--ok-fg)'}}>
+            <Icons.Check size={11}/> {t('deploy_ep_url_fixed')}
+          </div>
+        )}
       </div>
       <div className="field" style={{marginBottom: 12}}>
         <label className="field-label">API Key <span className="muted-sm" style={{fontWeight: 400}}>{t('deploy_ep_apikey_opt')}</span></label>

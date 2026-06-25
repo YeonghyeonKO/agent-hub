@@ -10,9 +10,11 @@
 from __future__ import annotations
 
 import os
+import re
 import ssl
 import uuid
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -43,14 +45,73 @@ class LangflowError(Exception):
         self.status = status
 
 
+# Langflow 웹 UI / API 의 라우트 첫 세그먼트들. 사용자가 브라우저 주소창 URL을
+# 통째로 붙여 넣는 경우(예: .../flow/<uuid>, .../login, .../api/v1/...)가 잦으므로
+# 이 세그먼트가 처음 나타나는 지점부터는 잘라내 host(+선택적 base path)만 남긴다.
+# 리버스 프록시로 서브패스(.../langflow/flow/..)에 띄운 경우에도 앞부분은 보존된다.
+_LANGFLOW_ROUTE_SEGMENTS = {
+    "flow", "flows", "login", "logout", "signup", "settings", "store",
+    "playground", "admin", "all", "components", "component", "dashboard",
+    "account", "profile", "view", "files", "mcp", "health", "api",
+}
+
+# http/https 는 슬래시 오타까지 허용해 명시적으로 잡고, 그 외 scheme 은 ``://`` 가
+# 있을 때만 scheme 으로 인정한다 (``host:port`` 를 scheme 으로 오인하지 않도록).
+_HTTP_SCHEME_RE = re.compile(r"^(https?):/{0,2}", re.IGNORECASE)
+_OTHER_SCHEME_RE = re.compile(r"^([a-zA-Z][a-zA-Z0-9+.\-]*)://")
+
+
+def _default_scheme() -> str:
+    """scheme 누락 시 붙일 기본값. 운영이 설정한 URL 패턴의 scheme을 따른다.
+
+    LANGFLOW_URL_PATTERN(예: ``http://agentbuilder-{empno}.corp``)이 환경의 실제
+    프로토콜을 알려주므로 이를 기본값으로 삼고, 미설정이면 https로 폴백한다.
+    """
+    pattern = (settings.LANGFLOW_URL_PATTERN or "").strip().lower()
+    if pattern.startswith("http://"):
+        return "http"
+    return "https"
+
+
 def normalize_base_url(url: str) -> str:
-    """끝 슬래시와 trailing /api 를 정리해 일관된 base_url 로 만든다."""
-    u = (url or "").strip().rstrip("/")
-    # 사용자가 .../api 또는 .../api/v1 까지 붙여 넣은 경우 정리
-    for suffix in ("/api/v1", "/api"):
-        if u.endswith(suffix):
-            u = u[: -len(suffix)]
-    return u
+    """사용자가 대충 입력한 주소를 일관된 Langflow base_url 로 보정한다.
+
+    다음을 자연스럽게 교정한다:
+    - 앞뒤 공백/따옴표/꺾쇠 제거
+    - scheme 누락(``agentbuilder.corp``) → 기본 scheme 부착
+    - scheme 슬래시 오타(``http:/host``, ``https:host``) 교정
+    - host 는 소문자화(경로/포트는 보존)
+    - 끝의 불필요한 경로/쿼리/프래그먼트 및 Langflow UI·API 경로(``/flow/<id>``,
+      ``/login``, ``/api/v1`` 등) 제거 → scheme://host[:port][/base-path] 만 남김
+    """
+    raw = (url or "").strip().strip("<>\"'").strip()
+    if not raw:
+        return ""
+
+    # scheme 보정: http/https 는 슬래시 오타(http:/, https:)까지 교정,
+    # 그 외 scheme 은 ``://`` 가 명시된 경우만 인정, 나머지는 기본 scheme 부착.
+    if m := _HTTP_SCHEME_RE.match(raw):
+        raw = f"{m.group(1).lower()}://{raw[m.end():]}"
+    elif m := _OTHER_SCHEME_RE.match(raw):
+        # ws://, ftp:// 등 잘못된 scheme → 기본값으로 치환
+        raw = f"{_default_scheme()}://{raw[m.end():]}"
+    else:
+        raw = f"{_default_scheme()}://{raw}"
+
+    parts = urlsplit(raw)
+    host = parts.netloc.lower()
+    if not host:
+        return ""
+
+    # 경로에서 Langflow 라우트 세그먼트가 처음 등장하는 지점부터 잘라낸다.
+    kept: list[str] = []
+    for seg in (s for s in parts.path.split("/") if s):
+        if seg.lower() in _LANGFLOW_ROUTE_SEGMENTS:
+            break
+        kept.append(seg)
+    path = ("/" + "/".join(kept)) if kept else ""
+
+    return f"{parts.scheme}://{host}{path}".rstrip("/")
 
 
 def _headers(api_key: str | None) -> dict[str, str]:
