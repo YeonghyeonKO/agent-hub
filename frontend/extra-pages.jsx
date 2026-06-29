@@ -288,6 +288,8 @@ function RankingPage({ onOpenComponent, starWeight = 1, downloadWeight = 2 }) {
 // ─────────────────────────────────────────────────────────────────────
 function GuidePage() {
   const { t } = useI18n();
+  const { compatVersions } = useLangflowVersions();
+  const minCompatVer = React.useMemo(() => [...compatVersions].sort()[0] || '1.8.0', [compatVersions]);
   const [active, setActive] = React.useState('quickstart');
   const [contactChannel, setContactChannel] = React.useState('#agenthub-help');
   React.useEffect(() => {
@@ -313,7 +315,7 @@ function GuidePage() {
   const standardChecklist = [
     { ok: true, label: '한글 + 영문 README 포함' },
     { ok: true, label: '입력 / 출력 타입 명세' },
-    { ok: true, label: 'Langflow 1.8.0 이상 호환' },
+    { ok: true, label: `Langflow ${minCompatVer} 이상 호환` },
     { ok: true, label: '예제 입력값 1건 이상' },
     { ok: true, label: '하드코딩된 시크릿 없음' },
     { ok: false, label: '단위 테스트 (권장, 가산점)' },

@@ -4,7 +4,7 @@ instanceName: ""
 backend:
   image:
     repository: dk02315/agent-hub-backend
-    tag: "1.4.1"
+    tag: "1.5.0"
     pullPolicy: IfNotPresent
   replicaCount: 2
   resources:
@@ -29,7 +29,7 @@ backend:
 frontend:
   image:
     repository: dk02315/agent-hub-frontend
-    tag: "1.4.1"
+    tag: "1.5.0"
     pullPolicy: IfNotPresent
   replicaCount: 2
   port: 80
@@ -103,6 +103,15 @@ app:
   storageClass: ""
   langflowUrlPattern: ""   # e.g. http://agentbuilder-{empno}.example.com — pre-fills Add Endpoint form
   langflowVerifySsl: false # verify TLS on deploy targets; corporate CA (if mounted) always takes precedence
+  # -- Compatible Langflow versions exposed to the upload modal and detail labels.
+  # Joined with comma and passed to backend as LANGFLOW_COMPAT_VERSIONS.
+  langflowCompatVersions:
+    - "1.8.0"
+    - "1.8.3"
+    - "1.9.0"
+    - "1.9.1"
+  # -- Version used for the "사내 표준(X.Y.Z) 호환" label and "latest" alias.
+  langflowLatestVersion: "1.9.1"
 
 # -- Autoscaling for backend
 autoscaling:

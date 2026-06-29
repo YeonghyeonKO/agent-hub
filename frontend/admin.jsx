@@ -540,6 +540,8 @@ const DEFAULT_CRITERIA = [
 
 function SettingsTab() {
   const { t } = useI18n();
+  const { compatVersions, latestVersion } = useLangflowVersions();
+  const minCompatVer = React.useMemo(() => [...compatVersions].sort()[0] || '1.8.0', [compatVersions]);
   const [season, setSeason] = React.useState({
     name: '2026 상반기',
     submitStart: '2026-01-15',
@@ -715,8 +717,8 @@ function SettingsTab() {
       <div className="card settings-card">
         <div className="h3" style={{marginBottom: 4}}>{t('settings_compat')}</div>
         <div className="muted-sm" style={{marginBottom: 14}}>{t('settings_compat_desc')}</div>
-        <SettingRow label={t('settings_min_ver')} value="1.8.0"/>
-        <SettingRow label={t('settings_rec_ver')} value="1.9.0"/>
+        <SettingRow label={t('settings_min_ver')} value={minCompatVer}/>
+        <SettingRow label={t('settings_rec_ver')} value={latestVersion}/>
         <SettingRow label={t('settings_readme_lang')} value="KR + EN"/>
         <SettingRow label={t('settings_secret_scan')} value="ON"/>
       </div>

@@ -171,8 +171,48 @@ const api = {
     deleted: () => api.get('/admin/deleted'),
     deleteComponent: (id) => api.del(`/admin/components/${id}`),
     statistics: () => api.get('/admin/statistics'),
+    publicSettings: () => api.get('/admin/settings/public'),
   },
 };
+
+// Cached fetch of /admin/settings/public — used for Langflow version metadata.
+// Returns a promise that resolves to the public settings object.
+let _publicSettingsPromise = null;
+function getPublicSettings() {
+  if (!_publicSettingsPromise) {
+    _publicSettingsPromise = api.admin.publicSettings().catch(() => null);
+  }
+  return _publicSettingsPromise;
+}
+
+// Default fallback if the backend is unreachable or returns no langflow block.
+const DEFAULT_LANGFLOW_VERSIONS = {
+  compatVersions: ['1.9.1', '1.9.0', '1.8.3', '1.8.2', '1.8.1', '1.8.0'],
+  latestVersion: '1.9.1',
+};
+
+// React hook for Langflow compatible versions. Uses the cached promise so
+// repeated callers share a single network request.
+function useLangflowVersions() {
+  const [data, setData] = React.useState(DEFAULT_LANGFLOW_VERSIONS);
+  React.useEffect(() => {
+    let cancelled = false;
+    getPublicSettings().then(d => {
+      if (cancelled || !d || !d.langflow) return;
+      const lf = d.langflow;
+      const list = Array.isArray(lf.compat_versions) && lf.compat_versions.length
+        ? [...lf.compat_versions].sort().reverse()
+        : DEFAULT_LANGFLOW_VERSIONS.compatVersions;
+      setData({
+        compatVersions: list,
+        latestVersion: lf.latest_version || list[0] || DEFAULT_LANGFLOW_VERSIONS.latestVersion,
+      });
+    });
+    return () => { cancelled = true; };
+  }, []);
+  return data;
+}
+window.useLangflowVersions = useLangflowVersions;
 
 // Hook: useFetch — simple data fetching with loading/error
 function useFetch(fetchFn, deps = []) {

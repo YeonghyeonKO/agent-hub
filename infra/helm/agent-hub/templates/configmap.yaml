@@ -10,6 +10,8 @@ data:
   CORS_ORIGINS: {{ .Values.app.corsOrigins | default (printf "https://%s" (include "agent-hub.host" .)) | quote }}
   LANGFLOW_URL_PATTERN: {{ .Values.app.langflowUrlPattern | default "" | quote }}
   LANGFLOW_VERIFY_SSL: {{ .Values.app.langflowVerifySsl | default false | quote }}
+  LANGFLOW_COMPAT_VERSIONS: {{ join "," (.Values.app.langflowCompatVersions | default (list "1.8.0" "1.8.3" "1.9.0" "1.9.1")) | quote }}
+  LANGFLOW_LATEST_VERSION: {{ .Values.app.langflowLatestVersion | default "1.9.1" | quote }}
   {{- if .Values.keycloak.enabled }}
   KEYCLOAK_URL: {{ .Values.keycloak.serverUrl | quote }}
   KEYCLOAK_REALM: {{ .Values.keycloak.realm | quote }}

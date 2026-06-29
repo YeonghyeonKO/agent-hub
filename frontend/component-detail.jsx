@@ -36,6 +36,7 @@ class SmartChunker(Component):
 
 function ComponentDetail({ component, onBack }) {
   const { t } = useI18n();
+  const { latestVersion } = useLangflowVersions();
   // Read tab from hash query string (?tab=improvements&imp=...)
   const initialTab = (() => {
     const m = window.location.hash.match(/\?([^#]+)$/);
@@ -200,7 +201,7 @@ function ComponentDetail({ component, onBack }) {
           <span key={v} className="version-pill tested"><Icons.Check size={10}/> {v}</span>
         ))}
         <div className="version-row-sep"/>
-        <span className="chip chip-ok"><Icons.Check size={10}/> 사내 표준(1.9.0) 호환</span>
+        <span className="chip chip-ok"><Icons.Check size={10}/> {t('flow_std_compat').replace('{ver}', latestVersion)}</span>
       </div>
 
       <div className="grid-4" style={{marginTop: 24}}>

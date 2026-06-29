@@ -22,6 +22,7 @@ const FLOW_EDGES = [
 
 function FlowDetail({ component, onBack, onOpenComponent }) {
   const { t } = useI18n();
+  const { latestVersion } = useLangflowVersions();
   const [c, setC] = React.useState(component);
   const [tab, setTab] = React.useState('readme');
   const [hoverNode, setHoverNode] = React.useState(null);
@@ -140,7 +141,7 @@ function FlowDetail({ component, onBack, onOpenComponent }) {
           <span key={v} className="version-pill tested"><Icons.Check size={10}/> {v}</span>
         ))}
         <div className="version-row-sep"/>
-        <span className="chip chip-ok"><Icons.Check size={10}/> {t('flow_std_compat')}</span>
+        <span className="chip chip-ok"><Icons.Check size={10}/> {t('flow_std_compat').replace('{ver}', latestVersion)}</span>
       </div>
 
       <div className="grid-4" style={{marginTop: 24}}>

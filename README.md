@@ -68,11 +68,11 @@ agent-hub/
 │   │   ├── config.py        # pydantic-settings (env vars)
 │   │   ├── auth.py          # Keycloak OIDC + DEV_MODE bypass
 │   │   ├── database.py      # SQLAlchemy async engine
-│   │   ├── models/          # 12 테이블 (User, Component, Review, ...)
+│   │   ├── models/          # 16 테이블 (User, Component, Review, Notification, LangflowEndpoint, ...)
 │   │   ├── schemas/         # Pydantic v2 request/response
-│   │   ├── routers/         # API 라우터 (7개)
+│   │   ├── routers/         # API 라우터 (12개)
 │   │   └── services/        # 비즈니스 로직 (랭킹 계산)
-│   ├── alembic/             # DB 마이그레이션 (6개 버전)
+│   ├── alembic/             # DB 마이그레이션 (10개 버전)
 │   ├── Dockerfile           # python:3.12-slim 멀티스테이지
 │   └── requirements.txt
 ├── infra/
@@ -165,45 +165,116 @@ kubectl exec -it deploy/agent-hub-backend -n agent-hub -- alembic upgrade head
 
 ## API Endpoints
 
+OpenAPI 문서는 `/docs` (Swagger UI), `/redoc` (ReDoc)에서 자동 생성됩니다.
+
+### Health
+
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `GET` | `/health` | - | 헬스체크 |
-| `GET` | `/api/v1/components` | - | Component/Flow 목록 (필터, 검색, 정렬) |
-| `GET` | `/api/v1/components/{id}` | - | 상세 조회 |
-| `GET` | `/api/v1/components/{id}/file` | - | 파일 내용 조회 (코드 미리보기) |
-| `GET` | `/api/v1/components/{id}/download-file` | user | 파일 다운로드 + 기록 |
+
+### Auth (Keycloak OIDC)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/v1/auth/config` | - | 프론트 SSO 설정 (issuer/clientId) |
+| `POST` | `/api/v1/auth/token` | - | code → token 교환 |
+| `POST` | `/api/v1/auth/refresh` | - | refresh token으로 access token 갱신 |
+
+### Components / Flows
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/v1/components` | - | 목록 (필터·검색·정렬·페이지) |
 | `POST` | `/api/v1/components` | user | 새 Component/Flow 제출 (multipart) |
+| `GET` | `/api/v1/components/{id}` | - | 상세 조회 |
+| `PATCH` | `/api/v1/components/{id}` | author/admin | 업데이트 (버전 bump) |
+| `DELETE` | `/api/v1/components/{id}` | author/admin | 본인/관리자 soft delete |
+| `GET` | `/api/v1/components/{id}/versions` | - | 버전 이력 |
+| `GET` | `/api/v1/components/{id}/versions/{vid}/file` | - | 특정 버전 파일 내용 |
+| `GET` | `/api/v1/components/{id}/file` | - | 최신 파일 내용 (코드 미리보기) |
+| `GET` | `/api/v1/components/{id}/download-file` | user | 파일 다운로드 + 기록 |
+| `POST` | `/api/v1/components/{id}/download` | user | 다운로드 카운터 증가 (이벤트만) |
+| `GET` | `/api/v1/components/{id}/starred` | user | 내 Star 여부 |
 | `POST` | `/api/v1/components/{id}/star` | user | Star 토글 |
-| `GET` | `/api/v1/rankings` | - | 랭킹 조회 (자기 Star/DL 제외) |
+
+### Code Improvements (협업)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/v1/components/{id}/improvements` | - | 개선안 목록 |
+| `GET` | `/api/v1/components/{id}/improvements/{iid}` | - | 개선안 상세 (diff 포함) |
+| `POST` | `/api/v1/components/{id}/improvements` | user | 개선안 제출 |
+| `POST` | `/api/v1/components/{id}/improvements/{iid}/review` | author/admin | 채택·반려 |
+| `DELETE` | `/api/v1/components/{id}/improvements/{iid}` | author/admin | 삭제 |
+| `GET` | `/api/v1/components/{id}/contributors` | - | Contributor 목록 |
+
+### Rankings / Users / Notifications
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/v1/rankings` | - | 랭킹 (자기 Star/DL 제외) |
 | `GET` | `/api/v1/users/me` | user | 내 프로필 (SSO) |
 | `GET` | `/api/v1/users/me/components` | user | 내 Component/Flow 목록 |
-| `GET` | `/api/v1/notices` | - | 공지사항 목록 |
-| `POST` | `/api/v1/notices` | admin | 공지 작성 |
-| `PUT` | `/api/v1/notices/{id}` | admin | 공지 수정 (핀 토글) |
-| `DELETE` | `/api/v1/notices/{id}` | admin | 공지 삭제 |
+| `GET` | `/api/v1/notifications` | user | 알림 목록 (페이지네이션) |
+| `GET` | `/api/v1/notifications/unread-count` | user | 미확인 알림 수 |
+| `POST` | `/api/v1/notifications/{id}/read` | user | 단건 읽음 처리 |
+| `POST` | `/api/v1/notifications/read-all` | user | 전체 읽음 처리 |
+
+### Notices / VoC
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/v1/notices` | - | 공지 목록 |
+| `GET` | `/api/v1/notices/{id}` | - | 공지 상세 |
+| `POST` | `/api/v1/notices` | admin | 작성 |
+| `PUT` | `/api/v1/notices/{id}` | admin | 수정 (핀 토글 포함) |
+| `DELETE` | `/api/v1/notices/{id}` | admin | 삭제 |
 | `GET` | `/api/v1/voc` | user | VoC 목록 (is_upvoted 포함) |
-| `POST` | `/api/v1/voc` | user | VoC 글 작성 (markdown) |
 | `GET` | `/api/v1/voc/{id}` | - | VoC 상세 + 댓글 |
+| `POST` | `/api/v1/voc` | user | 작성 (markdown) |
+| `PUT` | `/api/v1/voc/{id}` | author/admin | 수정 |
 | `POST` | `/api/v1/voc/{id}/comments` | user | 댓글 작성 |
 | `POST` | `/api/v1/voc/{id}/upvote` | user | Upvote 토글 |
 | `PATCH` | `/api/v1/voc/{id}/status` | admin | 상태 변경 |
-| `GET` | `/api/v1/admin/pending` | admin | 심사 대기 목록 |
-| `GET` | `/api/v1/admin/approved` | admin | 승인 목록 |
-| `GET` | `/api/v1/admin/rejected` | admin | 반려 목록 |
-| `POST` | `/api/v1/admin/review/{id}` | admin | 심사 제출 (승인/반려) |
-| `GET` | `/api/v1/admin/statistics` | admin | 전체 통계 (CSV 다운로드용) |
-| `GET/PUT` | `/api/v1/admin/settings` | admin | 시즌 설정 |
-| `PATCH` | `/api/v1/components/{id}` | user | Component/Flow 업데이트 (버전 bump) |
-| `GET` | `/api/v1/components/{id}/versions` | - | 버전 이력 |
-| `GET` | `/api/v1/components/{id}/starred` | user | Star 여부 확인 |
+
+### Admin
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/v1/admin/pending` | admin/reviewer | 심사 대기 |
+| `GET` | `/api/v1/admin/approved` | admin/reviewer | 승인 목록 |
+| `GET` | `/api/v1/admin/rejected` | admin/reviewer | 반려 목록 |
+| `GET` | `/api/v1/admin/deleted` | admin | 삭제된 목록 |
 | `DELETE` | `/api/v1/admin/components/{id}` | admin | Soft delete |
-| `GET/POST` | `/api/v1/deploy/endpoints` | user | 개인 Langflow 엔드포인트 목록/추가 (최대 5개) |
+| `GET` | `/api/v1/admin/issues` | admin | 신고/이슈 목록 |
+| `POST` | `/api/v1/admin/review/{id}` | admin/reviewer | 심사 제출 (점수 + 결정) |
+| `POST` | `/api/v1/admin/review/bulk` | admin/reviewer | 다건 일괄 심사 |
+| `GET` | `/api/v1/admin/users` | admin | 사용자 목록 |
+| `PATCH` | `/api/v1/admin/users/{empno}/role` | admin | 역할 변경 (admin/reviewer/user) |
+| `GET` | `/api/v1/admin/statistics` | admin | 전체 통계 (CSV 다운로드용) |
+| `GET` | `/api/v1/admin/settings/public` | - | 시즌 공개 설정 (홈 배너용) |
+| `GET/PUT` | `/api/v1/admin/settings` | admin | 시즌 + 심사기준 + 가중치 설정 |
+
+### Deploy (개인 Langflow)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/v1/deploy/suggested-url` | user | 사번 기반 추천 URL |
+| `GET/POST` | `/api/v1/deploy/endpoints` | user | 엔드포인트 목록/등록 (최대 5개) |
 | `DELETE` | `/api/v1/deploy/endpoints/{id}` | user | 엔드포인트 삭제 |
 | `POST` | `/api/v1/deploy/test` | user | 미저장 URL/Key 연결 테스트 |
 | `POST` | `/api/v1/deploy/endpoints/{id}/test` | user | 저장된 엔드포인트 연결 테스트 |
-| `GET` | `/api/v1/deploy/endpoints/{id}/projects` | user | 대상 Langflow 프로젝트 목록 |
+| `GET` | `/api/v1/deploy/endpoints/{id}/projects` | user | Langflow 프로젝트 목록 |
 | `GET` | `/api/v1/deploy/endpoints/{id}/projects/{pid}/flows` | user | 프로젝트 내 Flow 목록 |
-| `POST` | `/api/v1/deploy/components/{id}` | user | Component/Flow를 Langflow에 배포 |
+| `POST` | `/api/v1/deploy/components/{id}` | user | Langflow로 배포 (Component=Flow 합성, Flow=새/덮어쓰기) |
+
+### Images / Dev
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/v1/images` | user | 마크다운용 이미지 업로드 (클립보드 포함) |
+| `GET` | `/api/v1/images/{filename}` | - | 업로드된 이미지 서빙 |
 | `POST` | `/api/v1/seed` | dev | 시드 데이터 투입 (DEV_MODE only) |
 
 ---
@@ -270,7 +341,23 @@ Score = Star × 1 + Download × 2
 
 ### Version Updates
 - 작성자/관리자가 Component/Flow 업데이트 가능 (patch/minor/major 선택)
-- 이전 버전 이력 조회 가능 (버전 이력 탭)
+- 이전 버전 이력 조회 가능 (버전 이력 탭) — 특정 버전 파일도 다운로드 가능
+
+### Code Improvements (코드 개선 제안)
+- 누구나 Component/Flow에 대해 개선안(diff + 설명)을 제출
+- 작성자/관리자가 채택·반려 — 채택 시 contributor로 자동 기록
+- 상세 탭에서 diff 뷰어로 변경 사항 비교
+
+### Notifications
+- 심사 결과, 개선안 채택/반려, VoC 답변 등 이벤트 발생 시 사용자 알림 생성
+- Topbar 종 아이콘에 미확인 카운트 배지
+- 단건/전체 읽음 처리, 무한 스크롤 페이지네이션
+
+### Personal Langflow Deploy
+- 사용자별 최대 5개 Langflow 엔드포인트 등록 (alias + Base URL + 선택적 API Key)
+- 등록 / 배포 시 연결 테스트로 정상(초록)/실패(빨강) 표시
+- 사번 기반 추천 URL 자동 제안 (`/api/v1/deploy/suggested-url`)
+- Component 또는 Flow를 선택 프로젝트의 새/기존 Flow로 1-클릭 배포
 
 ### Mobile Responsive
 - 햄버거 메뉴 (768px 이하)
@@ -318,22 +405,26 @@ Score = Star × 1 + Download × 2
 
 ## Database (PostgreSQL)
 
-12개 테이블:
+16개 테이블 (alembic 010까지):
 
 | Table | Description |
 |-------|-------------|
-| `users` | 사용자 (사번 PK, Keycloak SSO) |
-| `components` | Component / Flow 등록물 |
+| `users` | 사용자 (사번 PK, Keycloak SSO, role) |
+| `components` | Component / Flow 등록물 (soft delete + tags JSON) |
 | `component_versions` | 버전 이력 |
 | `reviews` | 심사 결과 (점수 JSON + 결정) |
 | `stars` | Star (composite PK) |
 | `downloads` | 다운로드 기록 |
 | `issues` | 신고 / 보안 / 버그 |
-| `seasons` | 시즌 설정 (가중치, 기간) |
-| `notices` | 공지사항 |
-| `voc_posts` | VoC 게시글 |
+| `seasons` | 시즌 설정 (가중치, 기간, 심사기준) |
+| `notices` | 공지사항 (markdown, pin) |
+| `voc_posts` | VoC 게시글 (제안/버그/질문) |
 | `voc_comments` | VoC 댓글 |
 | `voc_upvotes` | VoC 추천 |
+| `images` | 마크다운용 업로드 이미지 (alembic 007) |
+| `code_improvements` | 코드 개선 제안 + diff + review (alembic 009) |
+| `notifications` | 사용자 알림 (alembic 009) |
+| `langflow_endpoints` | 개인 Langflow 엔드포인트 (alembic 010) |
 
 ---
 

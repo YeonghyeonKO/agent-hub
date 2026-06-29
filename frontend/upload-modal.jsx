@@ -3,6 +3,12 @@
 function UploadModal({ onClose, prefill }) {
   const { t } = useI18n();
   const pf = prefill || {};
+  const { compatVersions, latestVersion } = useLangflowVersions();
+  // Sorted descending; oldest is the floor for min, newest is the ceil for max.
+  const sortedAsc = React.useMemo(() => [...compatVersions].sort(), [compatVersions]);
+  const defaultMin = sortedAsc[0] || '1.8.0';
+  const defaultMax = sortedAsc[sortedAsc.length - 1] || latestVersion;
+  const defaultTested = React.useMemo(() => compatVersions.slice(0, 2), [compatVersions]);
   const [step, setStep] = React.useState(0);
   const [realFile, setRealFile] = React.useState(null);
   const [drag, setDrag] = React.useState(false);
@@ -13,9 +19,16 @@ function UploadModal({ onClose, prefill }) {
   const [icon, setIcon] = React.useState(pf.icon || 'Box');
   const [tags, setTags] = React.useState([]);
   const [tagInput, setTagInput] = React.useState('');
-  const [minVer, setMinVer] = React.useState(pf.min_langflow_ver || '1.8.0');
-  const [maxVer, setMaxVer] = React.useState(pf.max_langflow_ver || '1.9.1');
-  const [tested, setTested] = React.useState(pf.tested_versions || ['1.9.1', '1.9.0']);
+  const [minVer, setMinVer] = React.useState(pf.min_langflow_ver || defaultMin);
+  const [maxVer, setMaxVer] = React.useState(pf.max_langflow_ver || defaultMax);
+  const [tested, setTested] = React.useState(pf.tested_versions || defaultTested);
+  // Once compat versions arrive from the server, hydrate defaults if user hasn't picked yet
+  React.useEffect(() => {
+    if (pf.min_langflow_ver || pf.max_langflow_ver || pf.tested_versions) return;
+    setMinVer(defaultMin);
+    setMaxVer(defaultMax);
+    setTested(defaultTested);
+  }, [compatVersions]);
   const [deps, setDeps] = React.useState('');
   const FALLBACK_COMPONENT = "## 설명\n\n이 Component가 무엇을 하는지 간단히 설명하세요.\n\n## 입력 / 출력\n\n| 이름 | 타입 | 설명 |\n|------|------|------|\n| input_name | str | 입력 설명 |\n| output_name | str | 출력 설명 |\n";
   const FALLBACK_FLOW = "## 개요\n\n이 Flow가 어떤 워크플로우를 수행하는지 설명하세요.\n\n## 사용자 가이드\n\n- [주의사항]\n- [기타 참고사항]\n";
@@ -170,7 +183,7 @@ function UploadModal({ onClose, prefill }) {
   const addTag = () => { if (tagInput.trim() && !tags.includes(tagInput.trim()) && tags.length < 5) { setTags([...tags, tagInput.trim()]); setTagInput(''); } };
   const removeTag = (t) => { setTags(tags.filter(x => x !== t)); };
 
-  const VERSIONS = ['1.9.1', '1.9.0', '1.8.3', '1.8.2', '1.8.1', '1.8.0'];
+  const VERSIONS = compatVersions;
   const ICONS = ['Box', 'Scissors', 'Database', 'Plug', 'Ticket', 'FileText', 'Layers', 'Workflow'];
 
   const hasFile = !!realFile;

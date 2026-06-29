@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.5.0 (2026-06-29)
+
+### Features
+- **Langflow 호환 버전을 Helm env로 외부화**: 기존 코드에 흩어져 있던 `1.8.0` / `1.9.0` / `1.9.1` 하드코딩을 제거. Helm `app.langflowCompatVersions` (list) + `app.langflowLatestVersion`으로 운영자가 이미지 재빌드 없이 변경 가능. 백엔드는 `LANGFLOW_COMPAT_VERSIONS` (콤마 구분) + `LANGFLOW_LATEST_VERSION` env로 받아 `/api/v1/admin/settings/public` 응답에 `langflow.compat_versions` / `langflow.latest_version`으로 노출.
+- **프론트엔드 `useLangflowVersions()` 훅 추가**: 업로드 모달 드롭다운, 상세 화면의 "사내 표준({ver}) 호환" 라벨, 관리자 설정 패널, 가이드 페이지의 표준 체크리스트가 모두 이 값으로 동적으로 그려짐.
+
+### Docs
+- **README 현행화**: API 엔드포인트 표를 카테고리별로 재구성하고 누락 22개(인증, Code Improvements, Notifications, Images, Admin 추가 라우트 등) 반영. DB 테이블 12개 → 16개로 수정. Code Improvements / Notifications / Personal Langflow Deploy 기능 섹션 추가.
+
+---
+
 ## v1.4.1 (2026-06-24)
 
 ### Fixes

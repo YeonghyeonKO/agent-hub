@@ -344,11 +344,20 @@ async def get_statistics(
 async def get_public_settings(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
+    from app.config import settings as app_settings
+    langflow = {
+        "compat_versions": app_settings.langflow_compat_list,
+        "latest_version": app_settings.LANGFLOW_LATEST_VERSION,
+    }
     result = await db.execute(select(Season).where(Season.is_active == True))
     season = result.scalar_one_or_none()
     if not season:
-        return {"contact_channel": None, "criteria_weights": None}
-    return {"contact_channel": season.contact_channel, "criteria_weights": season.criteria_weights}
+        return {"contact_channel": None, "criteria_weights": None, "langflow": langflow}
+    return {
+        "contact_channel": season.contact_channel,
+        "criteria_weights": season.criteria_weights,
+        "langflow": langflow,
+    }
 
 
 @router.get("/settings", response_model=SeasonSettings | None)

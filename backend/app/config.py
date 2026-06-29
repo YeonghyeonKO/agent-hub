@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     # 배포 대상(Agent Builder) HTTPS 검증 정책. 사내 CA(/etc/ssl/certs/corporate-ca.crt)가
     # 마운트돼 있으면 그것으로 검증하고, 없을 때의 폴백 동작을 이 값으로 정한다(기본: 비활성).
     LANGFLOW_VERIFY_SSL: bool = False
+    # 호환 가능한 Langflow 버전 목록 (콤마 구분). 업로드 모달의 드롭다운, 호환성 표시 등에서 사용.
+    LANGFLOW_COMPAT_VERSIONS: str = "1.8.0,1.8.3,1.9.0,1.9.1"
+    # "latest" 표기에 사용되는 대표 버전. 사내 표준(X.Y.Z) 호환 라벨 등에 노출.
+    LANGFLOW_LATEST_VERSION: str = "1.9.1"
+
+    @property
+    def langflow_compat_list(self) -> list[str]:
+        return [v.strip() for v in self.LANGFLOW_COMPAT_VERSIONS.split(",") if v.strip()]
 
     @property
     def keycloak_issuer(self) -> str:
