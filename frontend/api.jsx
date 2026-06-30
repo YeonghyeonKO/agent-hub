@@ -108,6 +108,7 @@ const api = {
   deploy: {
     endpoints: () => api.get('/deploy/endpoints'),
     addEndpoint: (body) => api.post('/deploy/endpoints', body),
+    updateEndpoint: (id, body) => api.patch(`/deploy/endpoints/${id}`, body),
     delEndpoint: (id) => api.del(`/deploy/endpoints/${id}`),
     test: (body) => api.post('/deploy/test', body),
     testEndpoint: (id) => api.post(`/deploy/endpoints/${id}/test`),

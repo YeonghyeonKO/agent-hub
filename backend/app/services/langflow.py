@@ -10,9 +10,11 @@
 from __future__ import annotations
 
 import os
+import re
 import ssl
 import uuid
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -43,14 +45,55 @@ class LangflowError(Exception):
         self.status = status
 
 
+# http/https 는 슬래시 오타까지 허용해 명시적으로 잡고, 그 외 scheme 은 ``://`` 가
+# 있을 때만 scheme 으로 인정한다 (``host:port`` 를 scheme 으로 오인하지 않도록).
+_HTTP_SCHEME_RE = re.compile(r"^(https?):/{0,2}", re.IGNORECASE)
+_OTHER_SCHEME_RE = re.compile(r"^([a-zA-Z][a-zA-Z0-9+.\-]*)://")
+
+
+def _default_scheme() -> str:
+    """scheme 누락 시 붙일 기본값. 운영이 설정한 URL 패턴의 scheme을 따른다.
+
+    LANGFLOW_URL_PATTERN(예: ``http://agentbuilder-{empno}.corp``)이 환경의 실제
+    프로토콜을 알려주므로 이를 기본값으로 삼고, 미설정이면 https로 폴백한다.
+    """
+    pattern = (settings.LANGFLOW_URL_PATTERN or "").strip().lower()
+    if pattern.startswith("http://"):
+        return "http"
+    return "https"
+
+
 def normalize_base_url(url: str) -> str:
-    """끝 슬래시와 trailing /api 를 정리해 일관된 base_url 로 만든다."""
-    u = (url or "").strip().rstrip("/")
-    # 사용자가 .../api 또는 .../api/v1 까지 붙여 넣은 경우 정리
-    for suffix in ("/api/v1", "/api"):
-        if u.endswith(suffix):
-            u = u[: -len(suffix)]
-    return u
+    """사용자가 대충 입력한 주소를 일관된 Langflow base_url 로 보정한다.
+
+    다음을 자연스럽게 교정한다:
+    - 앞뒤 공백/따옴표/꺾쇠 제거
+    - scheme 누락(``agentbuilder.corp``) → 기본 scheme 부착
+    - scheme 슬래시 오타(``http:/host``, ``https:host``) 교정
+    - host 는 소문자화(포트는 보존)
+    - 사용자가 브라우저 주소창 URL을 통째로 붙여 넣어 따라오는 경로/쿼리/프래그먼트
+      (``/flow/<id>``, ``/login``, ``/test``, ``/api/v1`` 등)는 전부 제거하고
+      ``scheme://host[:port]`` 만 남긴다.
+    """
+    raw = (url or "").strip().strip("<>\"'").strip()
+    if not raw:
+        return ""
+
+    # scheme 보정: http/https 는 슬래시 오타(http:/, https:)까지 교정,
+    # 그 외 scheme 은 ``://`` 가 명시된 경우만 인정, 나머지는 기본 scheme 부착.
+    if m := _HTTP_SCHEME_RE.match(raw):
+        raw = f"{m.group(1).lower()}://{raw[m.end():]}"
+    elif m := _OTHER_SCHEME_RE.match(raw):
+        # ws://, ftp:// 등 잘못된 scheme → 기본값으로 치환
+        raw = f"{_default_scheme()}://{raw[m.end():]}"
+    else:
+        raw = f"{_default_scheme()}://{raw}"
+
+    parts = urlsplit(raw)
+    host = parts.netloc.lower()
+    if not host:
+        return ""
+    return f"{parts.scheme}://{host}"
 
 
 def _headers(api_key: str | None) -> dict[str, str]:
@@ -153,6 +196,30 @@ async def list_flows(base_url: str, api_key: str | None, project_id: str) -> lis
         raise LangflowError("Flow 목록을 가져오지 못했습니다.")
 
 
+async def _create_project(client: httpx.AsyncClient, name: str) -> dict[str, Any]:
+    """주어진 client 로 새 프로젝트(폴더)를 만들고 {id, name} 반환."""
+    for path in ("/api/v1/projects/", "/api/v1/folders/"):
+        try:
+            r = await client.post(path, json={"name": name})
+        except httpx.RequestError as e:
+            raise LangflowError("연결할 수 없습니다. 주소를 확인하세요.") from e
+        if r.status_code in (401, 403):
+            raise LangflowError("인증 실패: API Key를 확인하세요.", status=r.status_code)
+        if r.status_code == 404:
+            continue  # 다른 명칭으로 재시도
+        if r.status_code in (200, 201):
+            body = r.json()
+            return {"id": str(body.get("id")), "name": body.get("name") or name}
+    raise LangflowError("프로젝트를 만들 수 없습니다.")
+
+
+async def create_project(base_url: str, api_key: str | None, name: str) -> dict[str, Any]:
+    """새 프로젝트(폴더)를 만들고 {id, name} 반환."""
+    base_url = normalize_base_url(base_url)
+    async with _client(base_url, api_key) as client:
+        return await _create_project(client, name)
+
+
 async def _resolve_default_project(client: httpx.AsyncClient, base_url: str, api_key: str | None) -> str:
     """project_id 미지정 시 사용할 기본 프로젝트 id. 없으면 새로 만든다."""
     projects = await list_projects(base_url, api_key)
@@ -163,11 +230,7 @@ async def _resolve_default_project(client: httpx.AsyncClient, base_url: str, api
                 return p["id"]
         return projects[0]["id"]
     # 프로젝트가 하나도 없으면 생성
-    for path in ("/api/v1/projects/", "/api/v1/folders/"):
-        r = await client.post(path, json={"name": "AgentHub"})
-        if r.status_code in (200, 201):
-            return str(r.json().get("id"))
-    raise LangflowError("기본 프로젝트를 만들 수 없습니다.")
+    return (await _create_project(client, "AgentHub"))["id"]
 
 
 async def _build_component_node(client: httpx.AsyncClient, code: str) -> dict[str, Any]:

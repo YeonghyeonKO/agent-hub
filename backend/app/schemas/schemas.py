@@ -246,6 +246,17 @@ class LangflowEndpointCreate(BaseModel):
     api_key: str | None = None
 
 
+class LangflowEndpointUpdate(BaseModel):
+    """엔드포인트 수정. 지정한 필드만 갱신한다.
+
+    api_key 는 응답에 평문으로 노출하지 않으므로(has_api_key 만), 빈 값/미지정이면
+    기존 키를 그대로 유지하고 값이 들어온 경우에만 교체한다.
+    """
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    base_url: str | None = Field(default=None, min_length=1)
+    api_key: str | None = None
+
+
 class LangflowEndpointResponse(BaseModel):
     id: uuid.UUID
     name: str
@@ -285,6 +296,7 @@ class LangflowFlow(BaseModel):
 class DeployRequest(BaseModel):
     endpoint_id: uuid.UUID
     project_id: str | None = None  # 미지정 시 기본 프로젝트
+    new_project_name: str | None = Field(default=None, max_length=100)  # 지정 시 새 프로젝트를 만들어 배포
     flow_id: str | None = None     # component 한정, 미지정 시 새 Flow 생성
 
 

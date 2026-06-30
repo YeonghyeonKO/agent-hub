@@ -657,6 +657,44 @@ input[type=range].native-slider {
   margin: 0;
 }
 
+/* ---- Toggle switch ---- */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch .track {
+  position: absolute;
+  inset: 0;
+  background: var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.switch .track::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 2px;
+  top: 2px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+.switch input:checked + .track { background: var(--accent); }
+.switch input:checked + .track::before { transform: translateX(14px); }
+.switch input:focus-visible + .track { box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25); }
+
 /* ---- Submission list (admin) ---- */
 .sub-row {
   padding: 14px 16px;

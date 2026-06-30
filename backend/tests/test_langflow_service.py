@@ -16,11 +16,34 @@ BASE = "https://agentbuilder.corp"
 @pytest.mark.parametrize(
     "raw,expected",
     [
+        # 기존 동작(끝 슬래시 / api suffix 정리)
         ("https://agentbuilder.corp/", "https://agentbuilder.corp"),
         ("https://agentbuilder.corp/api/v1", "https://agentbuilder.corp"),
         ("https://agentbuilder.corp/api", "https://agentbuilder.corp"),
         ("  http://localhost:7860/  ", "http://localhost:7860"),
         ("", ""),
+        ("   ", ""),
+        # scheme 누락 → 기본 scheme(https) 부착
+        ("agentbuilder.corp", "https://agentbuilder.corp"),
+        ("agentbuilder.corp:7860/", "https://agentbuilder.corp:7860"),
+        # scheme 슬래시 오타 교정
+        ("http:/localhost:7860", "http://localhost:7860"),
+        ("https:agentbuilder.corp", "https://agentbuilder.corp"),
+        # 브라우저 주소창 URL 통째로 붙여넣기 → 경로/쿼리/프래그먼트 전부 제거, host 만 남김
+        ("https://agentbuilder.corp/flow/abc-123", "https://agentbuilder.corp"),
+        ("https://agentbuilder.corp/login", "https://agentbuilder.corp"),
+        ("agentbuilder.corp/flow/abc-123/?x=1#frag", "https://agentbuilder.corp"),
+        # 임의 경로(/test 등)도 모두 제거한다
+        ("https://agentbuilder.corp/test", "https://agentbuilder.corp"),
+        ("http://localhost:7860/some/random/path", "http://localhost:7860"),
+        # host:port 를 scheme 으로 오인하지 않는다
+        ("localhost:7860", "https://localhost:7860"),
+        # http/https 아닌 scheme 오타는 기본 scheme 으로 치환
+        ("ws://agentbuilder.corp", "https://agentbuilder.corp"),
+        # host 소문자화(경로/포트 보존)
+        ("HTTP://Agent.CORP:7860/Login", "http://agent.corp:7860"),
+        # 앞뒤 따옴표/꺾쇠 제거
+        ('"https://agentbuilder.corp/"', "https://agentbuilder.corp"),
     ],
 )
 def test_normalize_base_url(raw, expected):
